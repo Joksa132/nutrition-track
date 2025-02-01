@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Text, View, StyleSheet, Alert, TextInput, Button } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
+import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
+import * as Crypto from "expo-crypto";
 
 export default function Register() {
   const [username, setUsername] = useState<string>("");
@@ -16,19 +18,32 @@ export default function Register() {
       const userId = uuidv4();
 
       if (password !== confirmPassword) {
-        Alert.alert("Error", "Passwords do not match. Please try again.");
+        Alert.alert("Error", "Passwords do not match. Please try again.", [
+          {
+            text: "Ok",
+          },
+        ]);
         return;
       }
 
+      const hashedPassword = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        password
+      );
+
       await db.runAsync(
         "INSERT INTO users (id, username, password) VALUES (?, ?, ?)",
-        [userId, username, password]
+        [userId, username, hashedPassword]
       );
       Alert.alert("Success", "Registration successful! Please login.");
       router.push("/(auth)/login");
     } catch (error) {
       console.log(error);
-      Alert.alert("Error", "An error occurred during registration");
+      Alert.alert("Error", "An error occurred during registration", [
+        {
+          text: "Ok",
+        },
+      ]);
     }
   };
 

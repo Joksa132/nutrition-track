@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSQLiteContext } from "expo-sqlite";
 import { createContext, ReactNode, useEffect, useState } from "react";
 import { Alert } from "react-native";
+import * as Crypto from "expo-crypto";
 
 type AuthContextType = {
   user: { id: string; username: string } | null;
@@ -41,21 +42,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (username: string, password: string) => {
     try {
-      const user = await db.getFirstAsync<{ id: string; username: string }>(
-        "SELECT id, username FROM users WHERE username = ? AND password = ?",
-        [username, password]
+      const hashedPassword = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        password
       );
 
+      const user = await db.getFirstAsync<{
+        id: string;
+        username: string;
+        password: string;
+      }>("SELECT id, username, password FROM users WHERE username = ?", [
+        username,
+      ]);
+
       if (user) {
-        setUser((prevUser) => (prevUser?.id === user.id ? prevUser : user));
-        await AsyncStorage.setItem(
-          "user",
-          JSON.stringify({ id: user.id, username: user.username })
-        );
+        if (hashedPassword === user.password) {
+          setUser((prevUser) => (prevUser?.id === user.id ? prevUser : user));
+          await AsyncStorage.setItem(
+            "user",
+            JSON.stringify({ id: user.id, username: user.username })
+          );
+        } else {
+          Alert.alert("Error", "Incorrect password. Please try again.", [
+            {
+              text: "Ok",
+            },
+          ]);
+          throw new Error("Invalid credentials");
+        }
       } else {
         Alert.alert(
           "Error",
-          "User credentials are not correct. Please try again or create an account.",
+          "User doesn't exist. Please try again or create an account.",
           [
             {
               text: "Ok",
