@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from "expo-sqlite/kv-store";
 import { useSQLiteContext } from "expo-sqlite";
 import { createContext, ReactNode, useEffect, useState } from "react";
 import { Alert } from "react-native";
