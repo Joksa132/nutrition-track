@@ -1,0 +1,91 @@
+import { useState } from "react";
+import { Text, View, StyleSheet, Alert, TextInput, Button } from "react-native";
+import { Link, useRouter } from "expo-router";
+import { useSQLiteContext } from "expo-sqlite";
+import { v4 as uuidv4 } from "uuid";
+
+export default function Register() {
+  const [username, setUsername] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const router = useRouter();
+  const db = useSQLiteContext();
+
+  const handleRegister = async () => {
+    try {
+      const userId = uuidv4();
+
+      if (password !== confirmPassword) {
+        Alert.alert("Error", "Passwords do not match. Please try again.");
+        return;
+      }
+
+      await db.runAsync(
+        "INSERT INTO users (id, username, password) VALUES (?, ?, ?)",
+        [userId, username, password]
+      );
+      Alert.alert("Success", "Registration successful! Please login.");
+      router.push("/(auth)/login");
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Error", "An error occurred during registration");
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Login</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Username"
+        value={username}
+        onChangeText={setUsername}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Confirm Password"
+        secureTextEntry
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+      />
+      <Button title="Register" onPress={handleRegister} />
+      <Link href="/login" asChild>
+        <Text style={styles.link}>Already have an account? Login here.</Text>
+      </Link>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 16,
+  },
+  title: {
+    fontSize: 30,
+    marginBottom: 16,
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  input: {
+    height: 40,
+    borderColor: "rgb(204, 204, 204)",
+    borderWidth: 1,
+    marginBottom: 12,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+  },
+  link: {
+    marginTop: 16,
+    color: "blue",
+    textAlign: "center",
+  },
+});
