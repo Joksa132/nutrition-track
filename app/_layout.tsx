@@ -13,18 +13,18 @@ const createDbIfNeeded = async (db: SQLiteDatabase) => {
     );
 
     CREATE TABLE IF NOT EXISTS nutrition_info (
-    id TEXT PRIMARY KEY NOT NULL,
-    user_id INTEGER NOT NULL,
-    date TEXT NOT NULL,
-    meal_type TEXT NOT NULL,
-    food_name TEXT NOT NULL,
-    quantity INTEGER NOT NULL,
-    fat REAL NOT NULL, 
-    carbohydrates REAL NOT NULL,
-    sugar REAL NOT NULL,
-    protein REAL NOT NULL,
-    fiber REAL NOT NULL,
-    FOREIGN KEY(user_id) REFERENCES users(id)
+      id TEXT PRIMARY KEY NOT NULL,
+      user_id INTEGER NOT NULL,
+      date TEXT NOT NULL,
+      meal_type TEXT NOT NULL,
+      food_name TEXT NOT NULL,
+      quantity INTEGER NOT NULL,
+      fat REAL NOT NULL, 
+      carbohydrates REAL NOT NULL,
+      sugar REAL NOT NULL,
+      protein REAL NOT NULL,
+      fiber REAL NOT NULL,
+      FOREIGN KEY(user_id) REFERENCES users(id)
     );
     `);
 };
