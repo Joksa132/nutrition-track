@@ -18,6 +18,7 @@ export default function TabLayout() {
           tabBarLabelStyle: { fontWeight: "bold" },
           title: "Home",
           tabBarLabelPosition: "below-icon",
+          tabBarActiveTintColor: "black",
           tabBarIcon: ({ focused, color, size }) => {
             return focused ? (
               <Ionicons name="home" size={26} color="black" />
@@ -33,6 +34,7 @@ export default function TabLayout() {
           tabBarLabelStyle: { fontWeight: "bold" },
           title: "Scanner",
           tabBarLabelPosition: "below-icon",
+          tabBarActiveTintColor: "black",
           tabBarIcon: ({ focused, color, size }) => {
             return focused ? (
               <Ionicons name="camera" size={26} color="black" />
@@ -48,6 +50,7 @@ export default function TabLayout() {
           tabBarLabelStyle: { fontWeight: "bold" },
           title: "Add food",
           tabBarLabelPosition: "below-icon",
+          tabBarActiveTintColor: "black",
           tabBarIcon: ({ focused, color, size }) => {
             return focused ? (
               <Ionicons name="add-circle" size={26} color="black" />
@@ -63,6 +66,7 @@ export default function TabLayout() {
           tabBarLabelStyle: { fontWeight: "bold" },
           title: "Account",
           tabBarLabelPosition: "below-icon",
+          tabBarActiveTintColor: "black",
           tabBarIcon: ({ focused, color, size }) => {
             return focused ? (
               <Ionicons name="person" size={26} color="black" />
