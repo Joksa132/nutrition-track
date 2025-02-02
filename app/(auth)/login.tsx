@@ -1,7 +1,14 @@
 import { AuthContext } from "@/components/AuthContext";
 import { Link, useRouter } from "expo-router";
 import { useContext, useState } from "react";
-import { Text, View, StyleSheet, Button, TextInput, Alert } from "react-native";
+import {
+  Text,
+  View,
+  StyleSheet,
+  TextInput,
+  Alert,
+  TouchableHighlight,
+} from "react-native";
 
 export default function Login() {
   const [username, setUsername] = useState<string>("");
@@ -39,7 +46,9 @@ export default function Login() {
         value={password}
         onChangeText={setPassword}
       />
-      <Button title="Login" onPress={handleLogin} />
+      <TouchableHighlight style={styles.loginButton} onPress={handleLogin}>
+        <Text style={styles.loginButtonText}>Login</Text>
+      </TouchableHighlight>
       <Link href="/register" asChild>
         <Text style={styles.link}>Don't have an account? Register here.</Text>
       </Link>
@@ -67,9 +76,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderRadius: 4,
   },
+  loginButton: {
+    backgroundColor: "black",
+    borderRadius: 10,
+    padding: 15,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  loginButtonText: {
+    fontSize: 18,
+    color: "white",
+    fontWeight: "bold",
+  },
   link: {
     marginTop: 16,
-    color: "blue",
+    color: "rgba(0, 0, 0, 0.8)",
     textAlign: "center",
   },
 });

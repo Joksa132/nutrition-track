@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Text, View, StyleSheet, Alert, TextInput, Button } from "react-native";
+import {
+  Text,
+  View,
+  StyleSheet,
+  Alert,
+  TextInput,
+  TouchableHighlight,
+} from "react-native";
 import { Link, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import "react-native-get-random-values";
@@ -70,7 +77,12 @@ export default function Register() {
         value={confirmPassword}
         onChangeText={setConfirmPassword}
       />
-      <Button title="Register" onPress={handleRegister} />
+      <TouchableHighlight
+        style={styles.registerButton}
+        onPress={handleRegister}
+      >
+        <Text style={styles.registerButtonText}>Login</Text>
+      </TouchableHighlight>
       <Link href="/login" asChild>
         <Text style={styles.link}>Already have an account? Login here.</Text>
       </Link>
@@ -98,9 +110,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderRadius: 4,
   },
+  registerButton: {
+    backgroundColor: "black",
+    borderRadius: 10,
+    padding: 15,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  registerButtonText: {
+    fontSize: 18,
+    color: "white",
+    fontWeight: "bold",
+  },
   link: {
     marginTop: 16,
-    color: "blue",
+    color: "rgba(0, 0, 0, 0.8)",
     textAlign: "center",
   },
 });
