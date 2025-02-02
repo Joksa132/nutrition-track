@@ -11,12 +11,41 @@ import { Picker } from "@react-native-picker/picker";
 import { useContext, useState } from "react";
 import { AuthContext } from "@/components/AuthContext";
 import { FoodInfo } from "@/util/types";
-import { useSQLiteContext } from "expo-sqlite";
+import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import * as Crypto from "expo-crypto";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+const saveFoodInfoToDb = async (
+  userId: string,
+  foodInfo: FoodInfo,
+  db: SQLiteDatabase
+) => {
+  const query = `
+    INSERT INTO nutrition_info (id, user_id, date, meal_type, food_name, quantity, calories, fat, carbohydrates, sugar, protein, fiber)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+  const values = [
+    Crypto.randomUUID(),
+    userId,
+    foodInfo.date,
+    foodInfo.mealType,
+    foodInfo.foodName,
+    foodInfo.quantity === "" ? 0 : parseFloat(foodInfo.quantity),
+    foodInfo.calories === "" ? 0 : parseFloat(foodInfo.calories),
+    foodInfo.fat === "" ? 0 : parseFloat(foodInfo.fat),
+    foodInfo.carbohydrates === "" ? 0 : parseFloat(foodInfo.carbohydrates),
+    foodInfo.sugar === "" ? 0 : parseFloat(foodInfo.sugar),
+    foodInfo.protein === "" ? 0 : parseFloat(foodInfo.protein),
+    foodInfo.fiber === "" ? 0 : parseFloat(foodInfo.fiber),
+  ];
+
+  await db.runAsync(query, values);
+};
 
 export default function Add() {
   const db = useSQLiteContext();
   const auth = useContext(AuthContext);
+  const queryClient = useQueryClient();
 
   const currentDate = new Date().toISOString().split("T")[0];
 
@@ -33,45 +62,32 @@ export default function Add() {
     date: currentDate,
   });
 
-  const saveFoodInfoToDb = async (userId: string, foodInfo: FoodInfo) => {
-    try {
-      const query = `
-      INSERT INTO nutrition_info (id, user_id, date, meal_type, food_name, quantity, calories, fat, carbohydrates, sugar, protein, fiber)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-      const values = [
-        Crypto.randomUUID(),
-        userId,
-        foodInfo.date,
-        foodInfo.mealType,
-        foodInfo.foodName,
-        foodInfo.quantity === "" ? 0 : parseFloat(foodInfo.quantity),
-        foodInfo.calories === "" ? 0 : parseFloat(foodInfo.calories),
-        foodInfo.fat === "" ? 0 : parseFloat(foodInfo.fat),
-        foodInfo.carbohydrates === "" ? 0 : parseFloat(foodInfo.carbohydrates),
-        foodInfo.sugar === "" ? 0 : parseFloat(foodInfo.sugar),
-        foodInfo.protein === "" ? 0 : parseFloat(foodInfo.protein),
-        foodInfo.fiber === "" ? 0 : parseFloat(foodInfo.fiber),
-      ];
-
-      const result = await db.runAsync(query, values);
+  const saveMutation = useMutation({
+    mutationFn: (foodInfo: FoodInfo) =>
+      saveFoodInfoToDb(auth?.user?.id as string, foodInfo, db),
+    onSuccess: () => {
       Alert.alert("Success", "Food information saved successfully.", [
         {
           text: "Ok",
         },
       ]);
-    } catch (error) {
-      console.log(error);
+      queryClient.invalidateQueries({ queryKey: ["foodInfo"] });
+    },
+    onError: (error: Error) => {
       Alert.alert(
         "Error",
-        "Failed to save food information. Please try again.",
+        error.message || "Failed to save food information.",
         [
           {
             text: "Ok",
           },
         ]
       );
-    }
+    },
+  });
+
+  const handleSave = () => {
+    saveMutation.mutate(foodInfo);
   };
 
   return (
@@ -203,9 +219,12 @@ export default function Add() {
 
           <TouchableHighlight
             style={styles.buttonContainer}
-            onPress={() => saveFoodInfoToDb(auth?.user?.id as string, foodInfo)}
+            onPress={handleSave}
+            disabled={saveMutation.isPending}
           >
-            <Text style={styles.buttonText}>Save Food</Text>
+            <Text style={styles.buttonText}>
+              {saveMutation.isPending ? "Saving..." : "Save Food"}
+            </Text>
           </TouchableHighlight>
         </View>
       </View>
