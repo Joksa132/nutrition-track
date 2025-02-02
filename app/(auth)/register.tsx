@@ -10,7 +10,6 @@ import {
 import { Link, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import "react-native-get-random-values";
-import { v4 as uuidv4 } from "uuid";
 import * as Crypto from "expo-crypto";
 
 export default function Register() {
@@ -22,7 +21,7 @@ export default function Register() {
 
   const handleRegister = async () => {
     try {
-      const userId = uuidv4();
+      const userId = Crypto.randomUUID();
 
       if (password !== confirmPassword) {
         Alert.alert("Error", "Passwords do not match. Please try again.", [
@@ -81,7 +80,7 @@ export default function Register() {
         style={styles.registerButton}
         onPress={handleRegister}
       >
-        <Text style={styles.registerButtonText}>Login</Text>
+        <Text style={styles.registerButtonText}>Register</Text>
       </TouchableHighlight>
       <Link href="/login" asChild>
         <Text style={styles.link}>Already have an account? Login here.</Text>
