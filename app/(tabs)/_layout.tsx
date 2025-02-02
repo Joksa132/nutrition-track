@@ -48,7 +48,7 @@ export default function TabLayout() {
         name="add"
         options={{
           tabBarLabelStyle: { fontWeight: "bold" },
-          title: "Add food",
+          title: "Add Meal",
           tabBarLabelPosition: "below-icon",
           tabBarActiveTintColor: "black",
           tabBarIcon: ({ focused, color, size }) => {

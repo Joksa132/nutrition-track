@@ -81,8 +81,8 @@ export default function Add() {
     >
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>Add Food Manually</Text>
-          <Text style={styles.subText}>Enter food details below.</Text>
+          <Text style={styles.title}>Add Meals Manually</Text>
+          <Text style={styles.subText}>Enter product details below.</Text>
         </View>
 
         <View style={styles.section}>
