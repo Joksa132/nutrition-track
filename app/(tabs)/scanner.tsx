@@ -5,13 +5,20 @@ import {
   Button,
   TouchableOpacity,
   TouchableHighlight,
+  Alert,
+  Modal,
+  TextInput,
 } from "react-native";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import { useSQLiteContext } from "expo-sqlite";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { addMealToDb } from "@/util/queries";
+import { Picker } from "@react-native-picker/picker";
+import { AuthContext } from "@/components/AuthContext";
+import * as Crypto from "expo-crypto";
 
 export default function Scanner() {
   const [facing, setFacing] = useState<CameraType>("back");
@@ -19,11 +26,16 @@ export default function Scanner() {
   const [scanned, setScanned] = useState<boolean>(false);
   const [barcode, setBarcode] = useState<string | null>(null);
   const [flashlight, setFlashlight] = useState<boolean>(false);
+  const [amount, setAmount] = useState<string>("");
+  const [mealType, setMealType] = useState<string>("");
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
   const db = useSQLiteContext();
+  const queryClient = useQueryClient();
+  const auth = useContext(AuthContext);
 
   const fetchProductInfo = async (barcode: string) => {
     const response = await fetch(
-      `https://world.openfoodfacts.org/api/v2/product/${barcode}.json`
+      `https://world.openfoodfacts.org/api/v3/product/${barcode}.json`
     );
     const data = await response.json();
 
@@ -38,7 +50,8 @@ export default function Scanner() {
     refetch,
   } = useQuery({
     queryKey: ["productInfo", barcode],
-    queryFn: () => fetchProductInfo(barcode!),
+    queryFn: () =>
+      barcode ? fetchProductInfo(barcode) : Promise.resolve(null),
     enabled: !!barcode,
   });
 
@@ -51,6 +64,7 @@ export default function Scanner() {
   const resetScanner = () => {
     setScanned(false);
     setBarcode(null);
+    setAmount("");
   };
 
   if (!permission?.granted) {
@@ -70,6 +84,59 @@ export default function Scanner() {
 
   const toggleFlashlight = () => {
     setFlashlight((prev) => !prev);
+  };
+
+  const saveProductToDatabase = () => {
+    if (product && amount) {
+      const parsedAmount = parseFloat(amount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        Alert.alert("Error", "Please enter a valid amount in grams", [
+          {
+            text: "Ok",
+          },
+        ]);
+        return;
+      }
+
+      const currentDate = new Date().toISOString().split("T")[0];
+
+      const calories =
+        product.nutriments?.["energy-kcal_100g"] * (parsedAmount / 100);
+      const fat = (product.nutriments?.fat_100g || 0) * (parsedAmount / 100);
+      const carbs =
+        (product.nutriments?.carbohydrates_100g || 0) * (parsedAmount / 100);
+      const protein =
+        (product.nutriments?.proteins_100g || 0) * (parsedAmount / 100);
+      const sugar =
+        (product.nutriments?.sugars_100g || 0) * (parsedAmount / 100);
+      const fiber =
+        (product.nutriments?.fiber_100g || 0) * (parsedAmount / 100);
+
+      addMealToDb(
+        Crypto.randomUUID(),
+        auth?.user?.id as string,
+        currentDate,
+        mealType,
+        product.product_name_en || product.product_name,
+        parsedAmount,
+        calories,
+        Math.round(fat * 100) / 100,
+        Math.round(carbs * 100) / 100,
+        Math.round(sugar * 100) / 100,
+        Math.round(protein * 100) / 100,
+        Math.round(fiber * 100) / 100,
+        db
+      );
+
+      Alert.alert("Success", "Successfully saved this meal");
+      queryClient.invalidateQueries({ queryKey: ["foodInfo"] });
+      setModalVisible(false);
+      resetScanner();
+    }
+  };
+
+  const openAmountModal = () => {
+    setModalVisible(true);
   };
 
   return (
@@ -111,46 +178,14 @@ export default function Scanner() {
           {product && (
             <View>
               <Text style={styles.productName}>
-                {product.product_name_en
-                  ? product.product_name_en
-                  : product.product_name}
+                {product.product_name_en || product.product_name}
               </Text>
               <Text>Calories: {product.nutriments?.["energy-kcal_100g"]}</Text>
-              <Text>
-                Fat:{" "}
-                {product.nutriments?.fat_100g
-                  ? product.nutriments?.fat_100g
-                  : 0}
-                g
-              </Text>
-              <Text>
-                Carbs:{" "}
-                {product.nutriments?.carbohydrates_100g
-                  ? product.nutriments?.carbohydrates_100g
-                  : 0}
-                g
-              </Text>
-              <Text>
-                Protein:{" "}
-                {product.nutriments?.proteins_100g
-                  ? product.nutriments?.proteins_100g
-                  : 0}
-                g
-              </Text>
-              <Text>
-                Sugar:{" "}
-                {product.nutriments?.sugars_100g
-                  ? product.nutriments?.sugars_100g
-                  : 0}
-                g
-              </Text>
-              <Text>
-                Fiber:{" "}
-                {product.nutriments?.fiber_100g
-                  ? product.nutriments?.fiber_100g
-                  : 0}
-                g
-              </Text>
+              <Text>Fat: {product.nutriments?.fat_100g || 0}g</Text>
+              <Text>Carbs: {product.nutriments?.carbohydrates_100g || 0}g</Text>
+              <Text>Protein: {product.nutriments?.proteins_100g || 0}g</Text>
+              <Text>Sugar: {product.nutriments?.sugars_100g || 0}g</Text>
+              <Text>Fiber: {product.nutriments?.fiber_100g || 0}g</Text>
             </View>
           )}
           <View style={styles.scanButtonsContainer}>
@@ -162,13 +197,58 @@ export default function Scanner() {
             </TouchableHighlight>
             <TouchableHighlight
               style={styles.scanAgainButton}
-              onPress={resetScanner}
+              onPress={openAmountModal}
+              disabled={!product}
             >
               <Text style={styles.scanAgainText}>Save</Text>
             </TouchableHighlight>
           </View>
         </View>
       )}
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <Text style={styles.modalTitle}>Enter Amount in Grams</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Amount in grams"
+            inputMode="decimal"
+            value={amount}
+            onChangeText={setAmount}
+          />
+          <Text style={styles.modalTitle}>Choose Meal Type</Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={mealType}
+              onValueChange={(value) => setMealType(value)}
+            >
+              <Picker.Item label="Breakfast" value="breakfast" />
+              <Picker.Item label="Lunch" value="lunch" />
+              <Picker.Item label="Dinner" value="dinner" />
+              <Picker.Item label="Snack" value="snack" />
+            </Picker>
+          </View>
+          <View style={styles.modalButtonContainer}>
+            <TouchableHighlight
+              style={styles.scanAgainButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.scanAgainText}>Cancel</Text>
+            </TouchableHighlight>
+            <TouchableHighlight
+              style={styles.scanAgainButton}
+              onPress={saveProductToDatabase}
+            >
+              <Text style={styles.scanAgainText}>Save</Text>
+            </TouchableHighlight>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -239,5 +319,42 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "white",
     fontWeight: "bold",
+  },
+  input: {
+    height: 40,
+    borderColor: "rgb(204, 204, 204)",
+    backgroundColor: "white",
+    width: 200,
+    borderWidth: 1,
+    borderRadius: 4,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalTitle: {
+    fontSize: 20,
+    marginBottom: 20,
+    color: "white",
+  },
+  modalButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "80%",
+    gap: 20,
+  },
+  pickerContainer: {
+    borderColor: "rgb(204, 204, 204)",
+    borderWidth: 1,
+    borderRadius: 4,
+    height: 40,
+    width: 200,
+    backgroundColor: "white",
+    justifyContent: "center",
+    marginBottom: 40,
   },
 });
