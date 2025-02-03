@@ -16,7 +16,7 @@ import * as Crypto from "expo-crypto";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addMealToDb } from "@/util/queries";
 
-export default function Add() {
+export default function AddMeal() {
   const db = useSQLiteContext();
   const auth = useContext(AuthContext);
   const queryClient = useQueryClient();

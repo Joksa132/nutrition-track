@@ -45,7 +45,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="add"
+        name="add-meal"
         options={{
           tabBarLabelStyle: { fontWeight: "bold" },
           title: "Add Meal",
