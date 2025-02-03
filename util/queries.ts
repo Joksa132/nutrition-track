@@ -17,3 +17,43 @@ export const deleteMeal = async (mealId: string, db: SQLiteDatabase) => {
 
   return result;
 };
+
+export const addMealToDb = async (
+  id: string,
+  userId: string,
+  date: string,
+  mealType: string,
+  foodName: string,
+  quantity: number,
+  calories: number,
+  fat: number,
+  carbohydrates: number,
+  sugar: number,
+  protein: number,
+  fiber: number,
+  db: SQLiteDatabase
+) => {
+  try {
+    const result = await db.runAsync(
+      "INSERT INTO nutrition_info (id, user_id, date, meal_type, food_name, quantity, calories, fat, carbohydrates, sugar, protein, fiber) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        id,
+        userId,
+        date,
+        mealType,
+        foodName,
+        quantity,
+        calories,
+        fat,
+        carbohydrates,
+        sugar,
+        protein,
+        fiber,
+      ]
+    );
+
+    return result;
+  } catch (error) {
+    console.log(error);
+  }
+};
