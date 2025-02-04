@@ -120,11 +120,11 @@ export default function Scanner() {
         product.product_name_en || product.product_name,
         parsedAmount,
         calories,
-        Math.round(fat * 100) / 100,
-        Math.round(carbs * 100) / 100,
-        Math.round(sugar * 100) / 100,
-        Math.round(protein * 100) / 100,
-        Math.round(fiber * 100) / 100,
+        fat,
+        carbs,
+        sugar,
+        protein,
+        fiber,
         db
       );
 

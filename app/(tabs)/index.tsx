@@ -1,6 +1,5 @@
 import { AuthContext } from "@/components/AuthContext";
 import { deleteMeal, fetchFoodInfo } from "@/util/queries";
-import { FoodInfoFull } from "@/util/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSQLiteContext } from "expo-sqlite";
 import { useContext } from "react";

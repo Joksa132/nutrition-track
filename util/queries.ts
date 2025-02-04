@@ -44,11 +44,11 @@ export const addMealToDb = async (
         foodName,
         quantity,
         calories,
-        fat,
-        carbohydrates,
-        sugar,
-        protein,
-        fiber,
+        Math.round(fat * 100) / 100,
+        Math.round(carbohydrates * 100) / 100,
+        Math.round(sugar * 100) / 100,
+        Math.round(protein * 100) / 100,
+        Math.round(fiber * 100) / 100,
       ]
     );
 

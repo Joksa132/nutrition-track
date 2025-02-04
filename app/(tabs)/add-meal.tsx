@@ -37,22 +37,33 @@ export default function AddMeal() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: (foodInfo: FoodInfo) =>
-      addMealToDb(
+    mutationFn: (foodInfo: FoodInfo) => {
+      const quantity =
+        foodInfo.quantity === "" ? 0 : parseFloat(foodInfo.quantity);
+      const actualQuantity = quantity / 100;
+
+      return addMealToDb(
         Crypto.randomUUID(),
         auth?.user?.id as string,
         foodInfo.date,
         foodInfo.mealType,
         foodInfo.foodName,
         foodInfo.quantity === "" ? 0 : parseFloat(foodInfo.quantity),
-        foodInfo.calories === "" ? 0 : parseFloat(foodInfo.calories),
-        foodInfo.fat === "" ? 0 : parseFloat(foodInfo.fat),
-        foodInfo.carbohydrates === "" ? 0 : parseFloat(foodInfo.carbohydrates),
-        foodInfo.sugar === "" ? 0 : parseFloat(foodInfo.sugar),
-        foodInfo.protein === "" ? 0 : parseFloat(foodInfo.protein),
-        foodInfo.fiber === "" ? 0 : parseFloat(foodInfo.fiber),
+        foodInfo.calories === ""
+          ? 0
+          : parseFloat(foodInfo.calories) * actualQuantity,
+        foodInfo.fat === "" ? 0 : parseFloat(foodInfo.fat) * actualQuantity,
+        foodInfo.carbohydrates === ""
+          ? 0
+          : parseFloat(foodInfo.carbohydrates) * actualQuantity,
+        foodInfo.sugar === "" ? 0 : parseFloat(foodInfo.sugar) * actualQuantity,
+        foodInfo.protein === ""
+          ? 0
+          : parseFloat(foodInfo.protein) * actualQuantity,
+        foodInfo.fiber === "" ? 0 : parseFloat(foodInfo.fiber) * actualQuantity,
         db
-      ),
+      );
+    },
     onSuccess: () => {
       Alert.alert("Success", "Food information saved successfully.", [
         {
@@ -139,7 +150,7 @@ export default function AddMeal() {
             inputMode="decimal"
           />
 
-          <Text style={styles.label}>Calories</Text>
+          <Text style={styles.label}>Calories (100g)</Text>
           <TextInput
             style={styles.input}
             value={foodInfo.calories}
@@ -152,7 +163,7 @@ export default function AddMeal() {
             inputMode="decimal"
           />
 
-          <Text style={styles.label}>Fat (g)</Text>
+          <Text style={styles.label}>Fat (100g)</Text>
           <TextInput
             style={styles.input}
             value={foodInfo.fat}
@@ -165,7 +176,7 @@ export default function AddMeal() {
             inputMode="decimal"
           />
 
-          <Text style={styles.label}>Carbohydrates (g)</Text>
+          <Text style={styles.label}>Carbohydrates (100g)</Text>
           <TextInput
             style={styles.input}
             value={foodInfo.carbohydrates}
@@ -178,7 +189,7 @@ export default function AddMeal() {
             inputMode="decimal"
           />
 
-          <Text style={styles.label}>Sugar (g)</Text>
+          <Text style={styles.label}>Sugar (100g)</Text>
           <TextInput
             style={styles.input}
             value={foodInfo.sugar}
@@ -191,7 +202,7 @@ export default function AddMeal() {
             inputMode="decimal"
           />
 
-          <Text style={styles.label}>Protein (g)</Text>
+          <Text style={styles.label}>Protein (100g)</Text>
           <TextInput
             style={styles.input}
             value={foodInfo.protein}
@@ -204,7 +215,7 @@ export default function AddMeal() {
             inputMode="decimal"
           />
 
-          <Text style={styles.label}>Fiber (g)</Text>
+          <Text style={styles.label}>Fiber (100g)</Text>
           <TextInput
             style={styles.input}
             value={foodInfo.fiber}
