@@ -43,7 +43,7 @@ export const addMealToDb = async (
         mealType,
         foodName,
         quantity,
-        calories,
+        Math.round(calories * 100) / 100,
         Math.round(fat * 100) / 100,
         Math.round(carbohydrates * 100) / 100,
         Math.round(sugar * 100) / 100,
@@ -76,7 +76,7 @@ export const addProductToDb = async (
       [
         id,
         productName,
-        calories,
+        Math.round(calories * 100) / 100,
         Math.round(fat * 100) / 100,
         Math.round(carbohydrates * 100) / 100,
         Math.round(sugar * 100) / 100,
@@ -89,5 +89,19 @@ export const addProductToDb = async (
     return result;
   } catch (error) {
     console.log(error);
+  }
+};
+
+export const getProductFromDb = async (barcode: string, db: SQLiteDatabase) => {
+  try {
+    const result = await db.getFirstAsync(
+      "SELECT * FROM product_info WHERE barcode = (?)",
+      [barcode]
+    );
+
+    return result;
+  } catch (error) {
+    console.log(error);
+    return null;
   }
 };
