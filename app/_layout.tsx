@@ -40,7 +40,7 @@ const createDbIfNeeded = async (db: SQLiteDatabase) => {
         sugar REAL NOT NULL,
         protein REAL NOT NULL,
         fiber REAL NOT NULL,
-        barcode TEXT
+        barcode TEXT UNIQUE
       );
     `);
     console.log("Database initialized successfully.");
