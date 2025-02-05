@@ -45,10 +45,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="add-meal"
+        name="add"
         options={{
           tabBarLabelStyle: { fontWeight: "bold" },
-          title: "Add Meal",
+          title: "Add",
           tabBarLabelPosition: "below-icon",
           tabBarActiveTintColor: "black",
           tabBarIcon: ({ focused, color, size }) => {
