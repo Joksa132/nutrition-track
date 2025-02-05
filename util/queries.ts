@@ -57,3 +57,37 @@ export const addMealToDb = async (
     console.log(error);
   }
 };
+
+export const addProductToDb = async (
+  id: string,
+  productName: string,
+  calories: number,
+  fat: number,
+  carbohydrates: number,
+  sugar: number,
+  protein: number,
+  fiber: number,
+  barcode: string,
+  db: SQLiteDatabase
+) => {
+  try {
+    const result = await db.runAsync(
+      "INSERT INTO product_info (id, product_name, calories, fat, carbohydrates, sugar, protein, fiber, barcode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        id,
+        productName,
+        calories,
+        Math.round(fat * 100) / 100,
+        Math.round(carbohydrates * 100) / 100,
+        Math.round(sugar * 100) / 100,
+        Math.round(protein * 100) / 100,
+        Math.round(fiber * 100) / 100,
+        barcode,
+      ]
+    );
+
+    return result;
+  } catch (error) {
+    console.log(error);
+  }
+};
