@@ -15,10 +15,11 @@ import { useSQLiteContext } from "expo-sqlite";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { addMealToDb } from "@/util/queries";
+import { addMealToDb, getProductFromDb } from "@/util/queries";
 import { Picker } from "@react-native-picker/picker";
 import { AuthContext } from "@/components/AuthContext";
 import * as Crypto from "expo-crypto";
+import SaveModal from "@/components/SaveModal";
 
 export default function Scanner() {
   const [facing, setFacing] = useState<CameraType>("back");
@@ -39,10 +40,12 @@ export default function Scanner() {
     );
     const data = await response.json();
 
-    //if no data then fetch from db
+    if (data.status === "failure") {
+      const data2 = await getProductFromDb(barcode, db);
+      return data2;
+    }
     return data.product || null;
   };
-
   const {
     data: product,
     isLoading,
@@ -86,7 +89,7 @@ export default function Scanner() {
     setFlashlight((prev) => !prev);
   };
 
-  const saveProductToDatabase = () => {
+  const handleSave = () => {
     if (product && amount) {
       const parsedAmount = parseFloat(amount);
       if (isNaN(parsedAmount) || parsedAmount <= 0) {
@@ -101,16 +104,22 @@ export default function Scanner() {
       const currentDate = new Date().toISOString().split("T")[0];
 
       const calories =
-        product.nutriments?.["energy-kcal_100g"] * (parsedAmount / 100);
-      const fat = (product.nutriments?.fat_100g || 0) * (parsedAmount / 100);
+        (product.nutriments?.["energy-kcal_100g"] || product.calories) *
+        (parsedAmount / 100);
+      const fat =
+        (product.nutriments?.fat_100g || product.fat) * (parsedAmount / 100);
       const carbs =
-        (product.nutriments?.carbohydrates_100g || 0) * (parsedAmount / 100);
+        (product.nutriments?.carbohydrates_100g || product.carbohydrates) *
+        (parsedAmount / 100);
       const protein =
-        (product.nutriments?.proteins_100g || 0) * (parsedAmount / 100);
+        (product.nutriments?.proteins_100g || product.protein) *
+        (parsedAmount / 100);
       const sugar =
-        (product.nutriments?.sugars_100g || 0) * (parsedAmount / 100);
+        (product.nutriments?.sugars_100g || product.sugar) *
+        (parsedAmount / 100);
       const fiber =
-        (product.nutriments?.fiber_100g || 0) * (parsedAmount / 100);
+        (product.nutriments?.fiber_100g || product.fiber) *
+        (parsedAmount / 100);
 
       addMealToDb(
         Crypto.randomUUID(),
@@ -180,12 +189,26 @@ export default function Scanner() {
               <Text style={styles.productName}>
                 {product.product_name_en || product.product_name}
               </Text>
-              <Text>Calories: {product.nutriments?.["energy-kcal_100g"]}</Text>
-              <Text>Fat: {product.nutriments?.fat_100g || 0}g</Text>
-              <Text>Carbs: {product.nutriments?.carbohydrates_100g || 0}g</Text>
-              <Text>Protein: {product.nutriments?.proteins_100g || 0}g</Text>
-              <Text>Sugar: {product.nutriments?.sugars_100g || 0}g</Text>
-              <Text>Fiber: {product.nutriments?.fiber_100g || 0}g</Text>
+              <Text>
+                Calories:{" "}
+                {product.nutriments?.["energy-kcal_100g"] || product.calories}
+              </Text>
+              <Text>Fat: {product.nutriments?.fat_100g || product.fat}g</Text>
+              <Text>
+                Carbs:{" "}
+                {product.nutriments?.carbohydrates_100g ||
+                  product.carbohydrates}
+                g
+              </Text>
+              <Text>
+                Protein: {product.nutriments?.proteins_100g || product.protein}g
+              </Text>
+              <Text>
+                Sugar: {product.nutriments?.sugars_100g || product.sugar}g
+              </Text>
+              <Text>
+                Fiber: {product.nutriments?.fiber_100g || product.fiber}g
+              </Text>
             </View>
           )}
           <View style={styles.scanButtonsContainer}>
@@ -196,9 +219,13 @@ export default function Scanner() {
               <Text style={styles.scanAgainText}>Scan again</Text>
             </TouchableHighlight>
             <TouchableHighlight
-              style={styles.scanAgainButton}
+              style={
+                product === null
+                  ? styles.buttonDisabled
+                  : styles.scanAgainButton
+              }
               onPress={openAmountModal}
-              disabled={!product}
+              disabled={product === null ? true : false}
             >
               <Text style={styles.scanAgainText}>Save</Text>
             </TouchableHighlight>
@@ -206,49 +233,16 @@ export default function Scanner() {
         </View>
       )}
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>Enter Amount in Grams</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Amount in grams"
-            inputMode="decimal"
-            value={amount}
-            onChangeText={setAmount}
-          />
-          <Text style={styles.modalTitle}>Choose Meal Type</Text>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={mealType}
-              onValueChange={(value) => setMealType(value)}
-            >
-              <Picker.Item label="Breakfast" value="breakfast" />
-              <Picker.Item label="Lunch" value="lunch" />
-              <Picker.Item label="Dinner" value="dinner" />
-              <Picker.Item label="Snack" value="snack" />
-            </Picker>
-          </View>
-          <View style={styles.modalButtonContainer}>
-            <TouchableHighlight
-              style={styles.scanAgainButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.scanAgainText}>Cancel</Text>
-            </TouchableHighlight>
-            <TouchableHighlight
-              style={styles.scanAgainButton}
-              onPress={saveProductToDatabase}
-            >
-              <Text style={styles.scanAgainText}>Save</Text>
-            </TouchableHighlight>
-          </View>
-        </View>
-      </Modal>
+      <SaveModal
+        styles={styles}
+        modalVisible={modalVisible}
+        amount={amount}
+        setModalVisible={setModalVisible}
+        setAmount={setAmount}
+        mealType={mealType}
+        setMealType={setMealType}
+        handleSave={handleSave}
+      />
     </View>
   );
 }
@@ -308,6 +302,15 @@ const styles = StyleSheet.create({
   },
   scanAgainButton: {
     backgroundColor: "black",
+    borderRadius: 10,
+    padding: 6,
+    alignItems: "center",
+    marginTop: 5,
+    width: "100%",
+    flex: 1,
+  },
+  buttonDisabled: {
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     borderRadius: 10,
     padding: 6,
     alignItems: "center",
