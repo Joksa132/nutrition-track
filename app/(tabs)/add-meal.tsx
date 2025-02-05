@@ -2,7 +2,6 @@ import {
   Text,
   View,
   StyleSheet,
-  TextInput,
   ScrollView,
   Alert,
   TouchableHighlight,
@@ -10,33 +9,51 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { useContext, useState } from "react";
 import { AuthContext } from "@/components/AuthContext";
-import { FoodInfo } from "@/util/types";
+import { FoodInfo, ProductInfo } from "@/util/types";
 import { useSQLiteContext } from "expo-sqlite";
 import * as Crypto from "expo-crypto";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addMealToDb } from "@/util/queries";
+import { addMealToDb, addProductToDb } from "@/util/queries";
+import MealForm from "@/components/MealForm";
+import ProductForm from "@/components/ProductForm";
+
+const currentDate = new Date().toISOString().split("T")[0];
+
+const foodInfoDefault: FoodInfo = {
+  foodName: "",
+  mealType: "breakfast",
+  quantity: "0",
+  calories: "0",
+  fat: "0",
+  carbohydrates: "0",
+  sugar: "0",
+  protein: "0",
+  fiber: "0",
+  date: currentDate,
+};
+
+const productInfoDefault: ProductInfo = {
+  productName: "",
+  calories: "0",
+  fat: "0",
+  carbohydrates: "0",
+  sugar: "0",
+  protein: "0",
+  fiber: "0",
+  barcode: "",
+};
 
 export default function AddMeal() {
   const db = useSQLiteContext();
   const auth = useContext(AuthContext);
   const queryClient = useQueryClient();
 
-  const currentDate = new Date().toISOString().split("T")[0];
+  const [foodInfo, setFoodInfo] = useState<FoodInfo>(foodInfoDefault);
+  const [productInfo, setProductInfo] =
+    useState<ProductInfo>(productInfoDefault);
+  const [selectedForm, setSelectedForm] = useState<string>("meals");
 
-  const [foodInfo, setFoodInfo] = useState<FoodInfo>({
-    foodName: "",
-    mealType: "breakfast",
-    quantity: "0",
-    calories: "0",
-    fat: "0",
-    carbohydrates: "0",
-    sugar: "0",
-    protein: "0",
-    fiber: "0",
-    date: currentDate,
-  });
-
-  const saveMutation = useMutation({
+  const saveMealMutation = useMutation({
     mutationFn: (foodInfo: FoodInfo) => {
       const quantity =
         foodInfo.quantity === "" ? 0 : parseFloat(foodInfo.quantity);
@@ -71,18 +88,7 @@ export default function AddMeal() {
         },
       ]);
       queryClient.invalidateQueries({ queryKey: ["foodInfo"] });
-      setFoodInfo({
-        foodName: "",
-        mealType: "breakfast",
-        quantity: "0",
-        calories: "0",
-        fat: "0",
-        carbohydrates: "0",
-        sugar: "0",
-        protein: "0",
-        fiber: "0",
-        date: currentDate,
-      });
+      setFoodInfo(foodInfoDefault);
     },
     onError: (error: Error) => {
       Alert.alert(
@@ -97,8 +103,49 @@ export default function AddMeal() {
     },
   });
 
+  const saveProductMutation = useMutation({
+    mutationFn: (productInfo: ProductInfo) => {
+      return addProductToDb(
+        Crypto.randomUUID(),
+        productInfo.productName,
+        productInfo.calories === "" ? 0 : parseFloat(productInfo.calories),
+        productInfo.fat === "" ? 0 : parseFloat(productInfo.fat),
+        productInfo.carbohydrates === ""
+          ? 0
+          : parseFloat(productInfo.carbohydrates),
+        productInfo.sugar === "" ? 0 : parseFloat(productInfo.sugar),
+        productInfo.protein === "" ? 0 : parseFloat(productInfo.protein),
+        productInfo.fiber === "" ? 0 : parseFloat(productInfo.fiber),
+        productInfo.barcode,
+        db
+      );
+    },
+    onSuccess: () => {
+      Alert.alert("Success", "Product information saved successfully.", [
+        {
+          text: "Ok",
+        },
+      ]);
+      queryClient.invalidateQueries({ queryKey: ["productInfo"] });
+      setProductInfo(productInfoDefault);
+    },
+    onError: (error: Error) => {
+      Alert.alert(
+        "Error",
+        error.message || "Failed to save product information.",
+        [
+          {
+            text: "Ok",
+          },
+        ]
+      );
+    },
+  });
+
   const handleSave = () => {
-    saveMutation.mutate(foodInfo);
+    selectedForm === "meals"
+      ? saveMealMutation.mutate(foodInfo)
+      : saveProductMutation.mutate(productInfo);
   };
 
   return (
@@ -107,137 +154,55 @@ export default function AddMeal() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.container}>
+        <View style={styles.pickerContainer}>
+          <Picker selectedValue={selectedForm} onValueChange={setSelectedForm}>
+            <Picker.Item label="Meals" value="meals" />
+            <Picker.Item label="Products" value="products" />
+          </Picker>
+        </View>
+
         <View style={styles.header}>
-          <Text style={styles.title}>Add Meals Manually</Text>
-          <Text style={styles.subText}>Enter product details below.</Text>
+          <Text style={styles.title}>
+            Add {selectedForm === "meals" ? "Meals" : "Products"} Manually
+          </Text>
+          <Text style={styles.subText}>
+            Enter {selectedForm === "meals" ? "meal" : "product"} details below.
+          </Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>Food Name</Text>
-          <TextInput
-            style={styles.input}
-            value={foodInfo.foodName}
-            onChangeText={(text) =>
-              setFoodInfo((prev) => ({ ...prev, foodName: text }))
-            }
+        {selectedForm === "meals" ? (
+          <MealForm
+            styles={styles}
+            foodInfo={foodInfo}
+            setFoodInfo={setFoodInfo}
           />
-
-          <Text style={styles.label}>Meal Type</Text>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={foodInfo.mealType}
-              onValueChange={(value) =>
-                setFoodInfo((prev) => ({ ...prev, mealType: value }))
-              }
-            >
-              <Picker.Item label="Breakfast" value="breakfast" />
-              <Picker.Item label="Lunch" value="lunch" />
-              <Picker.Item label="Dinner" value="dinner" />
-              <Picker.Item label="Snack" value="snack" />
-            </Picker>
-          </View>
-
-          <Text style={styles.label}>Quantity (g)</Text>
-          <TextInput
-            style={styles.input}
-            value={foodInfo.quantity}
-            onChangeText={(text) =>
-              setFoodInfo((prev) => ({
-                ...prev,
-                quantity: text,
-              }))
-            }
-            inputMode="decimal"
+        ) : (
+          <ProductForm
+            styles={styles}
+            productInfo={productInfo}
+            setProductInfo={setProductInfo}
           />
+        )}
 
-          <Text style={styles.label}>Calories (100g)</Text>
-          <TextInput
-            style={styles.input}
-            value={foodInfo.calories}
-            onChangeText={(text) =>
-              setFoodInfo((prev) => ({
-                ...prev,
-                calories: text,
-              }))
-            }
-            inputMode="decimal"
-          />
-
-          <Text style={styles.label}>Fat (100g)</Text>
-          <TextInput
-            style={styles.input}
-            value={foodInfo.fat}
-            onChangeText={(text) =>
-              setFoodInfo((prev) => ({
-                ...prev,
-                fat: text,
-              }))
-            }
-            inputMode="decimal"
-          />
-
-          <Text style={styles.label}>Carbohydrates (100g)</Text>
-          <TextInput
-            style={styles.input}
-            value={foodInfo.carbohydrates}
-            onChangeText={(text) =>
-              setFoodInfo((prev) => ({
-                ...prev,
-                carbohydrates: text,
-              }))
-            }
-            inputMode="decimal"
-          />
-
-          <Text style={styles.label}>Sugar (100g)</Text>
-          <TextInput
-            style={styles.input}
-            value={foodInfo.sugar}
-            onChangeText={(text) =>
-              setFoodInfo((prev) => ({
-                ...prev,
-                sugar: text,
-              }))
-            }
-            inputMode="decimal"
-          />
-
-          <Text style={styles.label}>Protein (100g)</Text>
-          <TextInput
-            style={styles.input}
-            value={foodInfo.protein}
-            onChangeText={(text) =>
-              setFoodInfo((prev) => ({
-                ...prev,
-                protein: text,
-              }))
-            }
-            inputMode="decimal"
-          />
-
-          <Text style={styles.label}>Fiber (100g)</Text>
-          <TextInput
-            style={styles.input}
-            value={foodInfo.fiber}
-            onChangeText={(text) =>
-              setFoodInfo((prev) => ({
-                ...prev,
-                fiber: text,
-              }))
-            }
-            inputMode="decimal"
-          />
-
-          <TouchableHighlight
-            style={styles.buttonContainer}
-            onPress={handleSave}
-            disabled={saveMutation.isPending}
-          >
+        <TouchableHighlight
+          style={styles.buttonContainer}
+          onPress={handleSave}
+          disabled={
+            selectedForm === "meals"
+              ? saveMealMutation.isPending
+              : saveProductMutation.isPending
+          }
+        >
+          {selectedForm === "meals" ? (
             <Text style={styles.buttonText}>
-              {saveMutation.isPending ? "Saving..." : "Save Food"}
+              {saveMealMutation.isPending ? "Saving..." : "Save Meal"}
             </Text>
-          </TouchableHighlight>
-        </View>
+          ) : (
+            <Text style={styles.buttonText}>
+              {saveProductMutation.isPending ? "Saving..." : "Save Product"}
+            </Text>
+          )}
+        </TouchableHighlight>
       </View>
     </ScrollView>
   );
@@ -260,6 +225,7 @@ const styles = StyleSheet.create({
     color: "rgba(0, 0, 0, 0.7)",
     marginTop: 5,
   },
+  sectionContainer: {},
   section: {
     backgroundColor: "white",
     borderRadius: 10,
