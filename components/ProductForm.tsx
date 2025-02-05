@@ -107,6 +107,19 @@ export default function ProductForm({
         }
         inputMode="decimal"
       />
+
+      <Text style={styles.label}>Barcode</Text>
+      <TextInput
+        style={styles.input}
+        value={productInfo.barcode}
+        onChangeText={(text) =>
+          setProductInfo((prev) => ({
+            ...prev,
+            barcode: text,
+          }))
+        }
+        inputMode="decimal"
+      />
     </View>
   );
 }
