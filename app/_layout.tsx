@@ -33,14 +33,13 @@ const createDbIfNeeded = async (db: SQLiteDatabase) => {
 
       CREATE TABLE IF NOT EXISTS product_info (
         id TEXT PRIMARY KEY NOT NULL,
-        food_name TEXT NOT NULL,
-        quantity REAL NOT NULL,
+        product_name TEXT NOT NULL,
         calories REAL NOT NULL,
         fat REAL NOT NULL, 
         carbohydrates REAL NOT NULL,
         sugar REAL NOT NULL,
         protein REAL NOT NULL,
-        fiber REAL NOT NULL
+        fiber REAL NOT NULL,
         barcode TEXT
       );
     `);
