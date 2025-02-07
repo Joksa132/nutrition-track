@@ -1,4 +1,4 @@
-import { View, Text, TextInput } from "react-native";
+import { View, Text, TextInput, TouchableHighlight } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { FoodInfo } from "@/util/types";
 import { ViewStyle, TextStyle } from "react-native";
@@ -8,18 +8,22 @@ type Styles = {
   label: TextStyle;
   input: TextStyle;
   pickerContainer: ViewStyle;
+  dateButton: ViewStyle;
+  dateButtonText: TextStyle;
 };
 
 type MealFormProps = {
   styles: Styles;
   foodInfo: FoodInfo;
   setFoodInfo: React.Dispatch<React.SetStateAction<FoodInfo>>;
+  showDatepicker: () => void;
 };
 
 export default function MealForm({
   styles,
   foodInfo,
   setFoodInfo,
+  showDatepicker,
 }: MealFormProps) {
   return (
     <View style={styles.section}>
@@ -137,6 +141,10 @@ export default function MealForm({
         }
         inputMode="decimal"
       />
+
+      <TouchableHighlight style={styles.dateButton} onPress={showDatepicker}>
+        <Text style={styles.dateButtonText}>Date: {foodInfo.date}</Text>
+      </TouchableHighlight>
     </View>
   );
 }

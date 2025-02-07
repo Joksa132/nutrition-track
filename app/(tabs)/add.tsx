@@ -16,6 +16,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addMealToDb, addProductToDb } from "@/util/queries";
 import MealForm from "@/components/MealForm";
 import ProductForm from "@/components/ProductForm";
+import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 
 const currentDate = new Date().toISOString().split("T")[0];
 
@@ -148,6 +149,18 @@ export default function AddMeal() {
       : saveProductMutation.mutate(productInfo);
   };
 
+  const showDatepicker = () => {
+    DateTimePickerAndroid.open({
+      value: new Date(foodInfo.date),
+      onChange: (e, selectedDate) => {
+        const convertedDate = selectedDate!.toISOString().split("T")[0];
+        setFoodInfo((prev) => ({ ...prev, date: convertedDate }));
+      },
+      mode: "date",
+      is24Hour: true,
+    });
+  };
+
   return (
     <ScrollView
       contentContainerStyle={{ flexGrow: 1 }}
@@ -175,6 +188,7 @@ export default function AddMeal() {
             styles={styles}
             foodInfo={foodInfo}
             setFoodInfo={setFoodInfo}
+            showDatepicker={showDatepicker}
           />
         ) : (
           <ProductForm
@@ -262,11 +276,23 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 15,
     alignItems: "center",
-    marginTop: 20,
   },
   buttonText: {
     fontSize: 18,
     color: "white",
+    fontWeight: "bold",
+  },
+  dateButton: {
+    backgroundColor: "transparent",
+    borderRadius: 10,
+    borderColor: "rgba(0, 0, 0, 0.3)",
+    borderWidth: 1,
+    padding: 10,
+    alignItems: "center",
+  },
+  dateButtonText: {
+    fontSize: 16,
+    color: "black",
     fontWeight: "bold",
   },
 });
