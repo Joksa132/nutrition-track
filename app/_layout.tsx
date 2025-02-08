@@ -53,7 +53,7 @@ export default function RootLayout() {
   const queryClient = new QueryClient();
 
   return (
-    <SQLiteProvider databaseName="nutrition-track-db" onInit={createDbIfNeeded}>
+    <SQLiteProvider databaseName="nutrition-track.db" onInit={createDbIfNeeded}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <StatusBar barStyle={"dark-content"} />
