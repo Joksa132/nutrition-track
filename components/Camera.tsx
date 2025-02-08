@@ -41,6 +41,7 @@ export default function Camera({
         barcodeTypes: ["upc_a", "ean13", "ean8"],
       }}
       enableTorch={flashlight}
+      autofocus="on"
     >
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button} onPress={toggleFlashlight}>
