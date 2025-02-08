@@ -15,6 +15,7 @@ import { AuthContext } from "@/components/AuthContext";
 import * as Crypto from "expo-crypto";
 import SaveModal from "@/components/SaveModal";
 import Camera from "@/components/Camera";
+import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 
 export default function Scanner() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -23,6 +24,9 @@ export default function Scanner() {
   const [amount, setAmount] = useState<string>("");
   const [mealType, setMealType] = useState<string>("");
   const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [selectedDate, setSelectedDate] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
   const db = useSQLiteContext();
   const queryClient = useQueryClient();
   const auth = useContext(AuthContext);
@@ -40,6 +44,7 @@ export default function Scanner() {
 
     return data.product || null;
   };
+
   const {
     data: product,
     isLoading,
@@ -135,6 +140,18 @@ export default function Scanner() {
     setModalVisible(true);
   };
 
+  const showDatepicker = () => {
+    DateTimePickerAndroid.open({
+      value: new Date(selectedDate),
+      onChange: (e, selectedDate) => {
+        const convertedDate = selectedDate!.toISOString().split("T")[0];
+        setSelectedDate(convertedDate);
+      },
+      mode: "date",
+      is24Hour: true,
+    });
+  };
+
   return (
     <View style={styles.container}>
       <Camera
@@ -218,6 +235,8 @@ export default function Scanner() {
         mealType={mealType}
         setMealType={setMealType}
         handleSave={handleSave}
+        showDatepicker={showDatepicker}
+        selectedDate={selectedDate}
       />
     </View>
   );
@@ -313,12 +332,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(255, 255, 255, 1)",
   },
   modalTitle: {
     fontSize: 20,
     marginBottom: 20,
-    color: "white",
+    color: "black",
   },
   modalButtonContainer: {
     flexDirection: "row",
@@ -335,5 +354,20 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     justifyContent: "center",
     marginBottom: 40,
+  },
+  dateButton: {
+    backgroundColor: "transparent",
+    borderRadius: 10,
+    borderColor: "rgba(0, 0, 0, 0.3)",
+    borderWidth: 1,
+    width: 200,
+    padding: 10,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  dateButtonText: {
+    fontSize: 16,
+    color: "black",
+    fontWeight: "bold",
   },
 });

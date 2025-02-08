@@ -17,6 +17,8 @@ type Styles = {
   modalButtonContainer: ViewStyle;
   scanAgainButton: ViewStyle;
   scanAgainText: TextStyle;
+  dateButton: ViewStyle;
+  dateButtonText: TextStyle;
 };
 
 type ModalProps = {
@@ -28,6 +30,8 @@ type ModalProps = {
   mealType: string;
   setMealType: React.Dispatch<React.SetStateAction<string>>;
   handleSave: () => void;
+  showDatepicker: () => void;
+  selectedDate: string;
 };
 
 export default function SaveModal({
@@ -39,6 +43,8 @@ export default function SaveModal({
   mealType,
   setMealType,
   handleSave,
+  showDatepicker,
+  selectedDate,
 }: ModalProps) {
   return (
     <Modal
@@ -68,6 +74,16 @@ export default function SaveModal({
             <Picker.Item label="Snack" value="snack" />
           </Picker>
         </View>
+        <View style={{ marginTop: -30, alignItems: "center" }}>
+          <Text style={styles.modalTitle}>Choose Date</Text>
+          <TouchableHighlight
+            style={styles.dateButton}
+            onPress={showDatepicker}
+          >
+            <Text style={styles.dateButtonText}>Date: {selectedDate}</Text>
+          </TouchableHighlight>
+        </View>
+
         <View style={styles.modalButtonContainer}>
           <TouchableHighlight
             style={styles.scanAgainButton}
