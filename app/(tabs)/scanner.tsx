@@ -3,30 +3,23 @@ import {
   View,
   StyleSheet,
   Button,
-  TouchableOpacity,
   TouchableHighlight,
   Alert,
-  Modal,
-  TextInput,
 } from "react-native";
 import { useContext, useState } from "react";
-import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
+import { useCameraPermissions } from "expo-camera";
 import { useSQLiteContext } from "expo-sqlite";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { addMealToDb, getProductFromDb } from "@/util/queries";
-import { Picker } from "@react-native-picker/picker";
 import { AuthContext } from "@/components/AuthContext";
 import * as Crypto from "expo-crypto";
 import SaveModal from "@/components/SaveModal";
+import Camera from "@/components/Camera";
 
 export default function Scanner() {
-  const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState<boolean>(false);
   const [barcode, setBarcode] = useState<string | null>(null);
-  const [flashlight, setFlashlight] = useState<boolean>(false);
   const [amount, setAmount] = useState<string>("");
   const [mealType, setMealType] = useState<string>("");
   const [modalVisible, setModalVisible] = useState<boolean>(false);
@@ -44,6 +37,7 @@ export default function Scanner() {
       const data2 = await getProductFromDb(barcode, db);
       return data2;
     }
+
     return data.product || null;
   };
   const {
@@ -81,14 +75,6 @@ export default function Scanner() {
     );
   }
 
-  const toggleCameraFacing = () => {
-    setFacing((current) => (current === "back" ? "front" : "back"));
-  };
-
-  const toggleFlashlight = () => {
-    setFlashlight((prev) => !prev);
-  };
-
   const handleSave = () => {
     if (product && amount) {
       const parsedAmount = parseFloat(amount);
@@ -104,21 +90,22 @@ export default function Scanner() {
       const currentDate = new Date().toISOString().split("T")[0];
 
       const calories =
-        (product.nutriments?.["energy-kcal_100g"] || product.calories) *
+        (product.nutriments?.["energy-kcal_100g"] || product.calories || 0) *
         (parsedAmount / 100);
       const fat =
-        (product.nutriments?.fat_100g || product.fat) * (parsedAmount / 100);
+        (product.nutriments?.fat_100g || product.fat || 0) *
+        (parsedAmount / 100);
       const carbs =
-        (product.nutriments?.carbohydrates_100g || product.carbohydrates) *
+        (product.nutriments?.carbohydrates_100g || product.carbohydrates || 0) *
         (parsedAmount / 100);
       const protein =
-        (product.nutriments?.proteins_100g || product.protein) *
+        (product.nutriments?.proteins_100g || product.protein || 0) *
         (parsedAmount / 100);
       const sugar =
-        (product.nutriments?.sugars_100g || product.sugar) *
+        (product.nutriments?.sugars_100g || product.sugar || 0) *
         (parsedAmount / 100);
       const fiber =
-        (product.nutriments?.fiber_100g || product.fiber) *
+        (product.nutriments?.fiber_100g || product.fiber || 0) *
         (parsedAmount / 100);
 
       addMealToDb(
@@ -150,28 +137,11 @@ export default function Scanner() {
 
   return (
     <View style={styles.container}>
-      <CameraView
-        style={styles.camera}
-        facing={facing}
-        onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-        barcodeScannerSettings={{
-          barcodeTypes: ["upc_a", "ean13", "ean8"],
-        }}
-        enableTorch={flashlight}
-      >
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={toggleFlashlight}>
-            {flashlight ? (
-              <MaterialIcons name="flashlight-off" size={30} color="white" />
-            ) : (
-              <MaterialIcons name="flashlight-on" size={30} color="white" />
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
-            <FontAwesome6 name="arrows-rotate" size={30} color="white" />
-          </TouchableOpacity>
-        </View>
-      </CameraView>
+      <Camera
+        styles={styles}
+        scanned={scanned}
+        handleBarCodeScanned={handleBarCodeScanned}
+      />
 
       {scanned && (
         <View style={styles.overlay}>
@@ -191,23 +161,29 @@ export default function Scanner() {
               </Text>
               <Text>
                 Calories:{" "}
-                {product.nutriments?.["energy-kcal_100g"] || product.calories}
+                {product.nutriments?.["energy-kcal_100g"] ||
+                  product.calories ||
+                  0}
               </Text>
-              <Text>Fat: {product.nutriments?.fat_100g || product.fat}g</Text>
+              <Text>
+                Fat: {product.nutriments?.fat_100g || product.fat || 0}g
+              </Text>
               <Text>
                 Carbs:{" "}
                 {product.nutriments?.carbohydrates_100g ||
-                  product.carbohydrates}
+                  product.carbohydrates ||
+                  0}
                 g
               </Text>
               <Text>
-                Protein: {product.nutriments?.proteins_100g || product.protein}g
+                Protein:{" "}
+                {product.nutriments?.proteins_100g || product.protein || 0}g
               </Text>
               <Text>
-                Sugar: {product.nutriments?.sugars_100g || product.sugar}g
+                Sugar: {product.nutriments?.sugars_100g || product.sugar || 0}g
               </Text>
               <Text>
-                Fiber: {product.nutriments?.fiber_100g || product.fiber}g
+                Fiber: {product.nutriments?.fiber_100g || product.fiber || 0}g
               </Text>
             </View>
           )}
