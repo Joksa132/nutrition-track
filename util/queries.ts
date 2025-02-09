@@ -1,10 +1,14 @@
 import { SQLiteDatabase } from "expo-sqlite";
 import { FoodInfoFull } from "@/util/types";
 
-export const fetchFoodInfo = async (userId: string, db: SQLiteDatabase) => {
+export const fetchFoodInfo = async (
+  userId: string,
+  db: SQLiteDatabase,
+  date: string
+) => {
   const result = await db.getAllAsync(
-    "SELECT * FROM nutrition_info WHERE user_id = ?",
-    [userId]
+    "SELECT * FROM nutrition_info WHERE user_id = ? AND date = ?",
+    [userId, date]
   );
 
   return result as FoodInfoFull[];
