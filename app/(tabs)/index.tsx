@@ -153,10 +153,12 @@ export default function Index() {
         {foodInfo?.map((meal) => (
           <View key={meal.id} style={styles.mealItem}>
             <Text style={styles.mealName}>{meal.food_name}</Text>
-            <Text>Date: {meal.date}</Text>
-            <Text>Meal: {meal.meal_type}</Text>
-            <Text>Quantity: {meal.quantity} g</Text>
-            <Text>Calories: {meal.calories} kcal</Text>
+            <Text style={{ marginBottom: 8 }}>Date: {meal.date}</Text>
+            <Text style={{ marginBottom: 8 }}>Meal: {meal.meal_type}</Text>
+            <Text style={{ marginBottom: 8 }}>Quantity: {meal.quantity} g</Text>
+            <Text style={{ marginBottom: 8 }}>
+              Calories: {meal.calories} kcal
+            </Text>
             <TouchableHighlight
               style={styles.deleteButton}
               onPress={() => handleDelete(meal.id)}
@@ -178,7 +180,7 @@ const styles = StyleSheet.create({
   statsContainer: {
     marginBottom: 20,
     padding: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    backgroundColor: "white",
     borderRadius: 8,
   },
   statsTitle: {
