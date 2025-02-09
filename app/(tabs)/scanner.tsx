@@ -92,8 +92,6 @@ export default function Scanner() {
         return;
       }
 
-      const currentDate = new Date().toISOString().split("T")[0];
-
       const calories =
         (product.nutriments?.["energy-kcal_100g"] || product.calories || 0) *
         (parsedAmount / 100);
@@ -116,7 +114,7 @@ export default function Scanner() {
       addMealToDb(
         Crypto.randomUUID(),
         auth?.user?.id as string,
-        currentDate,
+        selectedDate,
         mealType,
         product.product_name_en || product.product_name,
         parsedAmount,
