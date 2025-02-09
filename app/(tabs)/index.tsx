@@ -1,8 +1,10 @@
 import { AuthContext } from "@/components/AuthContext";
 import { deleteMeal, fetchFoodInfo } from "@/util/queries";
+import { FoodInfo } from "@/util/types";
+import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSQLiteContext } from "expo-sqlite";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import {
   Text,
   View,
@@ -16,16 +18,43 @@ export default function Index() {
   const auth = useContext(AuthContext);
   const db = useSQLiteContext();
   const queryClient = useQueryClient();
+  const [selectedDate, setSelectedDate] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
 
   const {
     data: foodInfo,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["foodInfo", auth?.user?.id],
-    queryFn: () => fetchFoodInfo(auth?.user?.id as string, db),
+    queryKey: ["foodInfo", auth?.user?.id, selectedDate],
+    queryFn: () => fetchFoodInfo(auth?.user?.id as string, db, selectedDate),
     enabled: !!auth?.user?.id,
   });
+
+  const calculateTotals = (meals: FoodInfo[]) => {
+    const totals = {
+      calories: 0,
+      fat: 0,
+      carbohydrates: 0,
+      sugar: 0,
+      protein: 0,
+      fiber: 0,
+    };
+
+    meals.forEach((meal) => {
+      totals.calories += parseFloat(meal.calories);
+      totals.fat += parseFloat(meal.fat);
+      totals.carbohydrates += parseFloat(meal.carbohydrates);
+      totals.sugar += parseFloat(meal.sugar);
+      totals.protein += parseFloat(meal.protein);
+      totals.fiber += parseFloat(meal.fiber);
+    });
+
+    return totals;
+  };
+
+  const totals = calculateTotals(foodInfo || []);
 
   const { mutate: deleteFoodInfo } = useMutation({
     mutationFn: (mealId: string) => deleteMeal(mealId, db),
@@ -63,6 +92,18 @@ export default function Index() {
     );
   };
 
+  const showDatepicker = () => {
+    DateTimePickerAndroid.open({
+      value: new Date(selectedDate),
+      onChange: (e, date) => {
+        const convertedDate = date!.toISOString().split("T")[0];
+        setSelectedDate(convertedDate);
+      },
+      mode: "date",
+      is24Hour: true,
+    });
+  };
+
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -84,24 +125,41 @@ export default function Index() {
       contentContainerStyle={{ flexGrow: 1 }}
       keyboardShouldPersistTaps="handled"
     >
-      <View style={styles.container}>
-        {foodInfo?.map((row) => (
-          <View key={row.id} style={styles.foodItem}>
-            <Text style={styles.foodName}>{row.food_name}</Text>
-            <Text style={styles.foodDetails}>Meal type: {row.meal_type}</Text>
-            <Text style={styles.foodDetails}>Quantity: {row.quantity}g</Text>
-            <Text style={styles.foodDetails}>Calories: {row.calories}</Text>
-            <Text style={styles.foodDetails}>Fat: {row.fat}g</Text>
-            <Text style={styles.foodDetails}>
-              Carbohydrates: {row.carbohydrates}g
-            </Text>
-            <Text style={styles.foodDetails}>Sugar: {row.sugar}g</Text>
-            <Text style={styles.foodDetails}>Protein: {row.protein}g</Text>
-            <Text style={styles.foodDetails}>Fiber: {row.fiber}g</Text>
-            <Text style={styles.foodDetails}>Date: {row.date}</Text>
+      <View style={styles.statsContainer}>
+        <Text style={styles.statsTitle}>
+          Nutrition Stats for {selectedDate}
+        </Text>
+        <View style={styles.statsRow}>
+          <Text>Calories: {totals.calories} kcal</Text>
+          <Text>Fat: {totals.fat} g</Text>
+        </View>
+        <View style={styles.statsRow}>
+          <Text>Carbs: {totals.carbohydrates} g</Text>
+          <Text>Sugar: {totals.sugar} g</Text>
+        </View>
+        <View style={styles.statsRow}>
+          <Text>Protein: {totals.protein} g</Text>
+          <Text>Fiber: {totals.fiber} g</Text>
+        </View>
+        <TouchableHighlight
+          style={styles.datePickerButton}
+          onPress={showDatepicker}
+        >
+          <Text style={styles.datePickerButtonText}>Select Date</Text>
+        </TouchableHighlight>
+      </View>
+
+      <View style={styles.mealsContainer}>
+        {foodInfo?.map((meal) => (
+          <View key={meal.id} style={styles.mealItem}>
+            <Text style={styles.mealName}>{meal.food_name}</Text>
+            <Text>Date: {meal.date}</Text>
+            <Text>Meal: {meal.meal_type}</Text>
+            <Text>Quantity: {meal.quantity} g</Text>
+            <Text>Calories: {meal.calories} kcal</Text>
             <TouchableHighlight
               style={styles.deleteButton}
-              onPress={() => handleDelete(row.id)}
+              onPress={() => handleDelete(meal.id)}
             >
               <Text style={styles.deleteButtonText}>Delete</Text>
             </TouchableHighlight>
@@ -117,47 +175,65 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  loadingText: {
+  statsContainer: {
+    marginBottom: 20,
+    padding: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    borderRadius: 8,
+  },
+  statsTitle: {
     fontSize: 18,
-    textAlign: "center",
-    color: "gray",
-  },
-  errorText: {
-    fontSize: 18,
-    textAlign: "center",
-    color: "red",
-  },
-  foodItem: {
-    backgroundColor: "white",
-    padding: 20,
-    marginBottom: 15,
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  foodName: {
-    fontSize: 20,
     fontWeight: "bold",
     marginBottom: 10,
   },
-  foodDetails: {
-    fontSize: 16,
-    color: "rgba(0, 0, 0, 0.7)",
-    marginBottom: 5,
+  statsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
   },
-  deleteButton: {
-    backgroundColor: "#ff3b30",
-    borderRadius: 8,
-    padding: 12,
+  datePickerButton: {
+    backgroundColor: "black",
+    padding: 10,
+    borderRadius: 5,
     alignItems: "center",
-    marginTop: 15,
+    marginTop: 10,
   },
-  deleteButtonText: {
-    fontSize: 16,
+  datePickerButtonText: {
     color: "white",
     fontWeight: "bold",
+  },
+  mealsContainer: {
+    marginBottom: 20,
+  },
+  mealItem: {
+    padding: 16,
+    backgroundColor: "white",
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  mealName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
+  deleteButton: {
+    backgroundColor: "black",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  deleteButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  loadingText: {
+    textAlign: "center",
+    fontSize: 16,
+  },
+  errorText: {
+    textAlign: "center",
+    fontSize: 16,
+    color: "red",
   },
 });
