@@ -25,3 +25,18 @@ export type ProductInfo = {
   fiber: string;
   barcode: string;
 };
+
+export type UserRegister = {
+  username: string;
+  password: string;
+  confirmPassword: string;
+  gender: string;
+  age: string;
+  height: string;
+  weight: string;
+  activityLevel: string;
+};
+
+export type UserInfo = UserRegister & {
+  id: string;
+};
