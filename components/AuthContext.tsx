@@ -7,6 +7,7 @@ import { UserInfo } from "@/util/types";
 
 type AuthContextType = {
   user: UserInfo | null;
+  setUser: React.Dispatch<React.SetStateAction<UserInfo | null>>;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -99,7 +100,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>
+    <AuthContext.Provider
+      value={{ user, setUser, login, logout, isAuthenticated }}
+    >
       {children}
     </AuthContext.Provider>
   );
