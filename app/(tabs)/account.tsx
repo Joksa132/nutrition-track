@@ -1,5 +1,5 @@
 import { AuthContext } from "@/components/AuthContext";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import {
   Text,
   View,
@@ -7,9 +7,11 @@ import {
   StyleSheet,
   TouchableHighlight,
 } from "react-native";
+import EditUserInfoModal from "@/components/EditUserInfoModal";
 
 export default function Account() {
   const auth = useContext(AuthContext);
+  const [isModalVisible, setModalVisible] = useState<boolean>(false);
 
   const handleLogout = () => {
     Alert.alert(
@@ -30,6 +32,14 @@ export default function Account() {
     );
   };
 
+  const handleEditInfo = () => {
+    if (auth?.user) {
+      setModalVisible(true);
+    } else {
+      Alert.alert("Error", "User not logged in.");
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -44,14 +54,39 @@ export default function Account() {
           <Text style={styles.infoValue}>{auth?.user?.username}</Text>
         </View>
         <View style={styles.infoContainer}>
-          <Text style={styles.infoLabel}>User ID:</Text>
-          <Text style={styles.infoValue}>{auth?.user?.id}</Text>
+          <Text style={styles.infoLabel}>Age:</Text>
+          <Text style={styles.infoValue}>{auth?.user?.age}</Text>
+        </View>
+        <View style={styles.infoContainer}>
+          <Text style={styles.infoLabel}>Height:</Text>
+          <Text style={styles.infoValue}>{auth?.user?.height} cm</Text>
+        </View>
+        <View style={styles.infoContainer}>
+          <Text style={styles.infoLabel}>Weight:</Text>
+          <Text style={styles.infoValue}>{auth?.user?.weight} kg</Text>
+        </View>
+        <View style={styles.infoContainer}>
+          <Text style={styles.infoLabel}>Activity level:</Text>
+          <Text style={styles.infoValue}>
+            {auth?.user?.activityLevel} active
+          </Text>
         </View>
       </View>
+
+      <TouchableHighlight style={styles.logoutButton} onPress={handleEditInfo}>
+        <Text style={styles.logoutButtonText}>Edit personal info</Text>
+      </TouchableHighlight>
 
       <TouchableHighlight style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutButtonText}>Logout</Text>
       </TouchableHighlight>
+
+      <EditUserInfoModal
+        user={auth?.user!}
+        setUser={auth?.setUser!}
+        visible={isModalVisible}
+        setModalVisible={setModalVisible}
+      />
     </View>
   );
 }
@@ -62,7 +97,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
-    marginBottom: 30,
+    marginBottom: 15,
   },
   welcomeText: {
     fontSize: 24,
@@ -77,7 +112,6 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 10,
     padding: 20,
-    marginBottom: 20,
     shadowColor: "black",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
