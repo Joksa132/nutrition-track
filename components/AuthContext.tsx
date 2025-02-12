@@ -3,9 +3,10 @@ import { useSQLiteContext } from "expo-sqlite";
 import { createContext, ReactNode, useEffect, useState } from "react";
 import { Alert } from "react-native";
 import * as Crypto from "expo-crypto";
+import { UserInfo } from "@/util/types";
 
 type AuthContextType = {
-  user: { id: string; username: string } | null;
+  user: UserInfo | null;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -16,9 +17,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(
 );
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<{ id: string; username: string } | null>(
-    null
-  );
+  const [user, setUser] = useState<UserInfo | null>(null);
   const db = useSQLiteContext();
 
   useEffect(() => {
@@ -47,20 +46,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         password
       );
 
-      const user = await db.getFirstAsync<{
-        id: string;
-        username: string;
-        password: string;
-      }>("SELECT id, username, password FROM users WHERE username = ?", [
-        username,
-      ]);
+      const user: UserInfo | null = await db.getFirstAsync(
+        "SELECT id, username, password, gender, age, height, weight, activityLevel FROM users WHERE username = ?",
+        [username]
+      );
 
       if (user) {
         if (hashedPassword === user.password) {
           setUser((prevUser) => (prevUser?.id === user.id ? prevUser : user));
           await AsyncStorage.setItem(
             "user",
-            JSON.stringify({ id: user.id, username: user.username })
+            JSON.stringify({
+              id: user.id,
+              username: user.username,
+              gender: user.gender,
+              age: user.age,
+              height: user.height,
+              weight: user.weight,
+              activityLevel: user.activityLevel,
+            })
           );
         } else {
           Alert.alert("Error", "Incorrect password. Please try again.", [
