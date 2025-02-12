@@ -1,5 +1,30 @@
 import { SQLiteDatabase } from "expo-sqlite";
-import { FoodInfoFull } from "@/util/types";
+import { FoodInfoFull, UserInfo } from "@/util/types";
+
+export const updateUserInfo = async (
+  userInfo: UserInfo,
+  hashedPassword: string,
+  db: SQLiteDatabase
+) => {
+  const result = await db.runAsync(
+    `
+    UPDATE users 
+    SET username = ?, password = ?, gender = ?, age = ?, height = ?, weight = ?, activityLevel = ? 
+    WHERE id = ?;`,
+    [
+      userInfo.username,
+      hashedPassword,
+      userInfo.gender,
+      userInfo.age,
+      userInfo.height,
+      userInfo.weight,
+      userInfo.activityLevel,
+      userInfo.id,
+    ]
+  );
+
+  return result;
+};
 
 export const fetchFoodInfo = async (
   userId: string,
