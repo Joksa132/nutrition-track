@@ -64,7 +64,7 @@ export const addMealToDb = async (
 ) => {
   try {
     const result = await db.runAsync(
-      "INSERT INTO nutrition_info (id, user_id, date, meal_type, food_name, quantity, calories, fat, carbohydrates, sugar, protein, fiber) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO nutrition_info (id, user_id, date, mealType, foodName, quantity, calories, fat, carbohydrates, sugar, protein, fiber) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         id,
         userId,

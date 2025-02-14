@@ -152,9 +152,9 @@ export default function Index() {
       <View style={styles.mealsContainer}>
         {foodInfo?.map((meal) => (
           <View key={meal.id} style={styles.mealItem}>
-            <Text style={styles.mealName}>{meal.food_name}</Text>
+            <Text style={styles.mealName}>{meal.foodName}</Text>
             <Text style={{ marginBottom: 8 }}>Date: {meal.date}</Text>
-            <Text style={{ marginBottom: 8 }}>Meal: {meal.meal_type}</Text>
+            <Text style={{ marginBottom: 8 }}>Meal: {meal.mealType}</Text>
             <Text style={{ marginBottom: 8 }}>Quantity: {meal.quantity} g</Text>
             <Text style={{ marginBottom: 8 }}>
               Calories: {meal.calories} kcal
