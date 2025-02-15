@@ -104,6 +104,94 @@ export default function Index() {
     });
   };
 
+  const calculateRecommendedIntake = (
+    weight: string,
+    height: string,
+    age: string,
+    gender: string,
+    activityLevel: string,
+    goal: string
+  ) => {
+    let bmr: number;
+    let tdee: number;
+
+    if (gender === "male") {
+      bmr =
+        10 * parseFloat(weight) +
+        6.25 * parseFloat(height) -
+        5 * parseInt(age) +
+        5;
+    } else {
+      bmr =
+        10 * parseFloat(weight) +
+        6.25 * parseFloat(height) -
+        5 * parseInt(age) -
+        161;
+    }
+
+    switch (activityLevel) {
+      case "sedentary":
+        tdee = bmr * 1.2;
+        break;
+      case "lightly":
+        tdee = bmr * 1.375;
+        break;
+      case "moderately":
+        tdee = bmr * 1.55;
+        break;
+      case "very":
+        tdee = bmr * 1.725;
+        break;
+      default:
+        tdee = bmr;
+    }
+
+    let calorieTarget = tdee;
+    if (goal === "weight loss") {
+      calorieTarget = Math.max(tdee * 0.85, 1600);
+    } else if (goal === "weight gain") {
+      calorieTarget = tdee * 1.15;
+    } else {
+      calorieTarget = tdee;
+    }
+
+    const proteinRange = [0.1, 0.35];
+    const fatRange = [0.2, 0.35];
+    const carbRange = [0.45, 0.65];
+
+    const proteinCal =
+      calorieTarget * ((proteinRange[0] + proteinRange[1]) / 2);
+    const fatCal = calorieTarget * ((fatRange[0] + fatRange[1]) / 2);
+    const carbCal = calorieTarget * ((carbRange[0] + carbRange[1]) / 2);
+
+    const proteinG = proteinCal / 4;
+    const fatG = fatCal / 9;
+    const carbG = carbCal / 4;
+
+    const fiberG = (calorieTarget / 1000) * 14;
+
+    const sugarCal = calorieTarget * 0.1;
+    const sugarG = sugarCal / 4;
+
+    return {
+      calories: Math.round(calorieTarget),
+      fat: Math.round(fatG),
+      carbohydrates: Math.round(carbG),
+      sugar: Math.round(sugarG),
+      protein: Math.round(proteinG),
+      fiber: Math.round(fiberG),
+    };
+  };
+
+  const recommendedIntake = calculateRecommendedIntake(
+    auth?.user?.weight || "0",
+    auth?.user?.height || "0",
+    auth?.user?.age || "0",
+    auth?.user?.gender || "male",
+    auth?.user?.activityLevel || "sedentary",
+    auth?.user?.goal || "weight loss"
+  );
+
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -130,16 +218,28 @@ export default function Index() {
           Nutrition Stats for {selectedDate}
         </Text>
         <View style={styles.statsRow}>
-          <Text>Calories: {totals.calories} kcal</Text>
-          <Text>Fat: {totals.fat} g</Text>
+          <Text>
+            Calories: {totals.calories}kcal / {recommendedIntake.calories}kcal
+          </Text>
+          <Text>
+            Fat: {totals.fat}g / {recommendedIntake.fat}g
+          </Text>
         </View>
         <View style={styles.statsRow}>
-          <Text>Carbs: {totals.carbohydrates} g</Text>
-          <Text>Sugar: {totals.sugar} g</Text>
+          <Text>
+            Carbs: {totals.carbohydrates}g / {recommendedIntake.carbohydrates}g
+          </Text>
+          <Text>
+            Sugar: {totals.sugar}g / {recommendedIntake.sugar}g
+          </Text>
         </View>
         <View style={styles.statsRow}>
-          <Text>Protein: {totals.protein} g</Text>
-          <Text>Fiber: {totals.fiber} g</Text>
+          <Text>
+            Protein: {totals.protein}g / {recommendedIntake.protein}g
+          </Text>
+          <Text>
+            Fiber: {totals.fiber}g / {recommendedIntake.fiber}g
+          </Text>
         </View>
         <TouchableHighlight
           style={styles.datePickerButton}
