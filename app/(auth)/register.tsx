@@ -25,6 +25,7 @@ export default function Register() {
     height: "",
     weight: "",
     activityLevel: "",
+    goal: "",
   });
   const router = useRouter();
   const db = useSQLiteContext();
@@ -48,7 +49,7 @@ export default function Register() {
       );
 
       await db.runAsync(
-        "INSERT INTO users (id, username, password, gender, age, height, weight, activityLevel) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO users (id, username, password, gender, age, height, weight, activityLevel, goal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           userId,
           userInfo.username,
@@ -58,6 +59,7 @@ export default function Register() {
           userInfo.height,
           userInfo.weight,
           userInfo.activityLevel,
+          userInfo.goal,
         ]
       );
       Alert.alert("Success", "Registration successful! Please login.");
@@ -166,6 +168,18 @@ export default function Register() {
               label="Very Active (exercise 6-7 days a week)"
               value="very"
             />
+          </Picker>
+        </View>
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={userInfo.goal}
+            onValueChange={(value) =>
+              setUserInfo((prev) => ({ ...prev, goal: value }))
+            }
+          >
+            <Picker.Item label="Weight loss" value="weight loss" />
+            <Picker.Item label="Weight gain" value="weight gain" />
+            <Picker.Item label="Maintenance" value="maintenance" />
           </Picker>
         </View>
         <TouchableHighlight

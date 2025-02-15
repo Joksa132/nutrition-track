@@ -40,6 +40,7 @@ export default function ExportUserInfoModal({
     height: user.height,
     weight: user.weight,
     activityLevel: user.activityLevel,
+    goal: user.goal,
   });
 
   const handleUpdate = async () => {
@@ -68,6 +69,7 @@ export default function ExportUserInfoModal({
           height: userInfo.height,
           weight: userInfo.weight,
           activityLevel: userInfo.activityLevel,
+          goal: userInfo.goal,
         })
       );
       Alert.alert("Success", "User info changed successfully!");
@@ -176,6 +178,18 @@ export default function ExportUserInfoModal({
               label="Very Active (exercise 6-7 days a week)"
               value="very"
             />
+          </Picker>
+        </View>
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={userInfo.goal}
+            onValueChange={(value) =>
+              setUserInfo((prev) => ({ ...prev, goal: value }))
+            }
+          >
+            <Picker.Item label="Weight loss" value="weight loss" />
+            <Picker.Item label="Weight gain" value="weight gain" />
+            <Picker.Item label="Maintenance" value="maintenance" />
           </Picker>
         </View>
         <View style={styles.buttonContainer}>

@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       );
 
       const user: UserInfo | null = await db.getFirstAsync(
-        "SELECT id, username, password, gender, age, height, weight, activityLevel FROM users WHERE username = ?",
+        "SELECT id, username, password, gender, age, height, weight, activityLevel, goal FROM users WHERE username = ?",
         [username]
       );
 
@@ -65,6 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               height: user.height,
               weight: user.weight,
               activityLevel: user.activityLevel,
+              goal: user.goal,
             })
           );
         } else {

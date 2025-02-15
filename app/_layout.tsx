@@ -8,7 +8,7 @@ const createDbIfNeeded = async (db: SQLiteDatabase) => {
   try {
     await db.execAsync(`
       PRAGMA journal_mode = 'wal';
-      
+
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY NOT NULL, 
         username TEXT UNIQUE NOT NULL, 
@@ -17,7 +17,8 @@ const createDbIfNeeded = async (db: SQLiteDatabase) => {
         age TEXT NOT NULL,
         height TEXT NOT NULL,
         weight TEXT NOT NULL,
-        activityLevel TEXT NOT NULL
+        activityLevel TEXT NOT NULL,
+        goal TEXT NOT NULL
       );
 
       CREATE TABLE IF NOT EXISTS nutrition_info (

@@ -35,6 +35,7 @@ export type UserRegister = {
   height: string;
   weight: string;
   activityLevel: string;
+  goal: string;
 };
 
 export type UserInfo = UserRegister & {
