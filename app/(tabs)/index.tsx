@@ -357,7 +357,6 @@ export default function Index() {
             <Text style={{ marginBottom: 8 }}>
               Calories: {meal.calories} kcal
             </Text>
-            <Text style={{ marginBottom: 8 }}>Protein: {meal.protein} g</Text>
             <TouchableHighlight
               style={styles.deleteButton}
               onPress={() => handleDelete(meal.id)}
