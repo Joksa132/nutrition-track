@@ -52,6 +52,13 @@ export default function Index() {
       totals.fiber += parseFloat(meal.fiber);
     });
 
+    totals.calories = parseFloat(totals.calories.toFixed(0));
+    totals.fat = parseFloat(totals.fat.toFixed(2));
+    totals.carbohydrates = parseFloat(totals.carbohydrates.toFixed(2));
+    totals.sugar = parseFloat(totals.sugar.toFixed(2));
+    totals.protein = parseFloat(totals.protein.toFixed(2));
+    totals.fiber = parseFloat(totals.fiber.toFixed(2));
+
     return totals;
   };
 
@@ -240,8 +247,9 @@ export default function Index() {
           Nutrition Stats for {selectedDate}
         </Text>
         <View style={styles.statsRow}>
-          <Text>
-            Calories:{" "}
+          <Text style={{ fontSize: 13 }}>
+            Calories:
+            {getIndicatorIcon(totals.calories, recommendedIntake.calories)}
             <Text
               style={{
                 color: getIndicatorColor(
@@ -250,29 +258,31 @@ export default function Index() {
                 ),
               }}
             >
-              {totals.calories}kcal{" "}
-              {getIndicatorIcon(totals.calories, recommendedIntake.calories)}
+              {totals.calories}kcal
             </Text>
-            {" / "}
+            {"/"}
             {recommendedIntake.calories}kcal
           </Text>
-          <Text>
-            Fat:{" "}
+          <Text style={{ fontSize: 13 }}>
+            Fat:{getIndicatorIcon(totals.fat, recommendedIntake.fat)}
             <Text
               style={{
                 color: getIndicatorColor(totals.fat, recommendedIntake.fat),
               }}
             >
-              {totals.fat}g{" "}
-              {getIndicatorIcon(totals.fat, recommendedIntake.fat)}
+              {totals.fat}g
             </Text>
-            {" / "}
+            {"/"}
             {recommendedIntake.fat}g
           </Text>
         </View>
         <View style={styles.statsRow}>
-          <Text>
-            Carbs:{" "}
+          <Text style={{ fontSize: 13 }}>
+            Carbs:
+            {getIndicatorIcon(
+              totals.carbohydrates,
+              recommendedIntake.carbohydrates
+            )}
             <Text
               style={{
                 color: getIndicatorColor(
@@ -281,32 +291,28 @@ export default function Index() {
                 ),
               }}
             >
-              {totals.carbohydrates}g{" "}
-              {getIndicatorIcon(
-                totals.carbohydrates,
-                recommendedIntake.carbohydrates
-              )}
+              {totals.carbohydrates}g
             </Text>
-            {" / "}
+            {"/"}
             {recommendedIntake.carbohydrates}g
           </Text>
-          <Text>
-            Sugar:{" "}
+          <Text style={{ fontSize: 13 }}>
+            Sugar:{getIndicatorIcon(totals.sugar, recommendedIntake.sugar)}
             <Text
               style={{
                 color: getIndicatorColor(totals.sugar, recommendedIntake.sugar),
               }}
             >
-              {totals.sugar}g{" "}
-              {getIndicatorIcon(totals.sugar, recommendedIntake.sugar)}
+              {totals.sugar}g
             </Text>
-            {" / "}
+            {"/"}
             {recommendedIntake.sugar}g
           </Text>
         </View>
         <View style={styles.statsRow}>
-          <Text>
-            Protein:{" "}
+          <Text style={{ fontSize: 13 }}>
+            Protein:
+            {getIndicatorIcon(totals.protein, recommendedIntake.protein)}
             <Text
               style={{
                 color: getIndicatorColor(
@@ -315,23 +321,21 @@ export default function Index() {
                 ),
               }}
             >
-              {totals.protein}g{" "}
-              {getIndicatorIcon(totals.protein, recommendedIntake.protein)}
+              {totals.protein}g
             </Text>
-            {" / "}
+            {"/"}
             {recommendedIntake.protein}g
           </Text>
-          <Text>
-            Fiber:{" "}
+          <Text style={{ fontSize: 13 }}>
+            Fiber:{getIndicatorIcon(totals.fiber, recommendedIntake.fiber)}
             <Text
               style={{
                 color: getIndicatorColor(totals.fiber, recommendedIntake.fiber),
               }}
             >
-              {totals.fiber}g{" "}
-              {getIndicatorIcon(totals.fiber, recommendedIntake.fiber)}
+              {totals.fiber}g
             </Text>
-            {" / "}
+            {"/"}
             {recommendedIntake.fiber}g
           </Text>
         </View>
@@ -353,6 +357,7 @@ export default function Index() {
             <Text style={{ marginBottom: 8 }}>
               Calories: {meal.calories} kcal
             </Text>
+            <Text style={{ marginBottom: 8 }}>Protein: {meal.protein} g</Text>
             <TouchableHighlight
               style={styles.deleteButton}
               onPress={() => handleDelete(meal.id)}

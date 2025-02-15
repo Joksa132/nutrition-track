@@ -118,12 +118,12 @@ export default function Scanner() {
         mealType,
         product.product_name_en || product.product_name,
         parsedAmount,
-        calories,
-        fat,
-        carbs,
-        sugar,
-        protein,
-        fiber,
+        parseFloat(calories.toFixed(2)),
+        parseFloat(fat.toFixed(2)),
+        parseFloat(carbs.toFixed(2)),
+        parseFloat(sugar.toFixed(2)),
+        parseFloat(protein.toFixed(2)),
+        parseFloat(fiber.toFixed(2)),
         db
       );
 

@@ -60,6 +60,25 @@ export default function AddMeal() {
         foodInfo.quantity === "" ? 0 : parseFloat(foodInfo.quantity);
       const actualQuantity = quantity / 100;
 
+      const calories =
+        foodInfo.calories === ""
+          ? 0
+          : parseFloat(foodInfo.calories) * actualQuantity;
+      const fat =
+        foodInfo.fat === "" ? 0 : parseFloat(foodInfo.fat) * actualQuantity;
+      const carbohydrates =
+        foodInfo.carbohydrates === ""
+          ? 0
+          : parseFloat(foodInfo.carbohydrates) * actualQuantity;
+      const sugar =
+        foodInfo.sugar === "" ? 0 : parseFloat(foodInfo.sugar) * actualQuantity;
+      const protein =
+        foodInfo.protein === ""
+          ? 0
+          : parseFloat(foodInfo.protein) * actualQuantity;
+      const fiber =
+        foodInfo.fiber === "" ? 0 : parseFloat(foodInfo.fiber) * actualQuantity;
+
       return addMealToDb(
         Crypto.randomUUID(),
         auth?.user?.id as string,
@@ -67,18 +86,12 @@ export default function AddMeal() {
         foodInfo.mealType,
         foodInfo.foodName,
         foodInfo.quantity === "" ? 0 : parseFloat(foodInfo.quantity),
-        foodInfo.calories === ""
-          ? 0
-          : parseFloat(foodInfo.calories) * actualQuantity,
-        foodInfo.fat === "" ? 0 : parseFloat(foodInfo.fat) * actualQuantity,
-        foodInfo.carbohydrates === ""
-          ? 0
-          : parseFloat(foodInfo.carbohydrates) * actualQuantity,
-        foodInfo.sugar === "" ? 0 : parseFloat(foodInfo.sugar) * actualQuantity,
-        foodInfo.protein === ""
-          ? 0
-          : parseFloat(foodInfo.protein) * actualQuantity,
-        foodInfo.fiber === "" ? 0 : parseFloat(foodInfo.fiber) * actualQuantity,
+        parseFloat(calories.toFixed(2)),
+        parseFloat(fat.toFixed(2)),
+        parseFloat(carbohydrates.toFixed(2)),
+        parseFloat(sugar.toFixed(2)),
+        parseFloat(protein.toFixed(2)),
+        parseFloat(fiber.toFixed(2)),
         db
       );
     },
