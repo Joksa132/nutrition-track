@@ -1,6 +1,7 @@
 import { AuthContext } from "@/components/AuthContext";
 import { deleteMeal, fetchFoodInfo } from "@/util/queries";
 import { FoodInfo } from "@/util/types";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSQLiteContext } from "expo-sqlite";
@@ -192,6 +193,27 @@ export default function Index() {
     auth?.user?.goal || "weight loss"
   );
 
+  const getIndicatorColor = (actual: number, recommended: number): string => {
+    const lower = recommended * 0.9;
+    const upper = recommended * 1.1;
+    if (actual < lower) return "blue";
+    else if (actual > upper) return "red";
+    return "green";
+  };
+
+  const getIndicatorIcon = (actual: number, recommended: number) => {
+    const lower = recommended * 0.9;
+    const upper = recommended * 1.1;
+    const color = getIndicatorColor(actual, recommended);
+
+    if (actual < lower) {
+      return <Ionicons name="arrow-down-outline" size={16} color={color} />;
+    } else if (actual > upper) {
+      return <Ionicons name="arrow-up-outline" size={16} color={color} />;
+    }
+    return <Ionicons name="checkmark-outline" size={16} color={color} />;
+  };
+
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -219,26 +241,98 @@ export default function Index() {
         </Text>
         <View style={styles.statsRow}>
           <Text>
-            Calories: {totals.calories}kcal / {recommendedIntake.calories}kcal
+            Calories:{" "}
+            <Text
+              style={{
+                color: getIndicatorColor(
+                  totals.calories,
+                  recommendedIntake.calories
+                ),
+              }}
+            >
+              {totals.calories}kcal{" "}
+              {getIndicatorIcon(totals.calories, recommendedIntake.calories)}
+            </Text>
+            {" / "}
+            {recommendedIntake.calories}kcal
           </Text>
           <Text>
-            Fat: {totals.fat}g / {recommendedIntake.fat}g
+            Fat:{" "}
+            <Text
+              style={{
+                color: getIndicatorColor(totals.fat, recommendedIntake.fat),
+              }}
+            >
+              {totals.fat}g{" "}
+              {getIndicatorIcon(totals.fat, recommendedIntake.fat)}
+            </Text>
+            {" / "}
+            {recommendedIntake.fat}g
           </Text>
         </View>
         <View style={styles.statsRow}>
           <Text>
-            Carbs: {totals.carbohydrates}g / {recommendedIntake.carbohydrates}g
+            Carbs:{" "}
+            <Text
+              style={{
+                color: getIndicatorColor(
+                  totals.carbohydrates,
+                  recommendedIntake.carbohydrates
+                ),
+              }}
+            >
+              {totals.carbohydrates}g{" "}
+              {getIndicatorIcon(
+                totals.carbohydrates,
+                recommendedIntake.carbohydrates
+              )}
+            </Text>
+            {" / "}
+            {recommendedIntake.carbohydrates}g
           </Text>
           <Text>
-            Sugar: {totals.sugar}g / {recommendedIntake.sugar}g
+            Sugar:{" "}
+            <Text
+              style={{
+                color: getIndicatorColor(totals.sugar, recommendedIntake.sugar),
+              }}
+            >
+              {totals.sugar}g{" "}
+              {getIndicatorIcon(totals.sugar, recommendedIntake.sugar)}
+            </Text>
+            {" / "}
+            {recommendedIntake.sugar}g
           </Text>
         </View>
         <View style={styles.statsRow}>
           <Text>
-            Protein: {totals.protein}g / {recommendedIntake.protein}g
+            Protein:{" "}
+            <Text
+              style={{
+                color: getIndicatorColor(
+                  totals.protein,
+                  recommendedIntake.protein
+                ),
+              }}
+            >
+              {totals.protein}g{" "}
+              {getIndicatorIcon(totals.protein, recommendedIntake.protein)}
+            </Text>
+            {" / "}
+            {recommendedIntake.protein}g
           </Text>
           <Text>
-            Fiber: {totals.fiber}g / {recommendedIntake.fiber}g
+            Fiber:{" "}
+            <Text
+              style={{
+                color: getIndicatorColor(totals.fiber, recommendedIntake.fiber),
+              }}
+            >
+              {totals.fiber}g{" "}
+              {getIndicatorIcon(totals.fiber, recommendedIntake.fiber)}
+            </Text>
+            {" / "}
+            {recommendedIntake.fiber}g
           </Text>
         </View>
         <TouchableHighlight
