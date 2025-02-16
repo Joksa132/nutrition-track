@@ -159,9 +159,7 @@ export default function Index() {
       calorieTarget = Math.max(tdee * 0.85, 1600);
     } else if (goal === "weight gain") {
       calorieTarget = tdee * 1.15;
-    } else {
-      calorieTarget = tdee;
-    }
+    } 
 
     const proteinRange = [0.1, 0.35];
     const fatRange = [0.2, 0.35];
