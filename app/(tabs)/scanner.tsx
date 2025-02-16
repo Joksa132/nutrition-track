@@ -225,7 +225,6 @@ export default function Scanner() {
       )}
 
       <SaveModal
-        styles={styles}
         modalVisible={modalVisible}
         amount={amount}
         setModalVisible={setModalVisible}
