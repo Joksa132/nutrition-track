@@ -41,3 +41,17 @@ export type UserRegister = {
 export type UserInfo = UserRegister & {
   id: string;
 };
+
+export type OpenFoodFactsProduct = {
+  product_name: string;
+  product_name_en: string;
+  nutriments: {
+    "energy-kcal"?: number;
+    fat?: number;
+    carbohydrates?: number;
+    sugars?: number;
+    proteins?: number;
+    fiber?: number;
+  };
+  code: string;
+};
