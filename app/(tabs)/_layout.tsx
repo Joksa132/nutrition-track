@@ -45,6 +45,22 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="search"
+        options={{
+          tabBarLabelStyle: { fontWeight: "bold" },
+          title: "Search",
+          tabBarLabelPosition: "below-icon",
+          tabBarActiveTintColor: "black",
+          tabBarIcon: ({ focused, color, size }) => {
+            return focused ? (
+              <Ionicons name="search-circle" size={26} color="black" />
+            ) : (
+              <Ionicons name="search-circle-outline" size={26} color="black" />
+            );
+          },
+        }}
+      />
+      <Tabs.Screen
         name="add"
         options={{
           tabBarLabelStyle: { fontWeight: "bold" },
