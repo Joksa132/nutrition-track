@@ -13,8 +13,9 @@ import { UserInfo } from "@/util/types";
 import { Picker } from "@react-native-picker/picker";
 import * as Crypto from "expo-crypto";
 import AsyncStorage from "expo-sqlite/kv-store";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { updateUserInfo } from "@/util/queries";
+import { UserUpdateSchema, UserUpdateSchemaType } from "@/util/validations";
 
 type UserInfoModalProps = {
   user: UserInfo;
@@ -43,20 +44,35 @@ export default function ExportUserInfoModal({
     goal: user.goal,
   });
 
-  const handleUpdate = async () => {
-    if (userInfo.password !== userInfo.confirmPassword) {
-      throw new Error("Passwords do not match.");
-    }
+  const handleUpdate = async (validatedData: UserUpdateSchemaType) => {
+    try {
+      let hashedPassword = "";
+      if (validatedData.password) {
+        hashedPassword = await Crypto.digestStringAsync(
+          Crypto.CryptoDigestAlgorithm.SHA256,
+          validatedData.password
+        );
+      }
 
-    const hashedPassword = await Crypto.digestStringAsync(
-      Crypto.CryptoDigestAlgorithm.SHA256,
-      userInfo.password
-    );
-    updateUserInfo(userInfo, hashedPassword, db);
+      updateUserInfo(userInfo, hashedPassword, db);
+    } catch (error) {
+      throw error;
+    }
   };
 
   const { mutate: updateUser } = useMutation({
-    mutationFn: handleUpdate,
+    mutationFn: async () => {
+      const validatedData = UserUpdateSchema.safeParse(userInfo);
+
+      if (!validatedData.success) {
+        const errorMessages = validatedData.error.errors.map(
+          (error) => error.message
+        );
+        throw new Error(errorMessages.join("\n"));
+      }
+
+      await handleUpdate(validatedData.data);
+    },
     onSuccess: async () => {
       setUser(userInfo);
       await AsyncStorage.setItem(

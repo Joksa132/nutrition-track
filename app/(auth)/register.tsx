@@ -14,6 +14,7 @@ import "react-native-get-random-values";
 import * as Crypto from "expo-crypto";
 import { Picker } from "@react-native-picker/picker";
 import { UserRegister } from "@/util/types";
+import { UserRegisterSchema } from "@/util/validations";
 
 export default function Register() {
   const [userInfo, setUserInfo] = useState<UserRegister>({
@@ -32,34 +33,35 @@ export default function Register() {
 
   const handleRegister = async () => {
     try {
-      const userId = Crypto.randomUUID();
+      const validatedData = UserRegisterSchema.safeParse(userInfo);
 
-      if (userInfo.password !== userInfo.confirmPassword) {
-        Alert.alert("Error", "Passwords do not match. Please try again.", [
-          {
-            text: "Ok",
-          },
-        ]);
+      if (!validatedData.success) {
+        const errorMessages = validatedData.error.errors.map(
+          (error) => error.message
+        );
+        Alert.alert("Validation error", errorMessages.join("\n"));
         return;
       }
 
+      const userId = Crypto.randomUUID();
+
       const hashedPassword = await Crypto.digestStringAsync(
         Crypto.CryptoDigestAlgorithm.SHA256,
-        userInfo.password
+        validatedData.data.password
       );
 
       await db.runAsync(
         "INSERT INTO users (id, username, password, gender, age, height, weight, activityLevel, goal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           userId,
-          userInfo.username,
+          validatedData.data.username,
           hashedPassword,
-          userInfo.gender,
-          userInfo.age,
-          userInfo.height,
-          userInfo.weight,
-          userInfo.activityLevel,
-          userInfo.goal,
+          validatedData.data.gender,
+          validatedData.data.age,
+          validatedData.data.height,
+          validatedData.data.weight,
+          validatedData.data.activityLevel,
+          validatedData.data.goal,
         ]
       );
       Alert.alert("Success", "Registration successful! Please login.");

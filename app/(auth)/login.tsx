@@ -1,4 +1,5 @@
 import { AuthContext } from "@/components/AuthContext";
+import { UserLoginSchema } from "@/util/validations";
 import { Link, useRouter } from "expo-router";
 import { useContext, useState } from "react";
 import {
@@ -18,7 +19,20 @@ export default function Login() {
 
   const handleLogin = async () => {
     try {
-      await auth?.login(username, password);
+      const validatedData = UserLoginSchema.safeParse({ username, password });
+
+      if (!validatedData.success) {
+        const errorMessages = validatedData.error.errors.map(
+          (error) => error.message
+        );
+        Alert.alert("Validation Error", errorMessages.join("\n"));
+        return;
+      }
+
+      await auth?.login(
+        validatedData.data.username,
+        validatedData.data.password
+      );
       router.push("/(tabs)");
     } catch (error) {
       console.log(error);
