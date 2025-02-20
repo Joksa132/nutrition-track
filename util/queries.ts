@@ -9,7 +9,7 @@ export const updateUserInfo = async (
   const result = await db.runAsync(
     `
     UPDATE users 
-    SET username = ?, password = ?, gender = ?, age = ?, height = ?, weight = ?, activityLevel = ? 
+    SET username = ?, password = ?, gender = ?, age = ?, height = ?, weight = ?, activityLevel = ?, goal = ?
     WHERE id = ?;`,
     [
       userInfo.username,
@@ -19,6 +19,7 @@ export const updateUserInfo = async (
       userInfo.height,
       userInfo.weight,
       userInfo.activityLevel,
+      userInfo.goal,
       userInfo.id,
     ]
   );
