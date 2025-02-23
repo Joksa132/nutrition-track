@@ -157,4 +157,193 @@ export const UserUpdateSchema = z
     path: ["confirmPassword"],
   });
 
+export const FoodInfoSchema = z.object({
+  foodName: z
+    .string()
+    .min(2, { message: "Food name must be at least 2 characters" })
+    .max(50, { message: "Food name must be less than 50 characters" }),
+  mealType: z.enum(["breakfast", "lunch", "dinner", "snack"]),
+  quantity: z
+    .string()
+    .refine((val) => !isNaN(parseFloat(val)), {
+      message: "Quantity must be a number",
+    })
+    .transform((val) => parseFloat(val))
+    .pipe(
+      z
+        .number()
+        .min(1, { message: "Quantity must be at least 1 gram" })
+        .max(1000, {
+          message: "Quantity must be less than 1000 grams",
+        })
+    ),
+  calories: z
+    .string()
+    .refine((val) => !isNaN(parseFloat(val)), {
+      message: "Calories must be a number",
+    })
+    .transform((val) => parseFloat(val))
+    .pipe(
+      z.number().min(1, { message: "Calories must be at least 1" }).max(2000, {
+        message: "Calories must be less than 2000",
+      })
+    ),
+  fat: z
+    .string()
+    .refine((val) => !isNaN(parseFloat(val)), {
+      message: "Fat must be a number",
+    })
+    .transform((val) => parseFloat(val))
+    .pipe(
+      z.number().min(0, { message: "Fat must be a positive number" }).max(200, {
+        message: "Fat must be less than 200 grams",
+      })
+    ),
+  carbohydrates: z
+    .string()
+    .refine((val) => !isNaN(parseFloat(val)), {
+      message: "Carbohydrates must be a number",
+    })
+    .transform((val) => parseFloat(val))
+    .pipe(
+      z
+        .number()
+        .min(0, { message: "Carbohydrates must be a positive number" })
+        .max(200, {
+          message: "Carbohydrates must be less than 200 grams",
+        })
+    ),
+  sugar: z
+    .string()
+    .refine((val) => !isNaN(parseFloat(val)), {
+      message: "Sugar must be a number",
+    })
+    .transform((val) => parseFloat(val))
+    .pipe(
+      z
+        .number()
+        .min(0, { message: "Sugar must be a positive number" })
+        .max(200, {
+          message: "Sugar must be less than 200 grams",
+        })
+    ),
+  protein: z
+    .string()
+    .refine((val) => !isNaN(parseFloat(val)), {
+      message: "Protein must be a number",
+    })
+    .transform((val) => parseFloat(val))
+    .pipe(
+      z
+        .number()
+        .min(0, { message: "Protein must be a positive number" })
+        .max(200, {
+          message: "Protein must be less than 200 grams",
+        })
+    ),
+  fiber: z
+    .string()
+    .refine((val) => !isNaN(parseFloat(val)), {
+      message: "Fiber must be a number",
+    })
+    .transform((val) => parseFloat(val))
+    .pipe(
+      z
+        .number()
+        .min(0, { message: "Fiber must be a positive number" })
+        .max(200, {
+          message: "Fiber must be less than 200 grams",
+        })
+    ),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+    message: "Date must be in YYYY-MM-DD format",
+  }),
+});
+
+export const ProductInfoSchema = z.object({
+  productName: z
+    .string()
+    .min(2, { message: "Product name must be at least 2 characters" })
+    .max(50, { message: "Product name must be less than 50 characters" }),
+  calories: z
+    .string()
+    .refine((val) => !isNaN(parseFloat(val)), {
+      message: "Calories must be a number",
+    })
+    .transform((val) => parseFloat(val))
+    .pipe(
+      z.number().min(1, { message: "Calories must be at least 1" }).max(2000, {
+        message: "Calories must be less than 2000",
+      })
+    ),
+  fat: z
+    .string()
+    .refine((val) => !isNaN(parseFloat(val)), {
+      message: "Fat must be a number",
+    })
+    .transform((val) => parseFloat(val))
+    .pipe(
+      z.number().min(0, { message: "Fat must be a positive number" }).max(200, {
+        message: "Fat must be less than 200 grams",
+      })
+    ),
+  carbohydrates: z
+    .string()
+    .refine((val) => !isNaN(parseFloat(val)), {
+      message: "Carbohydrates must be a number",
+    })
+    .transform((val) => parseFloat(val))
+    .pipe(
+      z
+        .number()
+        .min(0, { message: "Carbohydrates must be a positive number" })
+        .max(200, {
+          message: "Carbohydrates must be less than 200 grams",
+        })
+    ),
+  sugar: z
+    .string()
+    .refine((val) => !isNaN(parseFloat(val)), {
+      message: "Sugar must be a number",
+    })
+    .transform((val) => parseFloat(val))
+    .pipe(
+      z
+        .number()
+        .min(0, { message: "Sugar must be a positive number" })
+        .max(200, {
+          message: "Sugar must be less than 200 grams",
+        })
+    ),
+  protein: z
+    .string()
+    .refine((val) => !isNaN(parseFloat(val)), {
+      message: "Protein must be a number",
+    })
+    .transform((val) => parseFloat(val))
+    .pipe(
+      z
+        .number()
+        .min(0, { message: "Protein must be a positive number" })
+        .max(200, {
+          message: "Protein must be less than 200 grams",
+        })
+    ),
+  fiber: z
+    .string()
+    .refine((val) => !isNaN(parseFloat(val)), {
+      message: "Fiber must be a number",
+    })
+    .transform((val) => parseFloat(val))
+    .pipe(
+      z
+        .number()
+        .min(0, { message: "Fiber must be a positive number" })
+        .max(200, {
+          message: "Fiber must be less than 200 grams",
+        })
+    ),
+  barcode: z.string(),
+});
+
 export type UserUpdateSchemaType = z.infer<typeof UserUpdateSchema>;
