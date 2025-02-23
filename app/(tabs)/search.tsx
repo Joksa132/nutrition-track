@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { useSQLiteContext } from "expo-sqlite";
 import { AuthContext } from "@/components/AuthContext";
+import { SaveModalSchema } from "@/util/validations";
 
 type OpenFoodFactsResponse = {
   products: OpenFoodFactsProduct[];
@@ -96,47 +97,54 @@ export default function Search() {
   };
 
   const handleSave = (product: OpenFoodFactsProduct) => {
-    if (amount) {
-      const parsedAmount = parseFloat(amount);
-      if (isNaN(parsedAmount) || parsedAmount <= 0) {
-        Alert.alert("Error", "Please enter a valid amount in grams", [
-          {
-            text: "Ok",
-          },
-        ]);
-        return;
-      }
+    const validatedData = SaveModalSchema.safeParse({
+      amount,
+      mealType,
+      selectedDate,
+    });
 
-      const calories =
-        (product.nutriments?.["energy-kcal"] || 0) * (parsedAmount / 100);
-      const fat = (product.nutriments?.fat || 0) * (parsedAmount / 100);
-      const carbs =
-        (product.nutriments?.carbohydrates || 0) * (parsedAmount / 100);
-      const protein =
-        (product.nutriments?.proteins || 0) * (parsedAmount / 100);
-      const sugar = (product.nutriments?.sugars || 0) * (parsedAmount / 100);
-      const fiber = (product.nutriments?.fiber || 0) * (parsedAmount / 100);
-
-      addMealToDb(
-        Crypto.randomUUID(),
-        auth?.user?.id as string,
-        selectedDate,
-        mealType,
-        product.product_name_en || product.product_name,
-        parsedAmount,
-        parseFloat(calories.toFixed(2)),
-        parseFloat(fat.toFixed(2)),
-        parseFloat(carbs.toFixed(2)),
-        parseFloat(sugar.toFixed(2)),
-        parseFloat(protein.toFixed(2)),
-        parseFloat(fiber.toFixed(2)),
-        db
+    if (!validatedData.success) {
+      const errorMessages = validatedData.error.errors.map(
+        (error) => error.message
       );
-
-      Alert.alert("Success", "Successfully saved this meal");
-      queryClient.invalidateQueries({ queryKey: ["foodInfo"] });
-      setModalVisible(false);
+      Alert.alert("Validation Error", errorMessages.join("\n"));
+      return;
     }
+
+    const calories =
+      (product.nutriments?.["energy-kcal"] || 0) *
+      (validatedData.data.amount / 100);
+    const fat =
+      (product.nutriments?.fat || 0) * (validatedData.data.amount / 100);
+    const carbs =
+      (product.nutriments?.carbohydrates || 0) *
+      (validatedData.data.amount / 100);
+    const protein =
+      (product.nutriments?.proteins || 0) * (validatedData.data.amount / 100);
+    const sugar =
+      (product.nutriments?.sugars || 0) * (validatedData.data.amount / 100);
+    const fiber =
+      (product.nutriments?.fiber || 0) * (validatedData.data.amount / 100);
+
+    addMealToDb(
+      Crypto.randomUUID(),
+      auth?.user?.id as string,
+      validatedData.data.selectedDate,
+      validatedData.data.mealType,
+      product.product_name_en || product.product_name,
+      validatedData.data.amount,
+      parseFloat(calories.toFixed(2)),
+      parseFloat(fat.toFixed(2)),
+      parseFloat(carbs.toFixed(2)),
+      parseFloat(sugar.toFixed(2)),
+      parseFloat(protein.toFixed(2)),
+      parseFloat(fiber.toFixed(2)),
+      db
+    );
+
+    Alert.alert("Success", "Successfully saved this meal");
+    queryClient.invalidateQueries({ queryKey: ["foodInfo"] });
+    setModalVisible(false);
   };
 
   return (
