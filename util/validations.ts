@@ -346,4 +346,25 @@ export const ProductInfoSchema = z.object({
   barcode: z.string(),
 });
 
+export const SaveModalSchema = z.object({
+  amount: z
+    .string()
+    .refine((val) => !isNaN(parseFloat(val)), {
+      message: "Amount must be a number",
+    })
+    .transform((val) => parseFloat(val))
+    .pipe(
+      z
+        .number()
+        .min(1, { message: "Amount must be at least 1 gram" })
+        .max(1000, {
+          message: "Amount must be less than 1000 grams",
+        })
+    ),
+  mealType: z.enum(["breakfast", "lunch", "dinner", "snack"]),
+  selectedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+    message: "Date must be in YYYY-MM-DD format",
+  }),
+});
+
 export type UserUpdateSchemaType = z.infer<typeof UserUpdateSchema>;

@@ -16,6 +16,7 @@ import * as Crypto from "expo-crypto";
 import SaveModal from "@/components/SaveModal";
 import Camera from "@/components/Camera";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import { SaveModalSchema } from "@/util/validations";
 
 export default function Scanner() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -81,43 +82,47 @@ export default function Scanner() {
   }
 
   const handleSave = () => {
-    if (product && amount) {
-      const parsedAmount = parseFloat(amount);
-      if (isNaN(parsedAmount) || parsedAmount <= 0) {
-        Alert.alert("Error", "Please enter a valid amount in grams", [
-          {
-            text: "Ok",
-          },
-        ]);
-        return;
-      }
+    const validatedData = SaveModalSchema.safeParse({
+      amount,
+      mealType,
+      selectedDate,
+    });
 
+    if (!validatedData.success) {
+      const errorMessages = validatedData.error.errors.map(
+        (error) => error.message
+      );
+      Alert.alert("Validation Error", errorMessages.join("\n"));
+      return;
+    }
+
+    if (product) {
       const calories =
         (product.nutriments?.["energy-kcal_100g"] || product.calories || 0) *
-        (parsedAmount / 100);
+        (validatedData.data.amount / 100);
       const fat =
         (product.nutriments?.fat_100g || product.fat || 0) *
-        (parsedAmount / 100);
+        (validatedData.data.amount / 100);
       const carbs =
         (product.nutriments?.carbohydrates_100g || product.carbohydrates || 0) *
-        (parsedAmount / 100);
+        (validatedData.data.amount / 100);
       const protein =
         (product.nutriments?.proteins_100g || product.protein || 0) *
-        (parsedAmount / 100);
+        (validatedData.data.amount / 100);
       const sugar =
         (product.nutriments?.sugars_100g || product.sugar || 0) *
-        (parsedAmount / 100);
+        (validatedData.data.amount / 100);
       const fiber =
         (product.nutriments?.fiber_100g || product.fiber || 0) *
-        (parsedAmount / 100);
+        (validatedData.data.amount / 100);
 
       addMealToDb(
         Crypto.randomUUID(),
         auth?.user?.id as string,
-        selectedDate,
-        mealType,
+        validatedData.data.selectedDate,
+        validatedData.data.mealType,
         product.product_name_en || product.product_name,
-        parsedAmount,
+        validatedData.data.amount,
         parseFloat(calories.toFixed(2)),
         parseFloat(fat.toFixed(2)),
         parseFloat(carbs.toFixed(2)),
