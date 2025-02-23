@@ -17,6 +17,7 @@ import { addMealToDb, addProductToDb } from "@/util/queries";
 import MealForm from "@/components/MealForm";
 import ProductForm from "@/components/ProductForm";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import { FoodInfoSchema, ProductInfoSchema } from "@/util/validations";
 
 const currentDate = new Date().toISOString().split("T")[0];
 
@@ -56,36 +57,31 @@ export default function AddMeal() {
 
   const saveMealMutation = useMutation({
     mutationFn: (foodInfo: FoodInfo) => {
-      const quantity =
-        foodInfo.quantity === "" ? 0 : parseFloat(foodInfo.quantity);
-      const actualQuantity = quantity / 100;
+      const validatedData = FoodInfoSchema.safeParse(foodInfo);
 
-      const calories =
-        foodInfo.calories === ""
-          ? 0
-          : parseFloat(foodInfo.calories) * actualQuantity;
-      const fat =
-        foodInfo.fat === "" ? 0 : parseFloat(foodInfo.fat) * actualQuantity;
-      const carbohydrates =
-        foodInfo.carbohydrates === ""
-          ? 0
-          : parseFloat(foodInfo.carbohydrates) * actualQuantity;
-      const sugar =
-        foodInfo.sugar === "" ? 0 : parseFloat(foodInfo.sugar) * actualQuantity;
-      const protein =
-        foodInfo.protein === ""
-          ? 0
-          : parseFloat(foodInfo.protein) * actualQuantity;
-      const fiber =
-        foodInfo.fiber === "" ? 0 : parseFloat(foodInfo.fiber) * actualQuantity;
+      if (!validatedData.success) {
+        const errorMessages = validatedData.error.errors.map(
+          (error) => error.message
+        );
+        throw new Error(errorMessages.join("\n"));
+      }
+
+      const quantity = validatedData.data.quantity / 100;
+
+      const calories = validatedData.data.calories * quantity;
+      const fat = validatedData.data.fat * quantity;
+      const carbohydrates = validatedData.data.carbohydrates * quantity;
+      const sugar = validatedData.data.sugar * quantity;
+      const protein = validatedData.data.protein * quantity;
+      const fiber = validatedData.data.fiber * quantity;
 
       return addMealToDb(
         Crypto.randomUUID(),
         auth?.user?.id as string,
-        foodInfo.date,
-        foodInfo.mealType,
-        foodInfo.foodName,
-        foodInfo.quantity === "" ? 0 : parseFloat(foodInfo.quantity),
+        validatedData.data.date,
+        validatedData.data.mealType,
+        validatedData.data.foodName,
+        validatedData.data.quantity,
         parseFloat(calories.toFixed(2)),
         parseFloat(fat.toFixed(2)),
         parseFloat(carbohydrates.toFixed(2)),
@@ -119,18 +115,25 @@ export default function AddMeal() {
 
   const saveProductMutation = useMutation({
     mutationFn: (productInfo: ProductInfo) => {
+      const validatedData = ProductInfoSchema.safeParse(productInfo);
+
+      if (!validatedData.success) {
+        const errorMessages = validatedData.error.errors.map(
+          (error) => error.message
+        );
+        throw new Error(errorMessages.join("\n"));
+      }
+
       return addProductToDb(
         Crypto.randomUUID(),
-        productInfo.productName,
-        productInfo.calories === "" ? 0 : parseFloat(productInfo.calories),
-        productInfo.fat === "" ? 0 : parseFloat(productInfo.fat),
-        productInfo.carbohydrates === ""
-          ? 0
-          : parseFloat(productInfo.carbohydrates),
-        productInfo.sugar === "" ? 0 : parseFloat(productInfo.sugar),
-        productInfo.protein === "" ? 0 : parseFloat(productInfo.protein),
-        productInfo.fiber === "" ? 0 : parseFloat(productInfo.fiber),
-        productInfo.barcode,
+        validatedData.data.productName,
+        validatedData.data.calories,
+        validatedData.data.fat,
+        validatedData.data.carbohydrates,
+        validatedData.data.sugar,
+        validatedData.data.protein,
+        validatedData.data.fiber,
+        validatedData.data.barcode,
         db
       );
     },
