@@ -17,6 +17,7 @@ import {
 import { useSQLiteContext } from "expo-sqlite";
 import { AuthContext } from "@/components/AuthContext";
 import { SaveModalSchema } from "@/util/validations";
+import Loading from "@/components/Loading";
 
 type OpenFoodFactsResponse = {
   products: OpenFoodFactsProduct[];
@@ -65,11 +66,7 @@ export default function Search() {
   });
 
   if (isLoading) {
-    return (
-      <View>
-        <Text>Loading...</Text>
-      </View>
-    );
+    return <Loading />;
   }
 
   if (isError) {

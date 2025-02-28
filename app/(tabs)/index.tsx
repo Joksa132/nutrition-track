@@ -1,4 +1,5 @@
 import { AuthContext } from "@/components/AuthContext";
+import Loading from "@/components/Loading";
 import { deleteMeal, fetchFoodInfo } from "@/util/queries";
 import { FoodInfo } from "@/util/types";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -159,7 +160,7 @@ export default function Index() {
       calorieTarget = Math.max(tdee * 0.85, 1600);
     } else if (goal === "weight gain") {
       calorieTarget = tdee * 1.15;
-    } 
+    }
 
     const proteinRange = [0.1, 0.35];
     const fatRange = [0.2, 0.35];
@@ -220,11 +221,7 @@ export default function Index() {
   };
 
   if (isLoading) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.loadingText}>Loading...</Text>
-      </View>
-    );
+    return <Loading />;
   }
 
   if (isError) {
@@ -424,10 +421,6 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: "white",
     fontWeight: "bold",
-  },
-  loadingText: {
-    textAlign: "center",
-    fontSize: 16,
   },
   errorText: {
     textAlign: "center",

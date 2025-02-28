@@ -17,6 +17,7 @@ import SaveModal from "@/components/SaveModal";
 import Camera from "@/components/Camera";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { SaveModalSchema } from "@/util/validations";
+import Loading from "@/components/Loading";
 
 export default function Scanner() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -165,7 +166,7 @@ export default function Scanner() {
 
       {scanned && (
         <View style={styles.overlay}>
-          {isLoading && <Text style={styles.overlayText}>Loading...</Text>}
+          {isLoading && <Loading />}
           {isError && (
             <Text style={styles.overlayText}>
               Error fetching product information.
