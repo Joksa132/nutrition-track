@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import { SQLiteDatabase, SQLiteProvider } from "expo-sqlite";
 import { StatusBar } from "react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const createDbIfNeeded = async (db: SQLiteDatabase) => {
   try {
@@ -61,17 +62,19 @@ export default function RootLayout() {
   return (
     <SQLiteProvider databaseName="nutrition-track.db" onInit={createDbIfNeeded}>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <StatusBar barStyle={"dark-content"} />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-            }}
-          >
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(tabs)" />
-          </Stack>
-        </AuthProvider>
+        <GestureHandlerRootView>
+          <AuthProvider>
+            <StatusBar barStyle={"dark-content"} />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+              }}
+            >
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="(tabs)" />
+            </Stack>
+          </AuthProvider>
+        </GestureHandlerRootView>
       </QueryClientProvider>
     </SQLiteProvider>
   );
