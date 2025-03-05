@@ -5,22 +5,23 @@ import {
   Button,
   TouchableHighlight,
   Alert,
+  Linking,
 } from "react-native";
 import { useContext, useState } from "react";
-import { useCameraPermissions } from "expo-camera";
 import { useSQLiteContext } from "expo-sqlite";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { addMealToDb, getProductFromDb } from "@/util/queries";
 import { AuthContext } from "@/components/AuthContext";
 import * as Crypto from "expo-crypto";
 import SaveModal from "@/components/SaveModal";
-import Camera from "@/components/Camera";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { SaveModalSchema } from "@/util/validations";
 import Loading from "@/components/Loading";
+import { useCameraPermission } from "react-native-vision-camera";
+import ScannerCamera from "@/components/Camera";
 
 export default function Scanner() {
-  const [permission, requestPermission] = useCameraPermissions();
+  const { hasPermission, requestPermission } = useCameraPermission();
   const [scanned, setScanned] = useState<boolean>(false);
   const [barcode, setBarcode] = useState<string | null>(null);
   const [amount, setAmount] = useState<string>("");
@@ -59,10 +60,24 @@ export default function Scanner() {
     enabled: !!barcode,
   });
 
-  const handleBarCodeScanned = ({ data }: { data: string }) => {
+  const handleBarcodeScanned = (barcodeData: string) => {
     setScanned(true);
-    setBarcode(data);
+    setBarcode(barcodeData);
     refetch();
+  };
+
+  const handlePermissionRequest = async () => {
+    const granted = await requestPermission();
+    if (!granted) {
+      Alert.alert(
+        "Permission Required",
+        "Camera access is required to scan barcodes. Please enable it in settings.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Open Settings", onPress: () => Linking.openSettings() },
+        ]
+      );
+    }
   };
 
   const resetScanner = () => {
@@ -71,13 +86,13 @@ export default function Scanner() {
     setAmount("");
   };
 
-  if (!permission?.granted) {
+  if (!hasPermission) {
     return (
       <View style={styles.container}>
         <Text style={styles.message}>
-          We need your permission to show the camera
+          We need your permission to access the camera
         </Text>
-        <Button onPress={requestPermission} title="grant permission" />
+        <Button title="Grant Camera Access" onPress={handlePermissionRequest} />
       </View>
     );
   }
@@ -158,10 +173,10 @@ export default function Scanner() {
 
   return (
     <View style={styles.container}>
-      <Camera
+      <ScannerCamera
         styles={styles}
         scanned={scanned}
-        handleBarCodeScanned={handleBarCodeScanned}
+        onBarcodeScanned={handleBarcodeScanned}
       />
 
       {scanned && (

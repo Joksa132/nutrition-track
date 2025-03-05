@@ -1,60 +1,95 @@
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { CameraType, CameraView } from "expo-camera";
-import { useState } from "react";
-import { TouchableOpacity, View, ViewStyle } from "react-native";
-
-type Styles = {
-  camera: ViewStyle;
-  buttonContainer: ViewStyle;
-  button: ViewStyle;
-};
+import { useCallback, useRef, useState } from "react";
+import { TouchableOpacity, View, StyleSheet } from "react-native";
+import {
+  Camera,
+  useCameraDevice,
+  useCodeScanner,
+  type CameraPosition,
+  type Point,
+} from "react-native-vision-camera";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { runOnJS } from "react-native-reanimated";
 
 type CameraProps = {
-  styles: Styles;
+  styles: any;
   scanned: boolean;
-  handleBarCodeScanned: ({ data }: { data: string }) => void;
+  onBarcodeScanned: (barcode: string) => void;
 };
 
-export default function Camera({
+export default function ScannerCamera({
   styles,
   scanned,
-  handleBarCodeScanned,
+  onBarcodeScanned,
 }: CameraProps) {
-  const [facing, setFacing] = useState<CameraType>("back");
-  const [flashlight, setFlashlight] = useState<boolean>(false);
+  const [torch, setTorch] = useState<"on" | "off">("off");
+  const [cameraPosition, setCameraPosition] = useState<CameraPosition>("back");
+  const device = useCameraDevice(cameraPosition);
+  const cameraRef = useRef<Camera>(null);
+
+  const codeScanner = useCodeScanner({
+    codeTypes: ["ean-13", "ean-8", "upc-a"],
+    onCodeScanned: (codes) => {
+      if (!scanned && codes.length > 0) {
+        let codeValue = codes[0].value;
+
+        if (codeValue) {
+          onBarcodeScanned(codeValue);
+        }
+      }
+    },
+  });
 
   const toggleCameraFacing = () => {
-    setFacing((current) => (current === "back" ? "front" : "back"));
+    setCameraPosition((current) => (current === "back" ? "front" : "back"));
   };
 
-  const toggleFlashlight = () => {
-    setFlashlight((prev) => !prev);
+  const toggleTorch = () => {
+    setTorch((current) => (current === "on" ? "off" : "on"));
   };
+
+  const handleFocus = useCallback(
+    (point: Point) => {
+      const camera = cameraRef.current;
+      if (!camera || !device?.supportsFocus) return;
+
+      camera.focus(point).catch(() => {});
+    },
+    [device?.supportsFocus]
+  );
+
+  const tapGesture = Gesture.Tap().onEnd(({ x, y }) => {
+    runOnJS(handleFocus)({ x, y });
+  });
+
+  if (!device) return null;
 
   return (
-    <CameraView
-      style={styles.camera}
-      facing={facing}
-      onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-      barcodeScannerSettings={{
-        barcodeTypes: ["upc_a", "ean13", "ean8"],
-      }}
-      enableTorch={flashlight}
-      autofocus="on"
-    >
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={toggleFlashlight}>
-          {flashlight ? (
-            <MaterialIcons name="flashlight-off" size={30} color="white" />
-          ) : (
-            <MaterialIcons name="flashlight-on" size={30} color="white" />
-          )}
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
-          <FontAwesome6 name="arrows-rotate" size={30} color="white" />
-        </TouchableOpacity>
+    <GestureDetector gesture={tapGesture}>
+      <View style={{ flex: 1 }}>
+        <Camera
+          ref={cameraRef}
+          style={StyleSheet.absoluteFill}
+          device={device}
+          isActive={!scanned}
+          codeScanner={codeScanner}
+          torch={torch}
+          resizeMode="cover"
+        />
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.button} onPress={toggleTorch}>
+            <MaterialIcons
+              name={torch === "on" ? "flashlight-off" : "flashlight-on"}
+              size={30}
+              color="white"
+            />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
+            <FontAwesome6 name="arrows-rotate" size={30} color="white" />
+          </TouchableOpacity>
+        </View>
       </View>
-    </CameraView>
+    </GestureDetector>
   );
 }
