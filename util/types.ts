@@ -55,3 +55,15 @@ export type OpenFoodFactsProduct = {
   };
   code: string;
 };
+
+export type ProductTemplate = {
+  id: string;
+  user_id: string;
+  productName: string;
+  calories: number;
+  fat: number;
+  carbohydrates: number;
+  sugar: number;
+  protein: number;
+  fiber: number;
+};
