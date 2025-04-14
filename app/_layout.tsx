@@ -49,6 +49,19 @@ const createDbIfNeeded = async (db: SQLiteDatabase) => {
         fiber REAL NOT NULL,
         barcode TEXT UNIQUE
       );
+
+      CREATE TABLE IF NOT EXISTS product_templates (
+        id TEXT PRIMARY KEY NOT NULL,
+        user_id TEXT NOT NULL,
+        product_name TEXT NOT NULL,
+        calories REAL NOT NULL,
+        fat REAL NOT NULL, 
+        carbohydrates REAL NOT NULL,
+        sugar REAL NOT NULL,
+        protein REAL NOT NULL,
+        fiber REAL NOT NULL,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
     `);
     console.log("Database initialized successfully.");
   } catch (error) {
