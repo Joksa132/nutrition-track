@@ -122,11 +122,76 @@ export const addProductToDb = async (
   }
 };
 
+export const addProductToTemplates = async (
+  id: string,
+  userId: string,
+  productName: string,
+  calories: number,
+  fat: number,
+  carbohydrates: number,
+  sugar: number,
+  protein: number,
+  fiber: number,
+  db: SQLiteDatabase
+) => {
+  try {
+    const result = await db.runAsync(
+      "INSERT INTO product_templates (id, user_id, product_name, calories, fat, carbohydrates, sugar, protein, fiber) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        id,
+        userId,
+        productName,
+        Math.round(calories * 100) / 100,
+        Math.round(fat * 100) / 100,
+        Math.round(carbohydrates * 100) / 100,
+        Math.round(sugar * 100) / 100,
+        Math.round(protein * 100) / 100,
+        Math.round(fiber * 100) / 100,
+      ]
+    );
+
+    return result;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 export const getProductFromDb = async (barcode: string, db: SQLiteDatabase) => {
   try {
     const result = await db.getFirstAsync(
       "SELECT * FROM product_info WHERE barcode = (?)",
       [barcode]
+    );
+
+    return result;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+};
+
+export const getAllTemplates = async (userId: string, db: SQLiteDatabase) => {
+  try {
+    const result = await db.getAllAsync(
+      "SELECT * FROM product_templates WHERE user_id = (?)",
+      [userId]
+    );
+
+    return result;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+};
+
+export const deleteTemplate = async (
+  templateId: string,
+  db: SQLiteDatabase
+) => {
+  try {
+    const result = await db.runAsync(
+      "DELETE FROM product_templates WHERE id = (?)",
+      [templateId]
     );
 
     return result;
