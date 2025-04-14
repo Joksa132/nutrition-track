@@ -13,7 +13,11 @@ import { FoodInfo, ProductInfo } from "@/util/types";
 import { useSQLiteContext } from "expo-sqlite";
 import * as Crypto from "expo-crypto";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addMealToDb, addProductToDb } from "@/util/queries";
+import {
+  addMealToDb,
+  addProductToTemplates,
+  addProductToDb,
+} from "@/util/queries";
 import MealForm from "@/components/MealForm";
 import ProductForm from "@/components/ProductForm";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
@@ -159,10 +163,42 @@ export default function AddMeal() {
     },
   });
 
+  const saveProductTemplateMutation = useMutation({
+    mutationFn: (productInfo: ProductInfo) => {
+      return addProductToTemplates(
+        Crypto.randomUUID(),
+        auth?.user?.id as string,
+        productInfo.productName,
+        parseFloat(productInfo.calories),
+        parseFloat(productInfo.fat),
+        parseFloat(productInfo.carbohydrates),
+        parseFloat(productInfo.sugar),
+        parseFloat(productInfo.protein),
+        parseFloat(productInfo.fiber),
+        db
+      );
+    },
+    onSuccess: () => {
+      Alert.alert("Success", "Meal template saved successfully.", [
+        { text: "Ok" },
+      ]);
+      queryClient.invalidateQueries({ queryKey: ["templateInfo"] });
+    },
+    onError: (error: any) => {
+      Alert.alert("Error", `Failed to save meal template: ${error}`, [
+        { text: "Ok" },
+      ]);
+    },
+  });
+
   const handleSave = () => {
     selectedForm === "meals"
       ? saveMealMutation.mutate(foodInfo)
       : saveProductMutation.mutate(productInfo);
+  };
+
+  const handleSaveTemplate = () => {
+    saveProductTemplateMutation.mutate(productInfo);
   };
 
   const showDatepicker = () => {
@@ -233,6 +269,20 @@ export default function AddMeal() {
             </Text>
           )}
         </TouchableHighlight>
+
+        {selectedForm === "products" && (
+          <TouchableHighlight
+            style={styles.saveTemplateButton}
+            onPress={handleSaveTemplate}
+            disabled={saveProductTemplateMutation.isPending}
+          >
+            <Text style={styles.buttonText}>
+              {saveProductTemplateMutation.isPending
+                ? "Saving Template..."
+                : "Save Template"}
+            </Text>
+          </TouchableHighlight>
+        )}
       </View>
     </ScrollView>
   );
@@ -310,5 +360,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "black",
     fontWeight: "bold",
+  },
+  saveTemplateButton: {
+    backgroundColor: "black",
+    borderRadius: 10,
+    padding: 15,
+    alignItems: "center",
+    marginTop: 10,
   },
 });
