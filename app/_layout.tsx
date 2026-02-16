@@ -4,6 +4,10 @@ import { SQLiteDatabase, SQLiteProvider } from "expo-sqlite";
 import { StatusBar } from "react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useEffect } from "react";
+import Constants from "expo-constants";
+import * as FileSystem from "expo-file-system";
+import AsyncStorage from "expo-sqlite/kv-store";
 
 const createDbIfNeeded = async (db: SQLiteDatabase) => {
   try {
@@ -69,8 +73,43 @@ const createDbIfNeeded = async (db: SQLiteDatabase) => {
   }
 };
 
+const APP_VERSION_KEY = "app_version";
+const DB_NAME = "nutrition-track.db";
+
+const backupDbIfVersionChanged = async () => {
+  try {
+    const currentVersion = Constants.expoConfig?.version || "unknown";
+    const storedVersion = await AsyncStorage.getItem(APP_VERSION_KEY);
+
+    if (storedVersion && storedVersion !== currentVersion) {
+      const dbPath = `${FileSystem.documentDirectory}SQLite/${DB_NAME}`;
+      const backupDir = `${FileSystem.documentDirectory}backups/`;
+      const backupPath = `${backupDir}nutrition-track-v${storedVersion}.db`;
+
+      const dirInfo = await FileSystem.getInfoAsync(backupDir);
+      if (!dirInfo.exists) {
+        await FileSystem.makeDirectoryAsync(backupDir, { intermediates: true });
+      }
+
+      const dbInfo = await FileSystem.getInfoAsync(dbPath);
+      if (dbInfo.exists) {
+        await FileSystem.copyAsync({ from: dbPath, to: backupPath });
+        console.log(`DB backed up: ${backupPath}`);
+      }
+    }
+
+    await AsyncStorage.setItem(APP_VERSION_KEY, currentVersion);
+  } catch (error) {
+    console.error("DB backup failed:", error);
+  }
+};
+
+const queryClient = new QueryClient();
+
 export default function RootLayout() {
-  const queryClient = new QueryClient();
+  useEffect(() => {
+    backupDbIfVersionChanged();
+  }, []);
 
   return (
     <SQLiteProvider databaseName="nutrition-track.db" onInit={createDbIfNeeded}>
