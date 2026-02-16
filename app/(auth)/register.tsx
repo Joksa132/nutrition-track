@@ -15,19 +15,21 @@ import * as Crypto from "expo-crypto";
 import { Picker } from "@react-native-picker/picker";
 import { UserRegister } from "@/util/types";
 import { UserRegisterSchema } from "@/util/validations";
+import { registerUser } from "@/util/queries";
 
 export default function Register() {
   const [userInfo, setUserInfo] = useState<UserRegister>({
     username: "",
     password: "",
     confirmPassword: "",
-    gender: "",
+    gender: "male",
     age: "",
     height: "",
     weight: "",
-    activityLevel: "",
-    goal: "",
+    activityLevel: "sedentary",
+    goal: "weight loss",
   });
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const router = useRouter();
   const db = useSQLiteContext();
 
@@ -43,6 +45,7 @@ export default function Register() {
         return;
       }
 
+      setIsLoading(true);
       const userId = Crypto.randomUUID();
 
       const hashedPassword = await Crypto.digestStringAsync(
@@ -50,19 +53,17 @@ export default function Register() {
         validatedData.data.password
       );
 
-      await db.runAsync(
-        "INSERT INTO users (id, username, password, gender, age, height, weight, activityLevel, goal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [
-          userId,
-          validatedData.data.username,
-          hashedPassword,
-          validatedData.data.gender,
-          validatedData.data.age,
-          validatedData.data.height,
-          validatedData.data.weight,
-          validatedData.data.activityLevel,
-          validatedData.data.goal,
-        ]
+      await registerUser(
+        userId,
+        validatedData.data.username,
+        hashedPassword,
+        validatedData.data.gender,
+        validatedData.data.age,
+        validatedData.data.height,
+        validatedData.data.weight,
+        validatedData.data.activityLevel,
+        validatedData.data.goal,
+        db
       );
       Alert.alert("Success", "Registration successful! Please login.");
       router.push("/(auth)/login");
@@ -73,6 +74,8 @@ export default function Register() {
           text: "Ok",
         },
       ]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -185,10 +188,13 @@ export default function Register() {
           </Picker>
         </View>
         <TouchableHighlight
-          style={styles.registerButton}
+          style={isLoading ? styles.registerButtonDisabled : styles.registerButton}
           onPress={handleRegister}
+          disabled={isLoading}
         >
-          <Text style={styles.registerButtonText}>Register</Text>
+          <Text style={styles.registerButtonText}>
+            {isLoading ? "Registering..." : "Register"}
+          </Text>
         </TouchableHighlight>
         <Link href="/login" asChild>
           <Text style={styles.link}>Already have an account? Login here.</Text>
@@ -220,6 +226,13 @@ const styles = StyleSheet.create({
   },
   registerButton: {
     backgroundColor: "black",
+    borderRadius: 10,
+    padding: 15,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  registerButtonDisabled: {
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     borderRadius: 10,
     padding: 15,
     alignItems: "center",

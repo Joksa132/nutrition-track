@@ -14,33 +14,30 @@ import {
 export default function Login() {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const router = useRouter();
   const auth = useContext(AuthContext);
 
   const handleLogin = async () => {
-    try {
-      const validatedData = UserLoginSchema.safeParse({ username, password });
+    const validatedData = UserLoginSchema.safeParse({ username, password });
 
-      if (!validatedData.success) {
-        const errorMessages = validatedData.error.errors.map(
-          (error) => error.message
-        );
-        Alert.alert("Validation Error", errorMessages.join("\n"));
-        return;
-      }
-
-      await auth?.login(
-        validatedData.data.username,
-        validatedData.data.password
+    if (!validatedData.success) {
+      const errorMessages = validatedData.error.errors.map(
+        (error) => error.message
       );
+      Alert.alert("Validation Error", errorMessages.join("\n"));
+      return;
+    }
+
+    setIsLoading(true);
+    const success = await auth?.login(
+      validatedData.data.username,
+      validatedData.data.password
+    );
+    setIsLoading(false);
+
+    if (success) {
       router.push("/(tabs)");
-    } catch (error) {
-      console.log(error);
-      Alert.alert("Error", "An error occurred during login", [
-        {
-          text: "Ok",
-        },
-      ]);
     }
   };
 
@@ -60,8 +57,14 @@ export default function Login() {
         value={password}
         onChangeText={setPassword}
       />
-      <TouchableHighlight style={styles.loginButton} onPress={handleLogin}>
-        <Text style={styles.loginButtonText}>Login</Text>
+      <TouchableHighlight
+        style={isLoading ? styles.loginButtonDisabled : styles.loginButton}
+        onPress={handleLogin}
+        disabled={isLoading}
+      >
+        <Text style={styles.loginButtonText}>
+          {isLoading ? "Logging in..." : "Login"}
+        </Text>
       </TouchableHighlight>
       <Link href="/register" asChild>
         <Text style={styles.link}>Don't have an account? Register here.</Text>
@@ -92,6 +95,13 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     backgroundColor: "black",
+    borderRadius: 10,
+    padding: 15,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  loginButtonDisabled: {
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     borderRadius: 10,
     padding: 15,
     alignItems: "center",

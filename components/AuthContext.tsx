@@ -8,7 +8,7 @@ import { UserInfo } from "@/util/types";
 type AuthContextType = {
   user: UserInfo | null;
   setUser: React.Dispatch<React.SetStateAction<UserInfo | null>>;
-  login: (username: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
 };
@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     checkLoggedInUser();
   }, []);
 
-  const login = async (username: string, password: string) => {
+  const login = async (username: string, password: string): Promise<boolean> => {
     try {
       const hashedPassword = await Crypto.digestStringAsync(
         Crypto.CryptoDigestAlgorithm.SHA256,
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       );
 
       const user: UserInfo | null = await db.getFirstAsync(
-        "SELECT id, username, password, gender, age, height, weight, activityLevel, goal FROM users WHERE username = ?",
+        "SELECT id, username, gender, age, height, weight, activityLevel, goal, password FROM users WHERE username = ?",
         [username]
       );
 
@@ -68,28 +68,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               goal: user.goal,
             })
           );
+          return true;
         } else {
-          Alert.alert("Error", "Incorrect password. Please try again.", [
-            {
-              text: "Ok",
-            },
-          ]);
-          throw new Error("Invalid credentials");
+          Alert.alert("Error", "Incorrect password. Please try again.");
+          return false;
         }
       } else {
         Alert.alert(
           "Error",
-          "User doesn't exist. Please try again or create an account.",
-          [
-            {
-              text: "Ok",
-            },
-          ]
+          "User doesn't exist. Please try again or create an account."
         );
-        throw new Error("Invalid credentials");
+        return false;
       }
     } catch (error) {
       console.log("Login failed:", error);
+      Alert.alert("Error", "An error occurred during login.");
+      return false;
     }
   };
 
