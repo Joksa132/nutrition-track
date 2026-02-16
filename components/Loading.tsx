@@ -1,10 +1,14 @@
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
-export default function Loading() {
+type LoadingProps = {
+  message?: string;
+};
+
+export default function Loading({ message = "Loading..." }: LoadingProps) {
   return (
     <View style={styles.loadingContainer}>
       <ActivityIndicator size="large" color="black" />
-      <Text style={styles.loadingText}>Searching...</Text>
+      <Text style={styles.loadingText}>{message}</Text>
     </View>
   );
 }
