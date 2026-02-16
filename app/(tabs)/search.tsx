@@ -30,7 +30,7 @@ export default function Search() {
     new Date().toISOString().split("T")[0]
   );
   const [amount, setAmount] = useState<string>("");
-  const [mealType, setMealType] = useState<string>("");
+  const [mealType, setMealType] = useState<string>("breakfast");
   const [selectedProduct, setSelectedProduct] =
     useState<OpenFoodFactsProduct | null>(null);
   const db = useSQLiteContext();
@@ -66,7 +66,7 @@ export default function Search() {
   });
 
   if (isLoading) {
-    return <Loading />;
+    return <Loading message="Searching..." />;
   }
 
   if (isError) {
@@ -109,19 +109,19 @@ export default function Search() {
     }
 
     const calories =
-      (product.nutriments?.["energy-kcal"] || 0) *
+      (product.nutriments?.["energy-kcal_100g"] || 0) *
       (validatedData.data.amount / 100);
     const fat =
-      (product.nutriments?.fat || 0) * (validatedData.data.amount / 100);
+      (product.nutriments?.fat_100g || 0) * (validatedData.data.amount / 100);
     const carbs =
-      (product.nutriments?.carbohydrates || 0) *
+      (product.nutriments?.carbohydrates_100g || 0) *
       (validatedData.data.amount / 100);
     const protein =
-      (product.nutriments?.proteins || 0) * (validatedData.data.amount / 100);
+      (product.nutriments?.proteins_100g || 0) * (validatedData.data.amount / 100);
     const sugar =
-      (product.nutriments?.sugars || 0) * (validatedData.data.amount / 100);
+      (product.nutriments?.sugars_100g || 0) * (validatedData.data.amount / 100);
     const fiber =
-      (product.nutriments?.fiber || 0) * (validatedData.data.amount / 100);
+      (product.nutriments?.fiber_100g || 0) * (validatedData.data.amount / 100);
 
     addMealToDb(
       Crypto.randomUUID(),
@@ -153,7 +153,11 @@ export default function Search() {
         value={searchTerm}
         onChangeText={setSearchTerm}
       />
-      <TouchableHighlight style={styles.buttonContainer} onPress={handleSearch}>
+      <TouchableHighlight
+        style={!searchTerm.trim() ? styles.buttonDisabled : styles.buttonContainer}
+        onPress={handleSearch}
+        disabled={!searchTerm.trim()}
+      >
         <Text style={styles.buttonText}>Search</Text>
       </TouchableHighlight>
 
@@ -169,22 +173,22 @@ export default function Search() {
               </Text>
               <View style={styles.itemRow}>
                 <Text>
-                  Calories: {result.nutriments["energy-kcal"]?.toFixed(2) || 0}
+                  Calories: {result.nutriments["energy-kcal_100g"]?.toFixed(2) || 0}
                   kcal
                 </Text>
-                <Text>Fat: {result.nutriments.fat?.toFixed(2) || 0}g</Text>
+                <Text>Fat: {result.nutriments.fat_100g?.toFixed(2) || 0}g</Text>
               </View>
               <View style={styles.itemRow}>
                 <Text>
-                  Carbs: {result.nutriments.carbohydrates?.toFixed(2) || 0}g
+                  Carbs: {result.nutriments.carbohydrates_100g?.toFixed(2) || 0}g
                 </Text>
-                <Text>Sugar: {result.nutriments.sugars?.toFixed(2) || 0}g</Text>
+                <Text>Sugar: {result.nutriments.sugars_100g?.toFixed(2) || 0}g</Text>
               </View>
               <View style={styles.itemRow}>
                 <Text>
-                  Protein: {result.nutriments.proteins?.toFixed(2) || 0}g
+                  Protein: {result.nutriments.proteins_100g?.toFixed(2) || 0}g
                 </Text>
-                <Text>Fiber: {result.nutriments.fiber?.toFixed(2) || 0}g</Text>
+                <Text>Fiber: {result.nutriments.fiber_100g?.toFixed(2) || 0}g</Text>
               </View>
               <TouchableHighlight
                 style={styles.buttonContainer}
@@ -240,6 +244,13 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     backgroundColor: "black",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  buttonDisabled: {
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     padding: 10,
     borderRadius: 5,
     alignItems: "center",
