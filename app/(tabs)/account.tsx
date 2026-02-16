@@ -8,6 +8,7 @@ import {
   TouchableHighlight,
   ScrollView,
 } from "react-native";
+import * as Updates from "expo-updates";
 import EditUserInfoModal from "@/components/EditUserInfoModal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addMealToDb, deleteTemplate, getAllTemplates } from "@/util/queries";
@@ -60,7 +61,7 @@ export default function Account() {
       queryClient.invalidateQueries({ queryKey: ["templateInfo"] });
       Alert.alert("Success", "Template deleted successfully.");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("Error deleting template:", error);
       Alert.alert("Error", "Failed to delete template.");
     },
@@ -83,6 +84,33 @@ export default function Account() {
       ],
       { cancelable: true }
     );
+  };
+
+  const [isCheckingUpdates, setIsCheckingUpdates] = useState<boolean>(false);
+
+  const handleCheckForUpdates = async () => {
+    setIsCheckingUpdates(true);
+    try {
+      const update = await Updates.checkForUpdateAsync();
+      if (update.isAvailable) {
+        Alert.alert("Update Available", "Downloading update...");
+        await Updates.fetchUpdateAsync();
+        Alert.alert(
+          "Update Ready",
+          "The app will restart to apply the update.",
+          [{ text: "Restart", onPress: () => Updates.reloadAsync() }]
+        );
+      } else {
+        Alert.alert("Up to Date", "You are running the latest version.");
+      }
+    } catch (error) {
+      Alert.alert(
+        "Update Check Failed",
+        "Could not check for updates. Make sure you are using a production build."
+      );
+    } finally {
+      setIsCheckingUpdates(false);
+    }
   };
 
   const handleEditInfo = () => {
@@ -220,6 +248,16 @@ export default function Account() {
 
         <TouchableHighlight style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutButtonText}>Logout</Text>
+        </TouchableHighlight>
+
+        <TouchableHighlight
+          style={styles.logoutButton}
+          onPress={handleCheckForUpdates}
+          disabled={isCheckingUpdates}
+        >
+          <Text style={styles.logoutButtonText}>
+            {isCheckingUpdates ? "Checking..." : "Check for Updates"}
+          </Text>
         </TouchableHighlight>
 
         <View style={(styles.section, { marginTop: 10 })}>
