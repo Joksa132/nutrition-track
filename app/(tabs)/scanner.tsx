@@ -9,8 +9,8 @@ import {
 } from "react-native";
 import { useContext, useState } from "react";
 import { useSQLiteContext } from "expo-sqlite";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { addMealToDb, getProductFromDb } from "@/util/queries";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { addMealToDb, addProductToTemplates, getProductFromDb } from "@/util/queries";
 import { AuthContext } from "@/components/AuthContext";
 import * as Crypto from "expo-crypto";
 import SaveModal from "@/components/SaveModal";
@@ -25,7 +25,7 @@ export default function Scanner() {
   const [scanned, setScanned] = useState<boolean>(false);
   const [barcode, setBarcode] = useState<string | null>(null);
   const [amount, setAmount] = useState<string>("");
-  const [mealType, setMealType] = useState<string>("");
+  const [mealType, setMealType] = useState<string>("breakfast");
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
@@ -155,6 +155,37 @@ export default function Scanner() {
     }
   };
 
+  const handleSaveAsTemplate = () => {
+    if (!product) return;
+
+    const productName = product.product_name_en || product.product_name;
+    const calories = product.nutriments?.["energy-kcal_100g"] || product.calories || 0;
+    const fat = product.nutriments?.fat_100g || product.fat || 0;
+    const carbs = product.nutriments?.carbohydrates_100g || product.carbohydrates || 0;
+    const sugar = product.nutriments?.sugars_100g || product.sugar || 0;
+    const protein = product.nutriments?.proteins_100g || product.protein || 0;
+    const fiber = product.nutriments?.fiber_100g || product.fiber || 0;
+
+    addProductToTemplates(
+      Crypto.randomUUID(),
+      auth?.user?.id as string,
+      productName,
+      calories,
+      fat,
+      carbs,
+      sugar,
+      protein,
+      fiber,
+      db
+    ).then(() => {
+      Alert.alert("Success", "Product saved as template.");
+      queryClient.invalidateQueries({ queryKey: ["templateInfo"] });
+    }).catch((error) => {
+      console.log("Error saving template:", error);
+      Alert.alert("Error", "Failed to save template.");
+    });
+  };
+
   const openAmountModal = () => {
     setModalVisible(true);
   };
@@ -237,9 +268,20 @@ export default function Scanner() {
                   : styles.scanAgainButton
               }
               onPress={openAmountModal}
-              disabled={product === null ? true : false}
+              disabled={product === null}
             >
               <Text style={styles.scanAgainText}>Save</Text>
+            </TouchableHighlight>
+            <TouchableHighlight
+              style={
+                product === null
+                  ? styles.buttonDisabled
+                  : styles.scanAgainButton
+              }
+              onPress={handleSaveAsTemplate}
+              disabled={product === null}
+            >
+              <Text style={styles.scanAgainText}>Template</Text>
             </TouchableHighlight>
           </View>
         </View>
