@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSQLiteContext } from "expo-sqlite";
 import {
   Alert,
@@ -44,6 +44,23 @@ export default function ExportUserInfoModal({
     goal: user.goal,
   });
 
+  useEffect(() => {
+    if (visible && user) {
+      setUserInfo({
+        id: user.id,
+        username: user.username,
+        password: "",
+        confirmPassword: "",
+        gender: user.gender,
+        age: user.age,
+        height: user.height,
+        weight: user.weight,
+        activityLevel: user.activityLevel,
+        goal: user.goal,
+      });
+    }
+  }, [visible, user]);
+
   const handleUpdate = async (validatedData: UserUpdateSchemaType) => {
     try {
       let hashedPassword = "";
@@ -54,7 +71,7 @@ export default function ExportUserInfoModal({
         );
       }
 
-      updateUserInfo(userInfo, hashedPassword, db);
+      await updateUserInfo(userInfo, hashedPassword, db);
     } catch (error) {
       throw error;
     }
