@@ -1,12 +1,13 @@
 import { AuthContext } from "@/components/AuthContext";
 import Loading from "@/components/Loading";
-import { deleteMeal, fetchFoodInfo } from "@/util/queries";
-import { FoodInfo } from "@/util/types";
+import EditMealModal from "@/components/EditMealModal";
+import { deleteMeal, fetchFoodInfo, updateMeal } from "@/util/queries";
+import { FoodInfo, FoodInfoFull } from "@/util/types";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSQLiteContext } from "expo-sqlite";
-import { useContext, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 import {
   Text,
   View,
@@ -14,6 +15,7 @@ import {
   TouchableHighlight,
   Alert,
   ScrollView,
+  RefreshControl,
 } from "react-native";
 
 export default function Index() {
@@ -23,6 +25,15 @@ export default function Index() {
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
+  const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
+  const [selectedMeal, setSelectedMeal] = useState<FoodInfoFull | null>(null);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await queryClient.invalidateQueries({ queryKey: ["foodInfo"] });
+    setRefreshing(false);
+  }, [queryClient]);
 
   const {
     data: foodInfo,
@@ -79,6 +90,37 @@ export default function Index() {
       ]);
     },
   });
+
+  const { mutate: editFoodInfo } = useMutation({
+    mutationFn: (meal: FoodInfoFull) =>
+      updateMeal(
+        meal.id,
+        meal.foodName,
+        meal.mealType,
+        parseFloat(String(meal.quantity)),
+        parseFloat(String(meal.calories)),
+        parseFloat(String(meal.fat)),
+        parseFloat(String(meal.carbohydrates)),
+        parseFloat(String(meal.sugar)),
+        parseFloat(String(meal.protein)),
+        parseFloat(String(meal.fiber)),
+        meal.date,
+        db
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["foodInfo"] });
+      Alert.alert("Success", "Meal updated successfully.");
+    },
+    onError: (error) => {
+      console.log("Error updating meal:", error);
+      Alert.alert("Error", "Error updating meal.");
+    },
+  });
+
+  const handleEdit = (meal: FoodInfoFull) => {
+    setSelectedMeal(meal);
+    setEditModalVisible(true);
+  };
 
   const handleDelete = (mealId: string) => {
     Alert.alert(
@@ -236,6 +278,9 @@ export default function Index() {
     <ScrollView
       contentContainerStyle={{ flexGrow: 1 }}
       keyboardShouldPersistTaps="handled"
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
     >
       <View style={styles.statsContainer}>
         <Text style={styles.statsTitle}>
@@ -343,24 +388,54 @@ export default function Index() {
       </View>
 
       <View style={styles.mealsContainer}>
-        {foodInfo?.map((meal) => (
-          <View key={meal.id} style={styles.mealItem}>
-            <Text style={styles.mealName}>{meal.foodName}</Text>
-            <Text style={{ marginBottom: 8 }}>Date: {meal.date}</Text>
-            <Text style={{ marginBottom: 8 }}>Meal: {meal.mealType}</Text>
-            <Text style={{ marginBottom: 8 }}>Quantity: {meal.quantity} g</Text>
-            <Text style={{ marginBottom: 8 }}>
-              Calories: {meal.calories} kcal
+        {!foodInfo || foodInfo.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>
+              No meals logged for this date.
             </Text>
-            <TouchableHighlight
-              style={styles.deleteButton}
-              onPress={() => handleDelete(meal.id)}
-            >
-              <Text style={styles.deleteButtonText}>Delete</Text>
-            </TouchableHighlight>
           </View>
-        ))}
+        ) : (
+          foodInfo.map((meal) => (
+            <View key={meal.id} style={styles.mealItem}>
+              <Text style={styles.mealName}>{meal.foodName}</Text>
+              <Text style={styles.mealDetail}>Date: {meal.date}</Text>
+              <Text style={styles.mealDetail}>Meal: {meal.mealType}</Text>
+              <Text style={styles.mealDetail}>Quantity: {meal.quantity} g</Text>
+              <Text style={styles.mealDetail}>
+                Calories: {meal.calories} kcal
+              </Text>
+              <Text style={styles.mealDetail}>Fat: {meal.fat} g</Text>
+              <Text style={styles.mealDetail}>
+                Carbs: {meal.carbohydrates} g
+              </Text>
+              <Text style={styles.mealDetail}>Sugar: {meal.sugar} g</Text>
+              <Text style={styles.mealDetail}>Protein: {meal.protein} g</Text>
+              <Text style={styles.mealDetail}>Fiber: {meal.fiber} g</Text>
+              <View style={styles.mealButtons}>
+                <TouchableHighlight
+                  style={styles.editButton}
+                  onPress={() => handleEdit(meal)}
+                >
+                  <Text style={styles.deleteButtonText}>Edit</Text>
+                </TouchableHighlight>
+                <TouchableHighlight
+                  style={styles.deleteButton}
+                  onPress={() => handleDelete(meal.id)}
+                >
+                  <Text style={styles.deleteButtonText}>Delete</Text>
+                </TouchableHighlight>
+              </View>
+            </View>
+          ))
+        )}
       </View>
+
+      <EditMealModal
+        visible={editModalVisible}
+        setVisible={setEditModalVisible}
+        meal={selectedMeal}
+        onSave={(meal) => editFoodInfo(meal)}
+      />
     </ScrollView>
   );
 }
@@ -411,16 +486,40 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 8,
   },
+  mealDetail: {
+    marginBottom: 4,
+    fontSize: 13,
+  },
+  mealButtons: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 10,
+  },
+  editButton: {
+    backgroundColor: "black",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    flex: 1,
+  },
   deleteButton: {
     backgroundColor: "black",
     padding: 10,
     borderRadius: 5,
     alignItems: "center",
-    marginTop: 10,
+    flex: 1,
   },
   deleteButtonText: {
     color: "white",
     fontWeight: "bold",
+  },
+  emptyState: {
+    padding: 20,
+    alignItems: "center",
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: "rgba(0, 0, 0, 0.5)",
   },
   errorText: {
     textAlign: "center",
