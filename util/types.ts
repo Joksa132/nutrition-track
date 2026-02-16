@@ -47,11 +47,17 @@ export type OpenFoodFactsProduct = {
   product_name_en: string;
   nutriments: {
     "energy-kcal"?: number;
+    "energy-kcal_100g"?: number;
     fat?: number;
+    fat_100g?: number;
     carbohydrates?: number;
+    carbohydrates_100g?: number;
     sugars?: number;
+    sugars_100g?: number;
     proteins?: number;
+    proteins_100g?: number;
     fiber?: number;
+    fiber_100g?: number;
   };
   code: string;
 };
@@ -59,7 +65,7 @@ export type OpenFoodFactsProduct = {
 export type ProductTemplate = {
   id: string;
   user_id: string;
-  productName: string;
+  product_name: string;
   calories: number;
   fat: number;
   carbohydrates: number;
