@@ -1,50 +1,28 @@
-# Welcome to your Expo app 👋
+# Nutrition-Track
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Description
 
-## Get started
+Nutrition-Track is a mobile application built with React Native and Expo, designed to allow users to monitor their daily nutritional intake. 
 
-1. Install dependencies
+## Features
 
-   ```bash
-   npm install
-   ```
+- **User Authentication:** Create and log in to accounts, ensuring personalized data tracking.
+- **Personalized Profile Setup:** Users can input and manage personal information such as weight, height, age, and activity level to inform nutritional calculations.
+- **Daily Nutrition Overview:** The home screen displays a summary of daily intake for key nutrients including calories, fat, carbohydrates, sugar, protein, and fiber.
+- **Dynamic Nutritional Recommendations:** Based on individual user profiles, the app calculates and displays recommended daily allowances for each nutrient.
+- **Date Navigation:** Easily view nutritional summaries for past days by changing the date on the home screen.
+- **Barcode Scanner:** Utilize the device's camera to scan product barcodes, quickly adding food items to daily logs.
+- **Product Search:** Search for a vast array of food products using the OpenFoodFacts API.
+- **Manual Food Entry:** Manually add meals or individual food items, including details such as food name, quantity, and specific nutritional values (calories, fat, carbohydrates, sugar, protein, fiber).
+- **Meal Templates:** Create and save custom meal templates for recurring meals, accessible for quick logging.
+- **Account Management:** The account tab provides access to saved meal templates and allows for editing personal information.
 
-2. Start the app
+## Technologies Used
 
-   ```bash
-    npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- **[React Native](https://reactnative.dev/)**
+- **[Expo](https://expo.dev/)**
+- **[SQLite](https://www.sqlite.org/)**
+- **[React Native Vision Camera](https://react-native-vision-camera.com/)**
+- **[TanStack Query](https://tanstack.com/query/latest)**
+- **[Zod](https://zod.dev/)**
+- **[OpenFoodFacts API](https://world.openfoodfacts.org/)**
