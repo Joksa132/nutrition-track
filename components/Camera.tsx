@@ -13,7 +13,7 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { runOnJS } from "react-native-reanimated";
 
 type CameraProps = {
-  styles: any;
+  styles: Record<string, object>;
   scanned: boolean;
   onBarcodeScanned: (barcode: string) => void;
 };

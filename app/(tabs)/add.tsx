@@ -184,8 +184,8 @@ export default function AddMeal() {
       ]);
       queryClient.invalidateQueries({ queryKey: ["templateInfo"] });
     },
-    onError: (error: any) => {
-      Alert.alert("Error", `Failed to save meal template: ${error}`, [
+    onError: (error: Error) => {
+      Alert.alert("Error", `Failed to save meal template: ${error.message}`, [
         { text: "Ok" },
       ]);
     },
