@@ -219,20 +219,15 @@ export default function AddMeal() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.container}>
-        <View style={styles.pickerContainer}>
+        <Text style={styles.title}>
+          Add {selectedForm === "meals" ? "Meals" : "Products"}
+        </Text>
+
+        <View style={styles.pickerCard}>
           <Picker selectedValue={selectedForm} onValueChange={setSelectedForm}>
             <Picker.Item label="Meals" value="meals" />
             <Picker.Item label="Products" value="products" />
           </Picker>
-        </View>
-
-        <View style={styles.header}>
-          <Text style={styles.title}>
-            Add {selectedForm === "meals" ? "Meals" : "Products"} Manually
-          </Text>
-          <Text style={styles.subText}>
-            Enter {selectedForm === "meals" ? "meal" : "product"} details below.
-          </Text>
         </View>
 
         {selectedForm === "meals" ? (
@@ -250,38 +245,42 @@ export default function AddMeal() {
           />
         )}
 
-        <TouchableHighlight
-          style={styles.buttonContainer}
-          onPress={handleSave}
-          disabled={
-            selectedForm === "meals"
-              ? saveMealMutation.isPending
-              : saveProductMutation.isPending
-          }
-        >
-          {selectedForm === "meals" ? (
-            <Text style={styles.buttonText}>
+        {selectedForm === "meals" ? (
+          <TouchableHighlight
+            style={styles.primaryButton}
+            underlayColor="#333"
+            onPress={handleSave}
+            disabled={saveMealMutation.isPending}
+          >
+            <Text style={styles.primaryButtonText}>
               {saveMealMutation.isPending ? "Saving..." : "Save Meal"}
             </Text>
-          ) : (
-            <Text style={styles.buttonText}>
-              {saveProductMutation.isPending ? "Saving..." : "Save Product"}
-            </Text>
-          )}
-        </TouchableHighlight>
-
-        {selectedForm === "products" && (
-          <TouchableHighlight
-            style={styles.saveTemplateButton}
-            onPress={handleSaveTemplate}
-            disabled={saveProductTemplateMutation.isPending}
-          >
-            <Text style={styles.buttonText}>
-              {saveProductTemplateMutation.isPending
-                ? "Saving Template..."
-                : "Save Template"}
-            </Text>
           </TouchableHighlight>
+        ) : (
+          <View style={styles.buttonRow}>
+            <TouchableHighlight
+              style={styles.primaryButtonFlex}
+              underlayColor="#333"
+              onPress={handleSave}
+              disabled={saveProductMutation.isPending}
+            >
+              <Text style={styles.primaryButtonText}>
+                {saveProductMutation.isPending ? "Saving..." : "Save Product"}
+              </Text>
+            </TouchableHighlight>
+            <TouchableHighlight
+              style={styles.outlineButtonFlex}
+              underlayColor="#f0f0f0"
+              onPress={handleSaveTemplate}
+              disabled={saveProductTemplateMutation.isPending}
+            >
+              <Text style={styles.outlineButtonText}>
+                {saveProductTemplateMutation.isPending
+                  ? "Saving..."
+                  : "Save Template"}
+              </Text>
+            </TouchableHighlight>
+          </View>
         )}
       </View>
     </ScrollView>
@@ -293,17 +292,22 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  header: {
-    marginBottom: 10,
-  },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
+    marginBottom: 12,
   },
-  subText: {
-    fontSize: 16,
-    color: "rgba(0, 0, 0, 0.7)",
-    marginTop: 5,
+  pickerCard: {
+    backgroundColor: "white",
+    borderRadius: 10,
+    marginBottom: 12,
+    height: 44,
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 1,
   },
   sectionContainer: {},
   section: {
@@ -337,11 +341,41 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: "center",
   },
-  buttonContainer: {
+  primaryButton: {
     backgroundColor: "black",
     borderRadius: 10,
     padding: 15,
     alignItems: "center",
+  },
+  primaryButtonFlex: {
+    flex: 1,
+    backgroundColor: "black",
+    borderRadius: 10,
+    padding: 15,
+    alignItems: "center",
+  },
+  primaryButtonText: {
+    fontSize: 16,
+    color: "white",
+    fontWeight: "bold",
+  },
+  outlineButtonFlex: {
+    flex: 1,
+    backgroundColor: "white",
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "black",
+    padding: 15,
+    alignItems: "center",
+  },
+  outlineButtonText: {
+    fontSize: 16,
+    color: "black",
+    fontWeight: "bold",
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: 10,
   },
   buttonText: {
     fontSize: 18,
@@ -360,12 +394,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "black",
     fontWeight: "bold",
-  },
-  saveTemplateButton: {
-    backgroundColor: "black",
-    borderRadius: 10,
-    padding: 15,
-    alignItems: "center",
-    marginTop: 10,
   },
 });

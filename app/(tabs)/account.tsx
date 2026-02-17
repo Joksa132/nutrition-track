@@ -7,7 +7,9 @@ import {
   StyleSheet,
   TouchableHighlight,
   ScrollView,
+  Pressable,
 } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Updates from "expo-updates";
 import EditUserInfoModal from "@/components/EditUserInfoModal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,14 +26,19 @@ export default function Account() {
   const [templateModalVisible, setTemplateModalVisible] =
     useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
   const [amount, setAmount] = useState<string>("");
   const [mealType, setMealType] = useState<string>("breakfast");
   const [selectedTemplate, setSelectedTemplate] =
     useState<ProductTemplate | null>(null);
+  const [expandedTemplates, setExpandedTemplates] = useState<Set<string>>(
+    new Set(),
+  );
   const db = useSQLiteContext();
   const queryClient = useQueryClient();
+
+  const [isCheckingUpdates, setIsCheckingUpdates] = useState<boolean>(false);
 
   const {
     data: productTemplates,
@@ -67,6 +74,18 @@ export default function Account() {
     },
   });
 
+  const toggleTemplate = (id: string) => {
+    setExpandedTemplates((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
   const handleLogout = () => {
     Alert.alert(
       "Logout",
@@ -82,11 +101,9 @@ export default function Account() {
           style: "destructive",
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
-
-  const [isCheckingUpdates, setIsCheckingUpdates] = useState<boolean>(false);
 
   const handleCheckForUpdates = async () => {
     setIsCheckingUpdates(true);
@@ -98,7 +115,7 @@ export default function Account() {
         Alert.alert(
           "Update Ready",
           "The app will restart to apply the update.",
-          [{ text: "Restart", onPress: () => Updates.reloadAsync() }]
+          [{ text: "Restart", onPress: () => Updates.reloadAsync() }],
         );
       } else {
         Alert.alert("Up to Date", "You are running the latest version.");
@@ -106,7 +123,7 @@ export default function Account() {
     } catch (error) {
       Alert.alert(
         "Update Check Failed",
-        "Could not check for updates. Make sure you are using a production build."
+        "Could not check for updates. Make sure you are using a production build.",
       );
     } finally {
       setIsCheckingUpdates(false);
@@ -139,7 +156,7 @@ export default function Account() {
           },
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
 
@@ -183,11 +200,11 @@ export default function Account() {
         selectedTemplate.sugar * (amountValue / 100),
         selectedTemplate.protein * (amountValue / 100),
         selectedTemplate.fiber * (amountValue / 100),
-        db
+        db,
       );
       Alert.alert(
         "Success",
-        `Added ${selectedTemplate.product_name} to today's meal list.`
+        `Added ${selectedTemplate.product_name} to today's meal list.`,
       );
       setTemplateModalVisible(false);
       queryClient.invalidateQueries({ queryKey: ["foodInfo"] });
@@ -195,9 +212,14 @@ export default function Account() {
       console.error("Error adding meal to database:", error);
       Alert.alert(
         "Error",
-        `Failed to add ${selectedTemplate.product_name} to today's meal list.`
+        `Failed to add ${selectedTemplate.product_name} to today's meal list.`,
       );
     }
+  };
+
+  const formatGoal = (goal: string | undefined) => {
+    if (!goal) return "";
+    return goal.charAt(0).toUpperCase() + goal.slice(1);
   };
 
   return (
@@ -206,120 +228,163 @@ export default function Account() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.welcomeText}>
-            Welcome, {auth?.user?.username}!
+        <View style={styles.profileBanner}>
+          <Text style={styles.profileUsername}>{auth?.user?.username}</Text>
+          {auth?.user?.goal && (
+            <View style={styles.goalBadge}>
+              <Text style={styles.goalBadgeText}>
+                {formatGoal(auth.user.goal)}
+              </Text>
+            </View>
+          )}
+          <Text style={styles.profileStatsLine}>
+            Age {auth?.user?.age} · {auth?.user?.height}cm ·{" "}
+            {auth?.user?.weight}kg · {auth?.user?.activityLevel} active
           </Text>
-          <Text style={styles.subText}>Manage your account settings here.</Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account Information</Text>
-          <View style={styles.infoContainer}>
-            <Text style={styles.infoLabel}>Username:</Text>
-            <Text style={styles.infoValue}>{auth?.user?.username}</Text>
-          </View>
-          <View style={styles.infoContainer}>
-            <Text style={styles.infoLabel}>Age:</Text>
-            <Text style={styles.infoValue}>{auth?.user?.age}</Text>
-          </View>
-          <View style={styles.infoContainer}>
-            <Text style={styles.infoLabel}>Height:</Text>
-            <Text style={styles.infoValue}>{auth?.user?.height} cm</Text>
-          </View>
-          <View style={styles.infoContainer}>
-            <Text style={styles.infoLabel}>Weight:</Text>
-            <Text style={styles.infoValue}>{auth?.user?.weight} kg</Text>
-          </View>
-          <View style={styles.infoContainer}>
-            <Text style={styles.infoLabel}>Activity level:</Text>
-            <Text style={styles.infoValue}>
-              {auth?.user?.activityLevel} active
-            </Text>
-          </View>
+        <View style={styles.buttonRow}>
+          <TouchableHighlight
+            style={styles.primaryButton}
+            underlayColor="#333"
+            onPress={handleEditInfo}
+          >
+            <Text style={styles.primaryButtonText}>Edit Info</Text>
+          </TouchableHighlight>
+          <TouchableHighlight
+            style={styles.outlineButton}
+            underlayColor="#f0f0f0"
+            onPress={handleLogout}
+          >
+            <Text style={styles.outlineButtonText}>Logout</Text>
+          </TouchableHighlight>
         </View>
 
         <TouchableHighlight
-          style={styles.logoutButton}
-          onPress={handleEditInfo}
-        >
-          <Text style={styles.logoutButtonText}>Edit personal info</Text>
-        </TouchableHighlight>
-
-        <TouchableHighlight style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </TouchableHighlight>
-
-        <TouchableHighlight
-          style={styles.logoutButton}
+          style={styles.utilityButton}
+          underlayColor="#e0e0e0"
           onPress={handleCheckForUpdates}
           disabled={isCheckingUpdates}
         >
-          <Text style={styles.logoutButtonText}>
+          <Text style={styles.utilityButtonText}>
             {isCheckingUpdates ? "Checking..." : "Check for Updates"}
           </Text>
         </TouchableHighlight>
 
-        <View style={(styles.section, { marginTop: 10 })}>
-          <Text style={styles.sectionTitle}>Product Templates</Text>
-          {isLoading ? (
-            <Text>Loading product templates...</Text>
-          ) : isError ? (
-            <Text>Error loading product templates: {error.message}</Text>
-          ) : !productTemplates || productTemplates.length === 0 ? (
-            <Text>No product templates saved.</Text>
-          ) : (
-            productTemplates.map((template) => (
+        <Text style={styles.sectionTitle}>Product Templates</Text>
+        {isLoading ? (
+          <Text style={styles.emptyText}>Loading product templates...</Text>
+        ) : isError ? (
+          <Text style={styles.emptyText}>
+            Error loading product templates: {error.message}
+          </Text>
+        ) : !productTemplates || productTemplates.length === 0 ? (
+          <Text style={styles.emptyText}>No product templates saved.</Text>
+        ) : (
+          productTemplates.map((template) => {
+            const isExpanded = expandedTemplates.has(template.id);
+            return (
               <View key={template.id} style={styles.templateCard}>
-                <Text style={styles.templateName}>{template.product_name}</Text>
-                <View style={styles.infoContainer}>
-                  <Text style={styles.infoLabel}>Calories:</Text>
-                  <Text style={styles.infoValue}>{template.calories} kcal</Text>
-                </View>
-                <View style={styles.infoContainer}>
-                  <Text style={styles.infoLabel}>Fat:</Text>
-                  <Text style={styles.infoValue}>{template.fat} g</Text>
-                </View>
-                <View style={styles.infoContainer}>
-                  <Text style={styles.infoLabel}>Carbs:</Text>
-                  <Text style={styles.infoValue}>
-                    {template.carbohydrates} g
-                  </Text>
-                </View>
-                <View style={styles.infoContainer}>
-                  <Text style={styles.infoLabel}>Sugar:</Text>
-                  <Text style={styles.infoValue}>{template.sugar} g</Text>
-                </View>
-                <View style={styles.infoContainer}>
-                  <Text style={styles.infoLabel}>Protein:</Text>
-                  <Text style={styles.infoValue}>{template.protein} g</Text>
-                </View>
-                <View style={styles.infoContainer}>
-                  <Text style={styles.infoLabel}>Fiber:</Text>
-                  <Text style={styles.infoValue}>{template.fiber} g</Text>
-                </View>
+                <Pressable
+                  onPress={() => toggleTemplate(template.id)}
+                  android_ripple={{ color: "#e8e8e8" }}
+                >
+                  <View style={styles.templateCardHeader}>
+                    <Text style={styles.templateName} numberOfLines={1}>
+                      {template.product_name}
+                    </Text>
+                    <View style={styles.templateChips}>
+                      <View style={styles.calorieChip}>
+                        <Text style={styles.calorieChipText}>
+                          {template.calories} kcal
+                        </Text>
+                      </View>
+                      <View style={styles.proteinChip}>
+                        <Text style={styles.proteinChipText}>
+                          {template.protein}g P
+                        </Text>
+                      </View>
+                    </View>
+                    <Ionicons
+                      name={
+                        isExpanded
+                          ? "chevron-up-outline"
+                          : "chevron-down-outline"
+                      }
+                      size={18}
+                      color="rgba(0,0,0,0.4)"
+                    />
+                  </View>
+                </Pressable>
 
-                <View style={styles.buttonContainer}>
-                  <TouchableHighlight
-                    style={styles.logoutButton}
-                    onPress={() => {
-                      setSelectedTemplate(template);
-                      setTemplateModalVisible(true);
-                    }}
-                  >
-                    <Text style={styles.logoutButtonText}>Save</Text>
-                  </TouchableHighlight>
-                  <TouchableHighlight
-                    style={styles.logoutButton}
-                    onPress={() => handleDeleteTemplate(template.id)}
-                  >
-                    <Text style={styles.logoutButtonText}>Delete</Text>
-                  </TouchableHighlight>
-                </View>
+                {isExpanded && (
+                  <View style={styles.templateExpanded}>
+                    <View style={styles.separator} />
+                    <View style={styles.macroGrid}>
+                      <View style={styles.macroCell}>
+                        <Text style={styles.macroCellLabel}>Calories</Text>
+                        <Text style={styles.macroCellValue}>
+                          {template.calories} kcal
+                        </Text>
+                      </View>
+                      <View style={styles.macroCell}>
+                        <Text style={styles.macroCellLabel}>Protein</Text>
+                        <Text style={styles.macroCellValue}>
+                          {template.protein}g
+                        </Text>
+                      </View>
+                      <View style={styles.macroCell}>
+                        <Text style={styles.macroCellLabel}>Carbs</Text>
+                        <Text style={styles.macroCellValue}>
+                          {template.carbohydrates}g
+                        </Text>
+                      </View>
+                      <View style={styles.macroCell}>
+                        <Text style={styles.macroCellLabel}>Fat</Text>
+                        <Text style={styles.macroCellValue}>
+                          {template.fat}g
+                        </Text>
+                      </View>
+                      <View style={styles.macroCell}>
+                        <Text style={styles.macroCellLabel}>Sugar</Text>
+                        <Text style={styles.macroCellValue}>
+                          {template.sugar}g
+                        </Text>
+                      </View>
+                      <View style={styles.macroCell}>
+                        <Text style={styles.macroCellLabel}>Fiber</Text>
+                        <Text style={styles.macroCellValue}>
+                          {template.fiber}g
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.templateActions}>
+                      <TouchableHighlight
+                        style={styles.saveMealButton}
+                        underlayColor="#333"
+                        onPress={() => {
+                          setSelectedTemplate(template);
+                          setTemplateModalVisible(true);
+                        }}
+                      >
+                        <Text style={styles.saveMealButtonText}>Save meal</Text>
+                      </TouchableHighlight>
+                      <TouchableHighlight
+                        style={styles.deleteTemplateButton}
+                        underlayColor="#f0f0f0"
+                        onPress={() => handleDeleteTemplate(template.id)}
+                      >
+                        <Text style={styles.deleteTemplateButtonText}>
+                          Delete
+                        </Text>
+                      </TouchableHighlight>
+                    </View>
+                  </View>
+                )}
               </View>
-            ))
-          )}
-        </View>
+            );
+          })
+        )}
 
         <EditUserInfoModal
           user={auth?.user!}
@@ -349,77 +414,195 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  header: {
-    marginBottom: 15,
-  },
-  welcomeText: {
-    fontSize: 24,
-    fontWeight: "bold",
-  },
-  subText: {
-    fontSize: 16,
-    color: "rgba(0, 0, 0, 0.7)",
-    marginTop: 5,
-  },
-  section: {
+  profileBanner: {
     backgroundColor: "white",
     borderRadius: 10,
-    padding: 20,
+    padding: 16,
+    marginBottom: 16,
     shadowColor: "black",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 3,
   },
+  profileUsername: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 6,
+  },
+  goalBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#f0f0f0",
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    marginBottom: 8,
+  },
+  goalBadgeText: {
+    fontSize: 12,
+    color: "rgba(0,0,0,0.6)",
+    fontWeight: "500",
+  },
+  profileStatsLine: {
+    fontSize: 13,
+    color: "rgba(0,0,0,0.6)",
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 10,
+  },
+  primaryButton: {
+    flex: 1,
+    backgroundColor: "black",
+    borderRadius: 10,
+    padding: 12,
+    alignItems: "center",
+  },
+  primaryButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 15,
+  },
+  outlineButton: {
+    flex: 1,
+    backgroundColor: "white",
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "black",
+    padding: 12,
+    alignItems: "center",
+  },
+  outlineButtonText: {
+    color: "black",
+    fontWeight: "bold",
+    fontSize: 15,
+  },
+  utilityButton: {
+    backgroundColor: "#f0f0f0",
+    borderRadius: 10,
+    padding: 10,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  utilityButtonText: {
+    color: "black",
+    fontWeight: "500",
+    fontSize: 14,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 15,
-  },
-  infoContainer: {
-    flexDirection: "row",
-    gap: 5,
     marginBottom: 10,
-    flexWrap: "wrap",
   },
-  infoLabel: {
-    fontSize: 16,
-    color: "rgba(0, 0, 0, 0.7)",
-  },
-  infoValue: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  logoutButton: {
-    backgroundColor: "black",
-    borderRadius: 10,
-    padding: 15,
-    alignItems: "center",
-    marginTop: 20,
-  },
-  logoutButtonText: {
-    fontSize: 18,
-    color: "white",
-    fontWeight: "bold",
+  emptyText: {
+    fontSize: 14,
+    color: "rgba(0,0,0,0.5)",
   },
   templateCard: {
     backgroundColor: "white",
     borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
+    padding: 12,
+    marginBottom: 8,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  templateCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   templateName: {
-    fontSize: 16,
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "bold",
+    color: "black",
+  },
+  templateChips: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  calorieChip: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  calorieChipText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  proteinChip: {
+    backgroundColor: "#f0f0f0",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  proteinChipText: {
+    color: "black",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  templateExpanded: {
+    marginTop: 4,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: "#e8e8e8",
+    marginVertical: 8,
+  },
+  macroGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  macroCell: {
+    width: "33.33%",
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+  },
+  macroCellLabel: {
+    fontSize: 11,
+    color: "rgba(0,0,0,0.5)",
+    marginBottom: 1,
+  },
+  macroCellValue: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "black",
+  },
+  templateActions: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 10,
+  },
+  saveMealButton: {
+    flex: 1,
+    backgroundColor: "black",
+    borderRadius: 8,
+    padding: 10,
+    alignItems: "center",
+  },
+  saveMealButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  deleteTemplateButton: {
+    flex: 1,
+    backgroundColor: "white",
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: "black",
+    padding: 10,
+    alignItems: "center",
+  },
+  deleteTemplateButtonText: {
     color: "black",
     fontWeight: "bold",
-    marginBottom: 10,
-  },
-  buttonContainer: {
-    flex: 1,
+    fontSize: 14,
   },
 });

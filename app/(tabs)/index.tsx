@@ -23,7 +23,7 @@ export default function Index() {
   const db = useSQLiteContext();
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
   const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
   const [selectedMeal, setSelectedMeal] = useState<FoodInfoFull | null>(null);
@@ -105,7 +105,7 @@ export default function Index() {
         parseFloat(String(meal.protein)),
         parseFloat(String(meal.fiber)),
         meal.date,
-        db
+        db,
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["foodInfo"] });
@@ -139,7 +139,7 @@ export default function Index() {
           },
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
 
@@ -161,7 +161,7 @@ export default function Index() {
     age: string,
     gender: string,
     activityLevel: string,
-    goal: string
+    goal: string,
   ) => {
     let bmr: number;
     let tdee: number;
@@ -238,7 +238,7 @@ export default function Index() {
     auth?.user?.age || "0",
     auth?.user?.gender || "male",
     auth?.user?.activityLevel || "sedentary",
-    auth?.user?.goal || "weight loss"
+    auth?.user?.goal || "weight loss",
   );
 
   const getIndicatorColor = (actual: number, recommended: number): string => {
@@ -255,11 +255,15 @@ export default function Index() {
     const color = getIndicatorColor(actual, recommended);
 
     if (actual < lower) {
-      return <Ionicons name="arrow-down-outline" size={16} color={color} />;
+      return <Ionicons name="arrow-down-outline" size={14} color={color} />;
     } else if (actual > upper) {
-      return <Ionicons name="arrow-up-outline" size={16} color={color} />;
+      return <Ionicons name="arrow-up-outline" size={14} color={color} />;
     }
-    return <Ionicons name="checkmark-outline" size={16} color={color} />;
+    return <Ionicons name="checkmark-outline" size={14} color={color} />;
+  };
+
+  const formatMealType = (type: string) => {
+    return type.charAt(0).toUpperCase() + type.slice(1);
   };
 
   if (isLoading) {
@@ -282,112 +286,169 @@ export default function Index() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      <View style={styles.statsContainer}>
-        <Text style={styles.statsTitle}>
-          Nutrition Stats for {selectedDate}
-        </Text>
-        <View style={styles.statsRow}>
-          <Text style={{ fontSize: 13 }}>
-            Calories:
-            {getIndicatorIcon(totals.calories, recommendedIntake.calories)}
-            <Text
-              style={{
-                color: getIndicatorColor(
-                  totals.calories,
-                  recommendedIntake.calories
-                ),
-              }}
-            >
-              {totals.calories}kcal
-            </Text>
-            {"/"}
-            {recommendedIntake.calories}kcal
+      <View style={styles.container}>
+        <View style={styles.statsContainer}>
+          <Text style={styles.statsTitle}>
+            Nutrition Stats for {selectedDate}
           </Text>
-          <Text style={{ fontSize: 13 }}>
-            Fat:{getIndicatorIcon(totals.fat, recommendedIntake.fat)}
-            <Text
-              style={{
-                color: getIndicatorColor(totals.fat, recommendedIntake.fat),
-              }}
-            >
-              {totals.fat}g
-            </Text>
-            {"/"}
-            {recommendedIntake.fat}g
-          </Text>
-        </View>
-        <View style={styles.statsRow}>
-          <Text style={{ fontSize: 13 }}>
-            Carbs:
-            {getIndicatorIcon(
-              totals.carbohydrates,
-              recommendedIntake.carbohydrates
-            )}
-            <Text
-              style={{
-                color: getIndicatorColor(
+          <View style={styles.statsGrid}>
+            <View style={styles.statCell}>
+              <Text style={styles.statLabel}>Calories</Text>
+              <View style={styles.statValueRow}>
+                {getIndicatorIcon(totals.calories, recommendedIntake.calories)}
+                <Text
+                  style={[
+                    styles.statValue,
+                    {
+                      color: getIndicatorColor(
+                        totals.calories,
+                        recommendedIntake.calories,
+                      ),
+                    },
+                  ]}
+                >
+                  {" "}
+                  {totals.calories}
+                </Text>
+                <Text style={styles.statRecommended}>
+                  {" "}
+                  / {recommendedIntake.calories} kcal
+                </Text>
+              </View>
+            </View>
+            <View style={styles.statCell}>
+              <Text style={styles.statLabel}>Fat</Text>
+              <View style={styles.statValueRow}>
+                {getIndicatorIcon(totals.fat, recommendedIntake.fat)}
+                <Text
+                  style={[
+                    styles.statValue,
+                    {
+                      color: getIndicatorColor(
+                        totals.fat,
+                        recommendedIntake.fat,
+                      ),
+                    },
+                  ]}
+                >
+                  {" "}
+                  {totals.fat}
+                </Text>
+                <Text style={styles.statRecommended}>
+                  {" "}
+                  / {recommendedIntake.fat}g
+                </Text>
+              </View>
+            </View>
+            <View style={styles.statCell}>
+              <Text style={styles.statLabel}>Carbs</Text>
+              <View style={styles.statValueRow}>
+                {getIndicatorIcon(
                   totals.carbohydrates,
-                  recommendedIntake.carbohydrates
-                ),
-              }}
-            >
-              {totals.carbohydrates}g
-            </Text>
-            {"/"}
-            {recommendedIntake.carbohydrates}g
-          </Text>
-          <Text style={{ fontSize: 13 }}>
-            Sugar:{getIndicatorIcon(totals.sugar, recommendedIntake.sugar)}
-            <Text
-              style={{
-                color: getIndicatorColor(totals.sugar, recommendedIntake.sugar),
-              }}
-            >
-              {totals.sugar}g
-            </Text>
-            {"/"}
-            {recommendedIntake.sugar}g
-          </Text>
+                  recommendedIntake.carbohydrates,
+                )}
+                <Text
+                  style={[
+                    styles.statValue,
+                    {
+                      color: getIndicatorColor(
+                        totals.carbohydrates,
+                        recommendedIntake.carbohydrates,
+                      ),
+                    },
+                  ]}
+                >
+                  {" "}
+                  {totals.carbohydrates}
+                </Text>
+                <Text style={styles.statRecommended}>
+                  {" "}
+                  / {recommendedIntake.carbohydrates}g
+                </Text>
+              </View>
+            </View>
+            <View style={styles.statCell}>
+              <Text style={styles.statLabel}>Sugar</Text>
+              <View style={styles.statValueRow}>
+                {getIndicatorIcon(totals.sugar, recommendedIntake.sugar)}
+                <Text
+                  style={[
+                    styles.statValue,
+                    {
+                      color: getIndicatorColor(
+                        totals.sugar,
+                        recommendedIntake.sugar,
+                      ),
+                    },
+                  ]}
+                >
+                  {" "}
+                  {totals.sugar}
+                </Text>
+                <Text style={styles.statRecommended}>
+                  {" "}
+                  / {recommendedIntake.sugar}g
+                </Text>
+              </View>
+            </View>
+            <View style={styles.statCell}>
+              <Text style={styles.statLabel}>Protein</Text>
+              <View style={styles.statValueRow}>
+                {getIndicatorIcon(totals.protein, recommendedIntake.protein)}
+                <Text
+                  style={[
+                    styles.statValue,
+                    {
+                      color: getIndicatorColor(
+                        totals.protein,
+                        recommendedIntake.protein,
+                      ),
+                    },
+                  ]}
+                >
+                  {" "}
+                  {totals.protein}
+                </Text>
+                <Text style={styles.statRecommended}>
+                  {" "}
+                  / {recommendedIntake.protein}g
+                </Text>
+              </View>
+            </View>
+            <View style={styles.statCell}>
+              <Text style={styles.statLabel}>Fiber</Text>
+              <View style={styles.statValueRow}>
+                {getIndicatorIcon(totals.fiber, recommendedIntake.fiber)}
+                <Text
+                  style={[
+                    styles.statValue,
+                    {
+                      color: getIndicatorColor(
+                        totals.fiber,
+                        recommendedIntake.fiber,
+                      ),
+                    },
+                  ]}
+                >
+                  {" "}
+                  {totals.fiber}
+                </Text>
+                <Text style={styles.statRecommended}>
+                  {" "}
+                  / {recommendedIntake.fiber}g
+                </Text>
+              </View>
+            </View>
+          </View>
+          <TouchableHighlight
+            style={styles.datePickerButton}
+            underlayColor="#f0f0f0"
+            onPress={showDatepicker}
+          >
+            <Text style={styles.datePickerButtonText}>Select Date</Text>
+          </TouchableHighlight>
         </View>
-        <View style={styles.statsRow}>
-          <Text style={{ fontSize: 13 }}>
-            Protein:
-            {getIndicatorIcon(totals.protein, recommendedIntake.protein)}
-            <Text
-              style={{
-                color: getIndicatorColor(
-                  totals.protein,
-                  recommendedIntake.protein
-                ),
-              }}
-            >
-              {totals.protein}g
-            </Text>
-            {"/"}
-            {recommendedIntake.protein}g
-          </Text>
-          <Text style={{ fontSize: 13 }}>
-            Fiber:{getIndicatorIcon(totals.fiber, recommendedIntake.fiber)}
-            <Text
-              style={{
-                color: getIndicatorColor(totals.fiber, recommendedIntake.fiber),
-              }}
-            >
-              {totals.fiber}g
-            </Text>
-            {"/"}
-            {recommendedIntake.fiber}g
-          </Text>
-        </View>
-        <TouchableHighlight
-          style={styles.datePickerButton}
-          onPress={showDatepicker}
-        >
-          <Text style={styles.datePickerButtonText}>Select Date</Text>
-        </TouchableHighlight>
-      </View>
 
-      <View style={styles.mealsContainer}>
         {!foodInfo || foodInfo.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>
@@ -396,30 +457,62 @@ export default function Index() {
           </View>
         ) : (
           foodInfo.map((meal) => (
-            <View key={meal.id} style={styles.mealItem}>
-              <Text style={styles.mealName}>{meal.foodName}</Text>
-              <Text style={styles.mealDetail}>Date: {meal.date}</Text>
-              <Text style={styles.mealDetail}>Meal: {meal.mealType}</Text>
-              <Text style={styles.mealDetail}>Quantity: {meal.quantity} g</Text>
-              <Text style={styles.mealDetail}>
-                Calories: {meal.calories} kcal
+            <View key={meal.id} style={styles.mealCard}>
+              <View style={styles.mealHeader}>
+                <Text style={styles.mealName} numberOfLines={1}>
+                  {meal.foodName}
+                </Text>
+                <View style={styles.mealTypeBadge}>
+                  <Text style={styles.mealTypeBadgeText}>
+                    {formatMealType(meal.mealType)}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.mealSubtext}>
+                {meal.quantity}g · {meal.date}
               </Text>
-              <Text style={styles.mealDetail}>Fat: {meal.fat} g</Text>
-              <Text style={styles.mealDetail}>
-                Carbs: {meal.carbohydrates} g
-              </Text>
-              <Text style={styles.mealDetail}>Sugar: {meal.sugar} g</Text>
-              <Text style={styles.mealDetail}>Protein: {meal.protein} g</Text>
-              <Text style={styles.mealDetail}>Fiber: {meal.fiber} g</Text>
+              <View style={styles.separator} />
+              <View style={styles.macroGrid}>
+                <View style={styles.macroCell}>
+                  <Text style={styles.macroCellLabel}>Calories</Text>
+                  <Text style={styles.macroCellValue}>
+                    {meal.calories} kcal
+                  </Text>
+                </View>
+                <View style={styles.macroCell}>
+                  <Text style={styles.macroCellLabel}>Protein</Text>
+                  <Text style={styles.macroCellValue}>{meal.protein}g</Text>
+                </View>
+                <View style={styles.macroCell}>
+                  <Text style={styles.macroCellLabel}>Carbs</Text>
+                  <Text style={styles.macroCellValue}>
+                    {meal.carbohydrates}g
+                  </Text>
+                </View>
+                <View style={styles.macroCell}>
+                  <Text style={styles.macroCellLabel}>Fat</Text>
+                  <Text style={styles.macroCellValue}>{meal.fat}g</Text>
+                </View>
+                <View style={styles.macroCell}>
+                  <Text style={styles.macroCellLabel}>Sugar</Text>
+                  <Text style={styles.macroCellValue}>{meal.sugar}g</Text>
+                </View>
+                <View style={styles.macroCell}>
+                  <Text style={styles.macroCellLabel}>Fiber</Text>
+                  <Text style={styles.macroCellValue}>{meal.fiber}g</Text>
+                </View>
+              </View>
               <View style={styles.mealButtons}>
                 <TouchableHighlight
                   style={styles.editButton}
+                  underlayColor="#333"
                   onPress={() => handleEdit(meal)}
                 >
-                  <Text style={styles.deleteButtonText}>Edit</Text>
+                  <Text style={styles.editButtonText}>Edit</Text>
                 </TouchableHighlight>
                 <TouchableHighlight
                   style={styles.deleteButton}
+                  underlayColor="#f0f0f0"
                   onPress={() => handleDelete(meal.id)}
                 >
                   <Text style={styles.deleteButtonText}>Delete</Text>
@@ -446,80 +539,161 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   statsContainer: {
-    marginBottom: 20,
+    marginBottom: 16,
     padding: 16,
     backgroundColor: "white",
-    borderRadius: 8,
+    borderRadius: 10,
+    shadowColor: "black",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
   },
   statsTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: 12,
   },
-  statsRow: {
+  statsGrid: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
+    flexWrap: "wrap",
+  },
+  statCell: {
+    width: "50%",
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: "rgba(0,0,0,0.5)",
+    marginBottom: 2,
+  },
+  statValueRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  statValue: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  statRecommended: {
+    fontSize: 12,
+    color: "rgba(0,0,0,0.4)",
   },
   datePickerButton: {
-    backgroundColor: "black",
+    backgroundColor: "transparent",
+    borderColor: "rgba(0,0,0,0.3)",
+    borderWidth: 1,
+    borderRadius: 10,
     padding: 10,
-    borderRadius: 5,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 12,
   },
   datePickerButtonText: {
-    color: "white",
+    color: "black",
     fontWeight: "bold",
+    fontSize: 14,
   },
-  mealsContainer: {
-    marginBottom: 20,
-  },
-  mealItem: {
-    padding: 16,
+  mealCard: {
     backgroundColor: "white",
-    borderRadius: 8,
-    marginBottom: 10,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  mealHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
   },
   mealName: {
-    fontSize: 16,
+    flex: 1,
+    fontSize: 15,
     fontWeight: "bold",
+  },
+  mealTypeBadge: {
+    backgroundColor: "#f0f0f0",
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  mealTypeBadgeText: {
+    fontSize: 12,
+    color: "rgba(0,0,0,0.6)",
+    fontWeight: "500",
+  },
+  mealSubtext: {
+    fontSize: 12,
+    color: "rgba(0,0,0,0.5)",
     marginBottom: 8,
   },
-  mealDetail: {
-    marginBottom: 4,
+  separator: {
+    height: 1,
+    backgroundColor: "#e8e8e8",
+    marginBottom: 8,
+  },
+  macroGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  macroCell: {
+    width: "33.33%",
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+  },
+  macroCellLabel: {
+    fontSize: 11,
+    color: "rgba(0,0,0,0.5)",
+    marginBottom: 1,
+  },
+  macroCellValue: {
     fontSize: 13,
+    fontWeight: "600",
+    color: "black",
   },
   mealButtons: {
     flexDirection: "row",
-    gap: 10,
+    gap: 8,
     marginTop: 10,
   },
   editButton: {
     backgroundColor: "black",
+    borderRadius: 8,
     padding: 10,
-    borderRadius: 5,
     alignItems: "center",
     flex: 1,
   },
+  editButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
   deleteButton: {
-    backgroundColor: "black",
+    backgroundColor: "white",
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: "black",
     padding: 10,
-    borderRadius: 5,
     alignItems: "center",
     flex: 1,
   },
   deleteButtonText: {
-    color: "white",
+    color: "black",
     fontWeight: "bold",
+    fontSize: 14,
   },
   emptyState: {
     padding: 20,
     alignItems: "center",
   },
   emptyStateText: {
-    fontSize: 16,
-    color: "rgba(0, 0, 0, 0.5)",
+    fontSize: 14,
+    color: "rgba(0,0,0,0.5)",
   },
   errorText: {
     textAlign: "center",

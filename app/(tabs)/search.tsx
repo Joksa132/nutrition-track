@@ -71,8 +71,8 @@ export default function Search() {
 
   if (isError) {
     return (
-      <View>
-        <Text>Error loading.</Text>
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Error loading.</Text>
       </View>
     );
   }
@@ -146,63 +146,89 @@ export default function Search() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Search for a product</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter a product name"
-        value={searchTerm}
-        onChangeText={setSearchTerm}
-      />
-      <TouchableHighlight
-        style={!searchTerm.trim() ? styles.buttonDisabled : styles.buttonContainer}
-        onPress={handleSearch}
-        disabled={!searchTerm.trim()}
-      >
-        <Text style={styles.buttonText}>Search</Text>
-      </TouchableHighlight>
-
-      <View style={styles.productContainer}>
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
+      <View style={styles.searchRow}>
+        <TextInput
+          style={styles.input}
+          placeholder="Search for a product..."
+          value={searchTerm}
+          onChangeText={setSearchTerm}
+        />
+        <TouchableHighlight
+          style={
+            !searchTerm.trim()
+              ? styles.searchButtonDisabled
+              : styles.searchButton
+          }
+          underlayColor="#333"
+          onPress={handleSearch}
+          disabled={!searchTerm.trim()}
         >
-          {searchResults?.products?.map((result) => (
-            <View key={result.code} style={styles.item}>
-              <Text style={styles.productName}>
-                {result.product_name_en || result.product_name} (100g)
-              </Text>
-              <View style={styles.itemRow}>
-                <Text>
-                  Calories: {result.nutriments["energy-kcal_100g"]?.toFixed(2) || 0}
-                  kcal
-                </Text>
-                <Text>Fat: {result.nutriments.fat_100g?.toFixed(2) || 0}g</Text>
-              </View>
-              <View style={styles.itemRow}>
-                <Text>
-                  Carbs: {result.nutriments.carbohydrates_100g?.toFixed(2) || 0}g
-                </Text>
-                <Text>Sugar: {result.nutriments.sugars_100g?.toFixed(2) || 0}g</Text>
-              </View>
-              <View style={styles.itemRow}>
-                <Text>
-                  Protein: {result.nutriments.proteins_100g?.toFixed(2) || 0}g
-                </Text>
-                <Text>Fiber: {result.nutriments.fiber_100g?.toFixed(2) || 0}g</Text>
-              </View>
-              <TouchableHighlight
-                style={styles.buttonContainer}
-                onPress={() => {
-                  setSelectedProduct(result);
-                  setModalVisible(true);
-                }}
-              >
-                <Text style={styles.buttonText}>Save</Text>
-              </TouchableHighlight>
-            </View>
-          ))}
-        </ScrollView>
+          <Text style={styles.searchButtonText}>Search</Text>
+        </TouchableHighlight>
       </View>
+
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 20 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        {searchResults?.products?.map((result) => (
+          <View key={result.code} style={styles.productCard}>
+            <Text style={styles.productName}>
+              {result.product_name_en || result.product_name}
+            </Text>
+            <Text style={styles.productSubtext}>per 100g</Text>
+            <View style={styles.separator} />
+            <View style={styles.macroGrid}>
+              <View style={styles.macroCell}>
+                <Text style={styles.macroCellLabel}>Calories</Text>
+                <Text style={styles.macroCellValue}>
+                  {result.nutriments["energy-kcal_100g"]?.toFixed(0) || 0} kcal
+                </Text>
+              </View>
+              <View style={styles.macroCell}>
+                <Text style={styles.macroCellLabel}>Protein</Text>
+                <Text style={styles.macroCellValue}>
+                  {result.nutriments.proteins_100g?.toFixed(1) || 0}g
+                </Text>
+              </View>
+              <View style={styles.macroCell}>
+                <Text style={styles.macroCellLabel}>Carbs</Text>
+                <Text style={styles.macroCellValue}>
+                  {result.nutriments.carbohydrates_100g?.toFixed(1) || 0}g
+                </Text>
+              </View>
+              <View style={styles.macroCell}>
+                <Text style={styles.macroCellLabel}>Fat</Text>
+                <Text style={styles.macroCellValue}>
+                  {result.nutriments.fat_100g?.toFixed(1) || 0}g
+                </Text>
+              </View>
+              <View style={styles.macroCell}>
+                <Text style={styles.macroCellLabel}>Sugar</Text>
+                <Text style={styles.macroCellValue}>
+                  {result.nutriments.sugars_100g?.toFixed(1) || 0}g
+                </Text>
+              </View>
+              <View style={styles.macroCell}>
+                <Text style={styles.macroCellLabel}>Fiber</Text>
+                <Text style={styles.macroCellValue}>
+                  {result.nutriments.fiber_100g?.toFixed(1) || 0}g
+                </Text>
+              </View>
+            </View>
+            <TouchableHighlight
+              style={styles.saveButton}
+              underlayColor="#333"
+              onPress={() => {
+                setSelectedProduct(result);
+                setModalVisible(true);
+              }}
+            >
+              <Text style={styles.saveButtonText}>Save</Text>
+            </TouchableHighlight>
+          </View>
+        ))}
+      </ScrollView>
 
       {selectedProduct && (
         <SaveModal
@@ -229,53 +255,101 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 10,
+  searchRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 16,
   },
   input: {
-    height: 40,
+    flex: 1,
+    height: 44,
     borderColor: "rgb(204, 204, 204)",
     borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 8,
-    borderRadius: 4,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: "white",
+    fontSize: 15,
   },
-  buttonContainer: {
+  searchButton: {
     backgroundColor: "black",
-    padding: 10,
-    borderRadius: 5,
+    borderRadius: 10,
+    paddingHorizontal: 20,
+    justifyContent: "center",
     alignItems: "center",
-    marginBottom: 10,
   },
-  buttonDisabled: {
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    padding: 10,
-    borderRadius: 5,
+  searchButtonDisabled: {
+    backgroundColor: "rgba(0,0,0,0.3)",
+    borderRadius: 10,
+    paddingHorizontal: 20,
+    justifyContent: "center",
     alignItems: "center",
-    marginBottom: 10,
   },
-  buttonText: {
+  searchButtonText: {
     color: "white",
     fontWeight: "bold",
+    fontSize: 15,
   },
-  productContainer: {
-    marginBottom: 120,
-  },
-  item: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "black",
+  productCard: {
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
   productName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: 2,
   },
-  itemRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  productSubtext: {
+    fontSize: 12,
+    color: "rgba(0,0,0,0.5)",
     marginBottom: 8,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: "#e8e8e8",
+    marginBottom: 8,
+  },
+  macroGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  macroCell: {
+    width: "33.33%",
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+  },
+  macroCellLabel: {
+    fontSize: 11,
+    color: "rgba(0,0,0,0.5)",
+    marginBottom: 1,
+  },
+  macroCellValue: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "black",
+  },
+  saveButton: {
+    backgroundColor: "black",
+    borderRadius: 8,
+    padding: 10,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  saveButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  errorText: {
+    textAlign: "center",
+    fontSize: 16,
+    color: "red",
+    marginTop: 20,
   },
 });

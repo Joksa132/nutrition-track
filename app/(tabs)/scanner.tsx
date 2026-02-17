@@ -226,62 +226,92 @@ export default function Scanner() {
               <Text style={styles.productName}>
                 {product.product_name_en || product.product_name}
               </Text>
-              <Text>
-                Calories:{" "}
-                {product.nutriments?.["energy-kcal_100g"] ||
-                  product.calories ||
-                  0}
-              </Text>
-              <Text>
-                Fat: {product.nutriments?.fat_100g || product.fat || 0}g
-              </Text>
-              <Text>
-                Carbs:{" "}
-                {product.nutriments?.carbohydrates_100g ||
-                  product.carbohydrates ||
-                  0}
-                g
-              </Text>
-              <Text>
-                Protein:{" "}
-                {product.nutriments?.proteins_100g || product.protein || 0}g
-              </Text>
-              <Text>
-                Sugar: {product.nutriments?.sugars_100g || product.sugar || 0}g
-              </Text>
-              <Text>
-                Fiber: {product.nutriments?.fiber_100g || product.fiber || 0}g
-              </Text>
+              <Text style={styles.productSubtext}>per 100g</Text>
+              <View style={styles.macroGrid}>
+                <View style={styles.macroCell}>
+                  <Text style={styles.macroCellLabel}>Calories</Text>
+                  <Text style={styles.macroCellValue}>
+                    {product.nutriments?.["energy-kcal_100g"] ||
+                      product.calories ||
+                      0}{" "}
+                    kcal
+                  </Text>
+                </View>
+                <View style={styles.macroCell}>
+                  <Text style={styles.macroCellLabel}>Protein</Text>
+                  <Text style={styles.macroCellValue}>
+                    {product.nutriments?.proteins_100g || product.protein || 0}g
+                  </Text>
+                </View>
+                <View style={styles.macroCell}>
+                  <Text style={styles.macroCellLabel}>Carbs</Text>
+                  <Text style={styles.macroCellValue}>
+                    {product.nutriments?.carbohydrates_100g ||
+                      product.carbohydrates ||
+                      0}
+                    g
+                  </Text>
+                </View>
+                <View style={styles.macroCell}>
+                  <Text style={styles.macroCellLabel}>Fat</Text>
+                  <Text style={styles.macroCellValue}>
+                    {product.nutriments?.fat_100g || product.fat || 0}g
+                  </Text>
+                </View>
+                <View style={styles.macroCell}>
+                  <Text style={styles.macroCellLabel}>Sugar</Text>
+                  <Text style={styles.macroCellValue}>
+                    {product.nutriments?.sugars_100g || product.sugar || 0}g
+                  </Text>
+                </View>
+                <View style={styles.macroCell}>
+                  <Text style={styles.macroCellLabel}>Fiber</Text>
+                  <Text style={styles.macroCellValue}>
+                    {product.nutriments?.fiber_100g || product.fiber || 0}g
+                  </Text>
+                </View>
+              </View>
             </View>
           )}
           <View style={styles.scanButtonsContainer}>
             <TouchableHighlight
-              style={styles.scanAgainButton}
+              style={styles.outlineButton}
+              underlayColor="#f0f0f0"
               onPress={resetScanner}
             >
-              <Text style={styles.scanAgainText}>Scan again</Text>
+              <Text style={styles.outlineButtonText}>Scan again</Text>
             </TouchableHighlight>
             <TouchableHighlight
               style={
                 product === null
-                  ? styles.buttonDisabled
-                  : styles.scanAgainButton
+                  ? styles.primaryButtonDisabled
+                  : styles.primaryButton
               }
+              underlayColor="#333"
               onPress={openAmountModal}
               disabled={product === null}
             >
-              <Text style={styles.scanAgainText}>Save</Text>
+              <Text style={styles.primaryButtonText}>Save</Text>
             </TouchableHighlight>
             <TouchableHighlight
               style={
                 product === null
-                  ? styles.buttonDisabled
-                  : styles.scanAgainButton
+                  ? styles.outlineButtonDisabled
+                  : styles.outlineButton
               }
+              underlayColor="#f0f0f0"
               onPress={handleSaveAsTemplate}
               disabled={product === null}
             >
-              <Text style={styles.scanAgainText}>Template</Text>
+              <Text
+                style={
+                  product === null
+                    ? styles.outlineButtonTextDisabled
+                    : styles.outlineButtonText
+                }
+              >
+                Template
+              </Text>
             </TouchableHighlight>
           </View>
         </View>
@@ -336,8 +366,15 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    padding: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.97)",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 8,
   },
   overlayText: {
     textAlign: "center",
@@ -346,14 +383,90 @@ const styles = StyleSheet.create({
   productName: {
     fontSize: 18,
     fontWeight: "bold",
+    marginBottom: 2,
+  },
+  productSubtext: {
+    fontSize: 12,
+    color: "rgba(0,0,0,0.5)",
     marginBottom: 8,
   },
+  macroGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 4,
+  },
+  macroCell: {
+    width: "33.33%",
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+  },
+  macroCellLabel: {
+    fontSize: 11,
+    color: "rgba(0,0,0,0.5)",
+    marginBottom: 1,
+  },
+  macroCellValue: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "black",
+  },
   scanButtonsContainer: {
-    flex: 1,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 5,
+    gap: 8,
+    marginTop: 8,
+  },
+  primaryButton: {
+    backgroundColor: "black",
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    alignItems: "center",
+    flex: 1,
+  },
+  primaryButtonDisabled: {
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    alignItems: "center",
+    flex: 1,
+  },
+  primaryButtonText: {
+    fontSize: 15,
+    color: "white",
+    fontWeight: "bold",
+  },
+  outlineButton: {
+    backgroundColor: "white",
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "black",
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    alignItems: "center",
+    flex: 1,
+  },
+  outlineButtonDisabled: {
+    backgroundColor: "white",
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "rgba(0,0,0,0.3)",
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    alignItems: "center",
+    flex: 1,
+  },
+  outlineButtonText: {
+    fontSize: 15,
+    color: "black",
+    fontWeight: "bold",
+  },
+  outlineButtonTextDisabled: {
+    fontSize: 15,
+    color: "rgba(0,0,0,0.3)",
+    fontWeight: "bold",
   },
   scanAgainButton: {
     backgroundColor: "black",
