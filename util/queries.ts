@@ -27,6 +27,43 @@ export const updateUserInfo = async (
   return result;
 };
 
+export const updateUserProfile = async (
+  userInfo: UserInfo,
+  db: SQLiteDatabase
+) => {
+  const result = await db.runAsync(
+    `
+    UPDATE users
+    SET username = ?, gender = ?, age = ?, height = ?, weight = ?, activityLevel = ?, goal = ?
+    WHERE id = ?;`,
+    [
+      userInfo.username,
+      userInfo.gender,
+      userInfo.age,
+      userInfo.height,
+      userInfo.weight,
+      userInfo.activityLevel,
+      userInfo.goal,
+      userInfo.id,
+    ]
+  );
+
+  return result;
+};
+
+export const updateUserPassword = async (
+  userId: string,
+  hashedPassword: string,
+  db: SQLiteDatabase
+) => {
+  const result = await db.runAsync(
+    `UPDATE users SET password = ? WHERE id = ?;`,
+    [hashedPassword, userId]
+  );
+
+  return result;
+};
+
 export const fetchFoodInfo = async (
   userId: string,
   db: SQLiteDatabase,
