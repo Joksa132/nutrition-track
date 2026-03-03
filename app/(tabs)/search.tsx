@@ -18,6 +18,7 @@ import { useSQLiteContext } from "expo-sqlite";
 import { AuthContext } from "@/components/AuthContext";
 import { SaveModalSchema } from "@/util/validations";
 import Loading from "@/components/Loading";
+import { commonStyles } from "@/styles/common";
 
 type OpenFoodFactsResponse = {
   products: OpenFoodFactsProduct[];
@@ -178,40 +179,40 @@ export default function Search() {
             </Text>
             <Text style={styles.productSubtext}>per 100g</Text>
             <View style={styles.separator} />
-            <View style={styles.macroGrid}>
-              <View style={styles.macroCell}>
-                <Text style={styles.macroCellLabel}>Calories</Text>
-                <Text style={styles.macroCellValue}>
+            <View style={commonStyles.macroGrid}>
+              <View style={commonStyles.macroCell}>
+                <Text style={commonStyles.macroCellLabel}>Calories</Text>
+                <Text style={commonStyles.macroCellValue}>
                   {result.nutriments["energy-kcal_100g"]?.toFixed(0) || 0} kcal
                 </Text>
               </View>
-              <View style={styles.macroCell}>
-                <Text style={styles.macroCellLabel}>Protein</Text>
-                <Text style={styles.macroCellValue}>
+              <View style={commonStyles.macroCell}>
+                <Text style={commonStyles.macroCellLabel}>Protein</Text>
+                <Text style={commonStyles.macroCellValue}>
                   {result.nutriments.proteins_100g?.toFixed(1) || 0}g
                 </Text>
               </View>
-              <View style={styles.macroCell}>
-                <Text style={styles.macroCellLabel}>Carbs</Text>
-                <Text style={styles.macroCellValue}>
+              <View style={commonStyles.macroCell}>
+                <Text style={commonStyles.macroCellLabel}>Carbs</Text>
+                <Text style={commonStyles.macroCellValue}>
                   {result.nutriments.carbohydrates_100g?.toFixed(1) || 0}g
                 </Text>
               </View>
-              <View style={styles.macroCell}>
-                <Text style={styles.macroCellLabel}>Fat</Text>
-                <Text style={styles.macroCellValue}>
+              <View style={commonStyles.macroCell}>
+                <Text style={commonStyles.macroCellLabel}>Fat</Text>
+                <Text style={commonStyles.macroCellValue}>
                   {result.nutriments.fat_100g?.toFixed(1) || 0}g
                 </Text>
               </View>
-              <View style={styles.macroCell}>
-                <Text style={styles.macroCellLabel}>Sugar</Text>
-                <Text style={styles.macroCellValue}>
+              <View style={commonStyles.macroCell}>
+                <Text style={commonStyles.macroCellLabel}>Sugar</Text>
+                <Text style={commonStyles.macroCellValue}>
                   {result.nutriments.sugars_100g?.toFixed(1) || 0}g
                 </Text>
               </View>
-              <View style={styles.macroCell}>
-                <Text style={styles.macroCellLabel}>Fiber</Text>
-                <Text style={styles.macroCellValue}>
+              <View style={commonStyles.macroCell}>
+                <Text style={commonStyles.macroCellLabel}>Fiber</Text>
+                <Text style={commonStyles.macroCellValue}>
                   {result.nutriments.fiber_100g?.toFixed(1) || 0}g
                 </Text>
               </View>
@@ -289,17 +290,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 15,
   },
-  productCard: {
-    backgroundColor: "white",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-  },
+  productCard: commonStyles.card,
   productName: {
     fontSize: 15,
     fontWeight: "bold",
@@ -314,25 +305,6 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#e8e8e8",
     marginBottom: 8,
-  },
-  macroGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  macroCell: {
-    width: "33.33%",
-    paddingVertical: 4,
-    paddingHorizontal: 2,
-  },
-  macroCellLabel: {
-    fontSize: 11,
-    color: "rgba(0,0,0,0.5)",
-    marginBottom: 1,
-  },
-  macroCellValue: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "black",
   },
   saveButton: {
     backgroundColor: "black",

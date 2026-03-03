@@ -19,6 +19,7 @@ import { SaveModalSchema } from "@/util/validations";
 import Loading from "@/components/Loading";
 import { useCameraPermission } from "react-native-vision-camera";
 import ScannerCamera from "@/components/Camera";
+import { commonStyles } from "@/styles/common";
 
 export default function Scanner() {
   const { hasPermission, requestPermission } = useCameraPermission();
@@ -227,46 +228,46 @@ export default function Scanner() {
                 {product.product_name_en || product.product_name}
               </Text>
               <Text style={styles.productSubtext}>per 100g</Text>
-              <View style={styles.macroGrid}>
-                <View style={styles.macroCell}>
-                  <Text style={styles.macroCellLabel}>Calories</Text>
-                  <Text style={styles.macroCellValue}>
+              <View style={[commonStyles.macroGrid, { marginBottom: 4 }]}>
+                <View style={commonStyles.macroCell}>
+                  <Text style={commonStyles.macroCellLabel}>Calories</Text>
+                  <Text style={commonStyles.macroCellValue}>
                     {product.nutriments?.["energy-kcal_100g"] ||
                       product.calories ||
                       0}{" "}
                     kcal
                   </Text>
                 </View>
-                <View style={styles.macroCell}>
-                  <Text style={styles.macroCellLabel}>Protein</Text>
-                  <Text style={styles.macroCellValue}>
+                <View style={commonStyles.macroCell}>
+                  <Text style={commonStyles.macroCellLabel}>Protein</Text>
+                  <Text style={commonStyles.macroCellValue}>
                     {product.nutriments?.proteins_100g || product.protein || 0}g
                   </Text>
                 </View>
-                <View style={styles.macroCell}>
-                  <Text style={styles.macroCellLabel}>Carbs</Text>
-                  <Text style={styles.macroCellValue}>
+                <View style={commonStyles.macroCell}>
+                  <Text style={commonStyles.macroCellLabel}>Carbs</Text>
+                  <Text style={commonStyles.macroCellValue}>
                     {product.nutriments?.carbohydrates_100g ||
                       product.carbohydrates ||
                       0}
                     g
                   </Text>
                 </View>
-                <View style={styles.macroCell}>
-                  <Text style={styles.macroCellLabel}>Fat</Text>
-                  <Text style={styles.macroCellValue}>
+                <View style={commonStyles.macroCell}>
+                  <Text style={commonStyles.macroCellLabel}>Fat</Text>
+                  <Text style={commonStyles.macroCellValue}>
                     {product.nutriments?.fat_100g || product.fat || 0}g
                   </Text>
                 </View>
-                <View style={styles.macroCell}>
-                  <Text style={styles.macroCellLabel}>Sugar</Text>
-                  <Text style={styles.macroCellValue}>
+                <View style={commonStyles.macroCell}>
+                  <Text style={commonStyles.macroCellLabel}>Sugar</Text>
+                  <Text style={commonStyles.macroCellValue}>
                     {product.nutriments?.sugars_100g || product.sugar || 0}g
                   </Text>
                 </View>
-                <View style={styles.macroCell}>
-                  <Text style={styles.macroCellLabel}>Fiber</Text>
-                  <Text style={styles.macroCellValue}>
+                <View style={commonStyles.macroCell}>
+                  <Text style={commonStyles.macroCellLabel}>Fiber</Text>
+                  <Text style={commonStyles.macroCellValue}>
                     {product.nutriments?.fiber_100g || product.fiber || 0}g
                   </Text>
                 </View>
@@ -389,26 +390,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "rgba(0,0,0,0.5)",
     marginBottom: 8,
-  },
-  macroGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginBottom: 4,
-  },
-  macroCell: {
-    width: "33.33%",
-    paddingVertical: 4,
-    paddingHorizontal: 2,
-  },
-  macroCellLabel: {
-    fontSize: 11,
-    color: "rgba(0,0,0,0.5)",
-    marginBottom: 1,
-  },
-  macroCellValue: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "black",
   },
   scanButtonsContainer: {
     flexDirection: "row",
