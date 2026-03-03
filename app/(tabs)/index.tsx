@@ -1,12 +1,18 @@
 import { AuthContext } from "@/components/AuthContext";
 import Loading from "@/components/Loading";
 import EditMealModal from "@/components/EditMealModal";
-import { deleteMeal, fetchFoodInfo, updateMeal } from "@/util/queries";
+import {
+  addProductToTemplates,
+  deleteMeal,
+  fetchFoodInfo,
+  updateMeal,
+} from "@/util/queries";
 import { FoodInfo, FoodInfoFull } from "@/util/types";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSQLiteContext } from "expo-sqlite";
+import * as Crypto from "expo-crypto";
 import { useCallback, useContext, useState } from "react";
 import {
   Text,
@@ -17,6 +23,7 @@ import {
   ScrollView,
   RefreshControl,
 } from "react-native";
+import { commonStyles } from "@/styles/common";
 
 export default function Index() {
   const auth = useContext(AuthContext);
@@ -116,6 +123,38 @@ export default function Index() {
       Alert.alert("Error", "Error updating meal.");
     },
   });
+
+  const { mutate: saveAsTemplate } = useMutation({
+    mutationFn: (meal: FoodInfoFull) => {
+      const quantity = parseFloat(String(meal.quantity));
+      const scale = 100 / quantity;
+
+      return addProductToTemplates(
+        Crypto.randomUUID(),
+        auth?.user?.id as string,
+        meal.foodName,
+        parseFloat(String(meal.calories)) * scale,
+        parseFloat(String(meal.fat)) * scale,
+        parseFloat(String(meal.carbohydrates)) * scale,
+        parseFloat(String(meal.sugar)) * scale,
+        parseFloat(String(meal.protein)) * scale,
+        parseFloat(String(meal.fiber)) * scale,
+        db,
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["templateInfo"] });
+      Alert.alert("Success", "Meal saved as template (per 100g).");
+    },
+    onError: (error) => {
+      console.log("Error saving template:", error);
+      Alert.alert("Error", "Failed to save template.");
+    },
+  });
+
+  const handleSaveAsTemplate = (meal: FoodInfoFull) => {
+    saveAsTemplate(meal);
+  };
 
   const handleEdit = (meal: FoodInfoFull) => {
     setSelectedMeal(meal);
@@ -472,34 +511,40 @@ export default function Index() {
                 {meal.quantity}g · {meal.date}
               </Text>
               <View style={styles.separator} />
-              <View style={styles.macroGrid}>
-                <View style={styles.macroCell}>
-                  <Text style={styles.macroCellLabel}>Calories</Text>
-                  <Text style={styles.macroCellValue}>
+              <View style={commonStyles.macroGrid}>
+                <View style={commonStyles.macroCell}>
+                  <Text style={commonStyles.macroCellLabel}>Calories</Text>
+                  <Text style={commonStyles.macroCellValue}>
                     {meal.calories} kcal
                   </Text>
                 </View>
-                <View style={styles.macroCell}>
-                  <Text style={styles.macroCellLabel}>Protein</Text>
-                  <Text style={styles.macroCellValue}>{meal.protein}g</Text>
+                <View style={commonStyles.macroCell}>
+                  <Text style={commonStyles.macroCellLabel}>Protein</Text>
+                  <Text style={commonStyles.macroCellValue}>
+                    {meal.protein}g
+                  </Text>
                 </View>
-                <View style={styles.macroCell}>
-                  <Text style={styles.macroCellLabel}>Carbs</Text>
-                  <Text style={styles.macroCellValue}>
+                <View style={commonStyles.macroCell}>
+                  <Text style={commonStyles.macroCellLabel}>Carbs</Text>
+                  <Text style={commonStyles.macroCellValue}>
                     {meal.carbohydrates}g
                   </Text>
                 </View>
-                <View style={styles.macroCell}>
-                  <Text style={styles.macroCellLabel}>Fat</Text>
-                  <Text style={styles.macroCellValue}>{meal.fat}g</Text>
+                <View style={commonStyles.macroCell}>
+                  <Text style={commonStyles.macroCellLabel}>Fat</Text>
+                  <Text style={commonStyles.macroCellValue}>{meal.fat}g</Text>
                 </View>
-                <View style={styles.macroCell}>
-                  <Text style={styles.macroCellLabel}>Sugar</Text>
-                  <Text style={styles.macroCellValue}>{meal.sugar}g</Text>
+                <View style={commonStyles.macroCell}>
+                  <Text style={commonStyles.macroCellLabel}>Sugar</Text>
+                  <Text style={commonStyles.macroCellValue}>
+                    {meal.sugar}g
+                  </Text>
                 </View>
-                <View style={styles.macroCell}>
-                  <Text style={styles.macroCellLabel}>Fiber</Text>
-                  <Text style={styles.macroCellValue}>{meal.fiber}g</Text>
+                <View style={commonStyles.macroCell}>
+                  <Text style={commonStyles.macroCellLabel}>Fiber</Text>
+                  <Text style={commonStyles.macroCellValue}>
+                    {meal.fiber}g
+                  </Text>
                 </View>
               </View>
               <View style={styles.mealButtons}>
@@ -509,6 +554,13 @@ export default function Index() {
                   onPress={() => handleEdit(meal)}
                 >
                   <Text style={styles.editButtonText}>Edit</Text>
+                </TouchableHighlight>
+                <TouchableHighlight
+                  style={styles.templateButton}
+                  underlayColor="#f0f0f0"
+                  onPress={() => handleSaveAsTemplate(meal)}
+                >
+                  <Text style={styles.templateButtonText}>Template</Text>
                 </TouchableHighlight>
                 <TouchableHighlight
                   style={styles.deleteButton}
@@ -594,17 +646,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 14,
   },
-  mealCard: {
-    backgroundColor: "white",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-  },
+  mealCard: commonStyles.card,
   mealHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -637,25 +679,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#e8e8e8",
     marginBottom: 8,
   },
-  macroGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  macroCell: {
-    width: "33.33%",
-    paddingVertical: 4,
-    paddingHorizontal: 2,
-  },
-  macroCellLabel: {
-    fontSize: 11,
-    color: "rgba(0,0,0,0.5)",
-    marginBottom: 1,
-  },
-  macroCellValue: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "black",
-  },
   mealButtons: {
     flexDirection: "row",
     gap: 8,
@@ -670,6 +693,20 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     color: "white",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  templateButton: {
+    backgroundColor: "white",
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: "black",
+    padding: 10,
+    alignItems: "center",
+    flex: 1,
+  },
+  templateButtonText: {
+    color: "black",
     fontWeight: "bold",
     fontSize: 14,
   },
