@@ -328,7 +328,7 @@ export default function Index() {
       <View style={styles.container}>
         <View style={styles.statsContainer}>
           <Text style={styles.statsTitle}>
-            Nutrition Stats for {selectedDate}
+            Nutrition Stats for {selectedDate.split("-").reverse().join(".")}
           </Text>
           <View style={styles.statsGrid}>
             <View style={styles.statCell}>
@@ -508,7 +508,7 @@ export default function Index() {
                 </View>
               </View>
               <Text style={styles.mealSubtext}>
-                {meal.quantity}g · {meal.date}
+                {meal.quantity}g · {meal.date.split("-").reverse().join(".")}
               </Text>
               <View style={styles.separator} />
               <View style={commonStyles.macroGrid}>
