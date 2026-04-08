@@ -103,6 +103,17 @@ export default function Scanner() {
     setAmount("");
   };
 
+  if (isExpoGo) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.message}>
+          Scanner is not available in Expo Go. Use a development build to scan
+          barcodes.
+        </Text>
+      </View>
+    );
+  }
+
   if (!cameraPermission?.hasPermission) {
     return (
       <View style={styles.container}>
@@ -467,81 +478,6 @@ const styles = StyleSheet.create({
   outlineButtonTextDisabled: {
     fontSize: 15,
     color: "rgba(0,0,0,0.3)",
-    fontWeight: "bold",
-  },
-  scanAgainButton: {
-    backgroundColor: "black",
-    borderRadius: 10,
-    padding: 6,
-    alignItems: "center",
-    marginTop: 5,
-    width: "100%",
-    flex: 1,
-  },
-  buttonDisabled: {
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    borderRadius: 10,
-    padding: 6,
-    alignItems: "center",
-    marginTop: 5,
-    width: "100%",
-    flex: 1,
-  },
-  scanAgainText: {
-    fontSize: 18,
-    color: "white",
-    fontWeight: "bold",
-  },
-  input: {
-    height: 40,
-    borderColor: "rgb(204, 204, 204)",
-    backgroundColor: "white",
-    width: 200,
-    borderWidth: 1,
-    borderRadius: 4,
-    marginBottom: 10,
-    paddingHorizontal: 10,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 1)",
-  },
-  modalTitle: {
-    fontSize: 20,
-    marginBottom: 20,
-    color: "black",
-  },
-  modalButtonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "80%",
-    gap: 20,
-  },
-  pickerContainer: {
-    borderColor: "rgb(204, 204, 204)",
-    borderWidth: 1,
-    borderRadius: 4,
-    height: 40,
-    width: 200,
-    backgroundColor: "white",
-    justifyContent: "center",
-    marginBottom: 40,
-  },
-  dateButton: {
-    backgroundColor: "transparent",
-    borderRadius: 10,
-    borderColor: "rgba(0, 0, 0, 0.3)",
-    borderWidth: 1,
-    width: 200,
-    padding: 10,
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  dateButtonText: {
-    fontSize: 16,
-    color: "black",
     fontWeight: "bold",
   },
 });
