@@ -280,25 +280,15 @@ export default function Index() {
     auth?.user?.goal || "weight loss",
   );
 
-  const getIndicatorColor = (actual: number, recommended: number): string => {
+  const getIndicator = (actual: number, recommended: number) => {
     const lower = recommended * 0.9;
     const upper = recommended * 1.1;
-    if (actual < lower) return "blue";
-    else if (actual > upper) return "red";
-    return "green";
-  };
 
-  const getIndicatorIcon = (actual: number, recommended: number) => {
-    const lower = recommended * 0.9;
-    const upper = recommended * 1.1;
-    const color = getIndicatorColor(actual, recommended);
-
-    if (actual < lower) {
-      return <Ionicons name="arrow-down-outline" size={14} color={color} />;
-    } else if (actual > upper) {
-      return <Ionicons name="arrow-up-outline" size={14} color={color} />;
-    }
-    return <Ionicons name="checkmark-outline" size={14} color={color} />;
+    if (actual < lower)
+      return { color: "blue", icon: <Ionicons name="arrow-down-outline" size={14} color="blue" /> };
+    if (actual > upper)
+      return { color: "red", icon: <Ionicons name="arrow-up-outline" size={14} color="red" /> };
+    return { color: "green", icon: <Ionicons name="checkmark-outline" size={14} color="green" /> };
   };
 
   const formatMealType = (type: string) => {
@@ -334,16 +324,11 @@ export default function Index() {
             <View style={styles.statCell}>
               <Text style={styles.statLabel}>Calories</Text>
               <View style={styles.statValueRow}>
-                {getIndicatorIcon(totals.calories, recommendedIntake.calories)}
+                {getIndicator(totals.calories, recommendedIntake.calories).icon}
                 <Text
                   style={[
                     styles.statValue,
-                    {
-                      color: getIndicatorColor(
-                        totals.calories,
-                        recommendedIntake.calories,
-                      ),
-                    },
+                    { color: getIndicator(totals.calories, recommendedIntake.calories).color },
                   ]}
                 >
                   {" "}
@@ -358,16 +343,11 @@ export default function Index() {
             <View style={styles.statCell}>
               <Text style={styles.statLabel}>Fat</Text>
               <View style={styles.statValueRow}>
-                {getIndicatorIcon(totals.fat, recommendedIntake.fat)}
+                {getIndicator(totals.fat, recommendedIntake.fat).icon}
                 <Text
                   style={[
                     styles.statValue,
-                    {
-                      color: getIndicatorColor(
-                        totals.fat,
-                        recommendedIntake.fat,
-                      ),
-                    },
+                    { color: getIndicator(totals.fat, recommendedIntake.fat).color },
                   ]}
                 >
                   {" "}
@@ -382,19 +362,11 @@ export default function Index() {
             <View style={styles.statCell}>
               <Text style={styles.statLabel}>Carbs</Text>
               <View style={styles.statValueRow}>
-                {getIndicatorIcon(
-                  totals.carbohydrates,
-                  recommendedIntake.carbohydrates,
-                )}
+                {getIndicator(totals.carbohydrates, recommendedIntake.carbohydrates).icon}
                 <Text
                   style={[
                     styles.statValue,
-                    {
-                      color: getIndicatorColor(
-                        totals.carbohydrates,
-                        recommendedIntake.carbohydrates,
-                      ),
-                    },
+                    { color: getIndicator(totals.carbohydrates, recommendedIntake.carbohydrates).color },
                   ]}
                 >
                   {" "}
@@ -409,16 +381,11 @@ export default function Index() {
             <View style={styles.statCell}>
               <Text style={styles.statLabel}>Sugar</Text>
               <View style={styles.statValueRow}>
-                {getIndicatorIcon(totals.sugar, recommendedIntake.sugar)}
+                {getIndicator(totals.sugar, recommendedIntake.sugar).icon}
                 <Text
                   style={[
                     styles.statValue,
-                    {
-                      color: getIndicatorColor(
-                        totals.sugar,
-                        recommendedIntake.sugar,
-                      ),
-                    },
+                    { color: getIndicator(totals.sugar, recommendedIntake.sugar).color },
                   ]}
                 >
                   {" "}
@@ -433,16 +400,11 @@ export default function Index() {
             <View style={styles.statCell}>
               <Text style={styles.statLabel}>Protein</Text>
               <View style={styles.statValueRow}>
-                {getIndicatorIcon(totals.protein, recommendedIntake.protein)}
+                {getIndicator(totals.protein, recommendedIntake.protein).icon}
                 <Text
                   style={[
                     styles.statValue,
-                    {
-                      color: getIndicatorColor(
-                        totals.protein,
-                        recommendedIntake.protein,
-                      ),
-                    },
+                    { color: getIndicator(totals.protein, recommendedIntake.protein).color },
                   ]}
                 >
                   {" "}
@@ -457,16 +419,11 @@ export default function Index() {
             <View style={styles.statCell}>
               <Text style={styles.statLabel}>Fiber</Text>
               <View style={styles.statValueRow}>
-                {getIndicatorIcon(totals.fiber, recommendedIntake.fiber)}
+                {getIndicator(totals.fiber, recommendedIntake.fiber).icon}
                 <Text
                   style={[
                     styles.statValue,
-                    {
-                      color: getIndicatorColor(
-                        totals.fiber,
-                        recommendedIntake.fiber,
-                      ),
-                    },
+                    { color: getIndicator(totals.fiber, recommendedIntake.fiber).color },
                   ]}
                 >
                   {" "}
