@@ -9,27 +9,42 @@ import {
 } from "react-native";
 import { useContext, useState } from "react";
 import { useSQLiteContext } from "expo-sqlite";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addMealToDb, addProductToTemplates, getProductFromDb } from "@/util/queries";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  addMealToDb,
+  addProductToTemplates,
+  getProductFromDb,
+} from "@/util/queries";
 import { AuthContext } from "@/components/AuthContext";
 import * as Crypto from "expo-crypto";
 import SaveModal from "@/components/SaveModal";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { SaveModalSchema } from "@/util/validations";
 import Loading from "@/components/Loading";
-import { useCameraPermission } from "react-native-vision-camera";
-import ScannerCamera from "@/components/Camera";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import { commonStyles } from "@/styles/common";
 
+const isExpoGo =
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
+let useCameraPermission: any;
+let ScannerCamera: any;
+
+if (!isExpoGo) {
+  useCameraPermission =
+    require("react-native-vision-camera").useCameraPermission;
+  ScannerCamera = require("@/components/Camera").default;
+}
+
 export default function Scanner() {
-  const { hasPermission, requestPermission } = useCameraPermission();
+  const cameraPermission = isExpoGo ? null : useCameraPermission();
   const [scanned, setScanned] = useState<boolean>(false);
   const [barcode, setBarcode] = useState<string | null>(null);
   const [amount, setAmount] = useState<string>("");
   const [mealType, setMealType] = useState<string>("breakfast");
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
   const db = useSQLiteContext();
   const queryClient = useQueryClient();
@@ -37,7 +52,7 @@ export default function Scanner() {
 
   const fetchProductInfo = async (barcode: string) => {
     const response = await fetch(
-      `https://world.openfoodfacts.org/api/v3/product/${barcode}.json`
+      `https://world.openfoodfacts.org/api/v3/product/${barcode}.json`,
     );
     const data = await response.json();
 
@@ -68,7 +83,8 @@ export default function Scanner() {
   };
 
   const handlePermissionRequest = async () => {
-    const granted = await requestPermission();
+    if (!cameraPermission) return;
+    const granted = await cameraPermission.requestPermission();
     if (!granted) {
       Alert.alert(
         "Permission Required",
@@ -76,7 +92,7 @@ export default function Scanner() {
         [
           { text: "Cancel", style: "cancel" },
           { text: "Open Settings", onPress: () => Linking.openSettings() },
-        ]
+        ],
       );
     }
   };
@@ -87,7 +103,7 @@ export default function Scanner() {
     setAmount("");
   };
 
-  if (!hasPermission) {
+  if (!cameraPermission?.hasPermission) {
     return (
       <View style={styles.container}>
         <Text style={styles.message}>
@@ -107,7 +123,7 @@ export default function Scanner() {
 
     if (!validatedData.success) {
       const errorMessages = validatedData.error.errors.map(
-        (error) => error.message
+        (error) => error.message,
       );
       Alert.alert("Validation Error", errorMessages.join("\n"));
       return;
@@ -146,7 +162,7 @@ export default function Scanner() {
         parseFloat(sugar.toFixed(2)),
         parseFloat(protein.toFixed(2)),
         parseFloat(fiber.toFixed(2)),
-        db
+        db,
       );
 
       Alert.alert("Success", "Successfully saved this meal");
@@ -160,9 +176,11 @@ export default function Scanner() {
     if (!product) return;
 
     const productName = product.product_name_en || product.product_name;
-    const calories = product.nutriments?.["energy-kcal_100g"] || product.calories || 0;
+    const calories =
+      product.nutriments?.["energy-kcal_100g"] || product.calories || 0;
     const fat = product.nutriments?.fat_100g || product.fat || 0;
-    const carbs = product.nutriments?.carbohydrates_100g || product.carbohydrates || 0;
+    const carbs =
+      product.nutriments?.carbohydrates_100g || product.carbohydrates || 0;
     const sugar = product.nutriments?.sugars_100g || product.sugar || 0;
     const protein = product.nutriments?.proteins_100g || product.protein || 0;
     const fiber = product.nutriments?.fiber_100g || product.fiber || 0;
@@ -177,14 +195,16 @@ export default function Scanner() {
       sugar,
       protein,
       fiber,
-      db
-    ).then(() => {
-      Alert.alert("Success", "Product saved as template.");
-      queryClient.invalidateQueries({ queryKey: ["templateInfo"] });
-    }).catch((error) => {
-      console.log("Error saving template:", error);
-      Alert.alert("Error", "Failed to save template.");
-    });
+      db,
+    )
+      .then(() => {
+        Alert.alert("Success", "Product saved as template.");
+        queryClient.invalidateQueries({ queryKey: ["templateInfo"] });
+      })
+      .catch((error) => {
+        console.log("Error saving template:", error);
+        Alert.alert("Error", "Failed to save template.");
+      });
   };
 
   const openAmountModal = () => {
