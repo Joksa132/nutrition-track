@@ -1,35 +1,9 @@
 import { SQLiteDatabase } from "expo-sqlite";
 import { FoodInfoFull, UserInfo } from "@/util/types";
 
-export const updateUserInfo = async (
-  userInfo: UserInfo,
-  hashedPassword: string,
-  db: SQLiteDatabase
-) => {
-  const result = await db.runAsync(
-    `
-    UPDATE users 
-    SET username = ?, password = ?, gender = ?, age = ?, height = ?, weight = ?, activityLevel = ?, goal = ?
-    WHERE id = ?;`,
-    [
-      userInfo.username,
-      hashedPassword,
-      userInfo.gender,
-      userInfo.age,
-      userInfo.height,
-      userInfo.weight,
-      userInfo.activityLevel,
-      userInfo.goal,
-      userInfo.id,
-    ]
-  );
-
-  return result;
-};
-
 export const updateUserProfile = async (
   userInfo: UserInfo,
-  db: SQLiteDatabase
+  db: SQLiteDatabase,
 ) => {
   const result = await db.runAsync(
     `
@@ -45,7 +19,7 @@ export const updateUserProfile = async (
       userInfo.activityLevel,
       userInfo.goal,
       userInfo.id,
-    ]
+    ],
   );
 
   return result;
@@ -54,11 +28,11 @@ export const updateUserProfile = async (
 export const updateUserPassword = async (
   userId: string,
   hashedPassword: string,
-  db: SQLiteDatabase
+  db: SQLiteDatabase,
 ) => {
   const result = await db.runAsync(
     `UPDATE users SET password = ? WHERE id = ?;`,
-    [hashedPassword, userId]
+    [hashedPassword, userId],
   );
 
   return result;
@@ -67,11 +41,11 @@ export const updateUserPassword = async (
 export const fetchFoodInfo = async (
   userId: string,
   db: SQLiteDatabase,
-  date: string
+  date: string,
 ) => {
   const result = await db.getAllAsync(
     "SELECT * FROM nutrition_info WHERE user_id = ? AND date = ?",
-    [userId, date]
+    [userId, date],
   );
 
   return result as FoodInfoFull[];
@@ -98,7 +72,7 @@ export const addMealToDb = async (
   sugar: number,
   protein: number,
   fiber: number,
-  db: SQLiteDatabase
+  db: SQLiteDatabase,
 ) => {
   try {
     const result = await db.runAsync(
@@ -116,7 +90,7 @@ export const addMealToDb = async (
         Math.round(sugar * 100) / 100,
         Math.round(protein * 100) / 100,
         Math.round(fiber * 100) / 100,
-      ]
+      ],
     );
 
     return result;
@@ -135,7 +109,7 @@ export const addProductToDb = async (
   protein: number,
   fiber: number,
   barcode: string,
-  db: SQLiteDatabase
+  db: SQLiteDatabase,
 ) => {
   try {
     const result = await db.runAsync(
@@ -150,7 +124,7 @@ export const addProductToDb = async (
         Math.round(protein * 100) / 100,
         Math.round(fiber * 100) / 100,
         barcode,
-      ]
+      ],
     );
 
     return result;
@@ -169,7 +143,7 @@ export const addProductToTemplates = async (
   sugar: number,
   protein: number,
   fiber: number,
-  db: SQLiteDatabase
+  db: SQLiteDatabase,
 ) => {
   try {
     const result = await db.runAsync(
@@ -184,7 +158,7 @@ export const addProductToTemplates = async (
         Math.round(sugar * 100) / 100,
         Math.round(protein * 100) / 100,
         Math.round(fiber * 100) / 100,
-      ]
+      ],
     );
 
     return result;
@@ -197,7 +171,7 @@ export const getProductFromDb = async (barcode: string, db: SQLiteDatabase) => {
   try {
     const result = await db.getFirstAsync(
       "SELECT * FROM product_info WHERE barcode = (?)",
-      [barcode]
+      [barcode],
     );
 
     return result;
@@ -211,7 +185,7 @@ export const getAllTemplates = async (userId: string, db: SQLiteDatabase) => {
   try {
     const result = await db.getAllAsync(
       "SELECT * FROM product_templates WHERE user_id = (?)",
-      [userId]
+      [userId],
     );
 
     return result;
@@ -223,12 +197,12 @@ export const getAllTemplates = async (userId: string, db: SQLiteDatabase) => {
 
 export const deleteTemplate = async (
   templateId: string,
-  db: SQLiteDatabase
+  db: SQLiteDatabase,
 ) => {
   try {
     const result = await db.runAsync(
       "DELETE FROM product_templates WHERE id = (?)",
-      [templateId]
+      [templateId],
     );
 
     return result;
@@ -248,11 +222,21 @@ export const registerUser = async (
   weight: string | number,
   activityLevel: string | number,
   goal: string | number,
-  db: SQLiteDatabase
+  db: SQLiteDatabase,
 ) => {
   const result = await db.runAsync(
     "INSERT INTO users (id, username, password, gender, age, height, weight, activityLevel, goal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [id, username, hashedPassword, gender, age, height, weight, activityLevel, goal]
+    [
+      id,
+      username,
+      hashedPassword,
+      gender,
+      age,
+      height,
+      weight,
+      activityLevel,
+      goal,
+    ],
   );
 
   return result;
@@ -270,7 +254,7 @@ export const updateMeal = async (
   protein: number,
   fiber: number,
   date: string,
-  db: SQLiteDatabase
+  db: SQLiteDatabase,
 ) => {
   const result = await db.runAsync(
     `UPDATE nutrition_info
@@ -288,7 +272,7 @@ export const updateMeal = async (
       Math.round(fiber * 100) / 100,
       date,
       mealId,
-    ]
+    ],
   );
 
   return result;

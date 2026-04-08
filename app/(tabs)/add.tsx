@@ -65,7 +65,7 @@ export default function AddMeal() {
 
       if (!validatedData.success) {
         const errorMessages = validatedData.error.errors.map(
-          (error) => error.message
+          (error) => error.message,
         );
         throw new Error(errorMessages.join("\n"));
       }
@@ -92,7 +92,7 @@ export default function AddMeal() {
         parseFloat(sugar.toFixed(2)),
         parseFloat(protein.toFixed(2)),
         parseFloat(fiber.toFixed(2)),
-        db
+        db,
       );
     },
     onSuccess: () => {
@@ -112,7 +112,7 @@ export default function AddMeal() {
           {
             text: "Ok",
           },
-        ]
+        ],
       );
     },
   });
@@ -123,7 +123,7 @@ export default function AddMeal() {
 
       if (!validatedData.success) {
         const errorMessages = validatedData.error.errors.map(
-          (error) => error.message
+          (error) => error.message,
         );
         throw new Error(errorMessages.join("\n"));
       }
@@ -138,7 +138,7 @@ export default function AddMeal() {
         validatedData.data.protein,
         validatedData.data.fiber,
         validatedData.data.barcode,
-        db
+        db,
       );
     },
     onSuccess: () => {
@@ -158,7 +158,7 @@ export default function AddMeal() {
           {
             text: "Ok",
           },
-        ]
+        ],
       );
     },
   });
@@ -175,7 +175,7 @@ export default function AddMeal() {
         parseFloat(productInfo.sugar),
         parseFloat(productInfo.protein),
         parseFloat(productInfo.fiber),
-        db
+        db,
       );
     },
     onSuccess: () => {
@@ -309,7 +309,6 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  sectionContainer: {},
   section: {
     backgroundColor: "white",
     borderRadius: 10,
