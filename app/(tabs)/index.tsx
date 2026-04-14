@@ -280,13 +280,13 @@ export default function Index() {
     auth?.user?.goal || "weight loss",
   );
 
-  const getIndicator = (actual: number, recommended: number) => {
+  const getIndicator = (actual: number, recommended: number, noUpperLimit = false) => {
     const lower = recommended * 0.9;
     const upper = recommended * 1.1;
 
     if (actual < lower)
       return { color: "blue", icon: <Ionicons name="arrow-down-outline" size={14} color="blue" /> };
-    if (actual > upper)
+    if (!noUpperLimit && actual > upper)
       return { color: "red", icon: <Ionicons name="arrow-up-outline" size={14} color="red" /> };
     return { color: "green", icon: <Ionicons name="checkmark-outline" size={14} color="green" /> };
   };
@@ -400,11 +400,11 @@ export default function Index() {
             <View style={styles.statCell}>
               <Text style={styles.statLabel}>Protein</Text>
               <View style={styles.statValueRow}>
-                {getIndicator(totals.protein, recommendedIntake.protein).icon}
+                {getIndicator(totals.protein, recommendedIntake.protein, true).icon}
                 <Text
                   style={[
                     styles.statValue,
-                    { color: getIndicator(totals.protein, recommendedIntake.protein).color },
+                    { color: getIndicator(totals.protein, recommendedIntake.protein, true).color },
                   ]}
                 >
                   {" "}
