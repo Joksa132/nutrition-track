@@ -243,23 +243,23 @@ export default function Index() {
       calorieTarget = tdee * 1.15;
     }
 
-    const proteinRange = [0.1, 0.35];
-    const fatRange = [0.2, 0.35];
-    const carbRange = [0.45, 0.65];
+    const weightKg = parseFloat(weight);
 
-    const proteinCal =
-      calorieTarget * ((proteinRange[0] + proteinRange[1]) / 2);
-    const fatCal = calorieTarget * ((fatRange[0] + fatRange[1]) / 2);
-    const carbCal = calorieTarget * ((carbRange[0] + carbRange[1]) / 2);
+    let proteinPerKg: number;
+    if (goal === "weight loss") proteinPerKg = 2.2;
+    else if (goal === "weight gain") proteinPerKg = 1.6;
+    else proteinPerKg = 1.8;
+    const proteinG = proteinPerKg * weightKg;
 
-    const proteinG = proteinCal / 4;
-    const fatG = fatCal / 9;
-    const carbG = carbCal / 4;
+    const fatFromPct = (calorieTarget * 0.25) / 9;
+    const fatMin = 0.8 * weightKg;
+    const fatG = Math.max(fatFromPct, fatMin);
+
+    const carbsKcal = calorieTarget - proteinG * 4 - fatG * 9;
+    const carbG = Math.max(carbsKcal, 0) / 4;
 
     const fiberG = (calorieTarget / 1000) * 14;
-
-    const sugarCal = calorieTarget * 0.1;
-    const sugarG = sugarCal / 4;
+    const sugarG = (calorieTarget * 0.1) / 4;
 
     return {
       calories: Math.round(calorieTarget),
@@ -280,15 +280,24 @@ export default function Index() {
     auth?.user?.goal || "weight loss",
   );
 
-  const getIndicator = (actual: number, recommended: number, noUpperLimit = false) => {
+  const getIndicator = (actual: number, recommended: number) => {
     const lower = recommended * 0.9;
     const upper = recommended * 1.1;
 
     if (actual < lower)
-      return { color: "blue", icon: <Ionicons name="arrow-down-outline" size={14} color="blue" /> };
-    if (!noUpperLimit && actual > upper)
-      return { color: "red", icon: <Ionicons name="arrow-up-outline" size={14} color="red" /> };
-    return { color: "green", icon: <Ionicons name="checkmark-outline" size={14} color="green" /> };
+      return {
+        color: "blue",
+        icon: <Ionicons name="arrow-down-outline" size={14} color="blue" />,
+      };
+    if (actual > upper)
+      return {
+        color: "red",
+        icon: <Ionicons name="arrow-up-outline" size={14} color="red" />,
+      };
+    return {
+      color: "green",
+      icon: <Ionicons name="checkmark-outline" size={14} color="green" />,
+    };
   };
 
   const formatMealType = (type: string) => {
@@ -328,7 +337,12 @@ export default function Index() {
                 <Text
                   style={[
                     styles.statValue,
-                    { color: getIndicator(totals.calories, recommendedIntake.calories).color },
+                    {
+                      color: getIndicator(
+                        totals.calories,
+                        recommendedIntake.calories,
+                      ).color,
+                    },
                   ]}
                 >
                   {" "}
@@ -347,7 +361,10 @@ export default function Index() {
                 <Text
                   style={[
                     styles.statValue,
-                    { color: getIndicator(totals.fat, recommendedIntake.fat).color },
+                    {
+                      color: getIndicator(totals.fat, recommendedIntake.fat)
+                        .color,
+                    },
                   ]}
                 >
                   {" "}
@@ -362,11 +379,21 @@ export default function Index() {
             <View style={styles.statCell}>
               <Text style={styles.statLabel}>Carbs</Text>
               <View style={styles.statValueRow}>
-                {getIndicator(totals.carbohydrates, recommendedIntake.carbohydrates).icon}
+                {
+                  getIndicator(
+                    totals.carbohydrates,
+                    recommendedIntake.carbohydrates,
+                  ).icon
+                }
                 <Text
                   style={[
                     styles.statValue,
-                    { color: getIndicator(totals.carbohydrates, recommendedIntake.carbohydrates).color },
+                    {
+                      color: getIndicator(
+                        totals.carbohydrates,
+                        recommendedIntake.carbohydrates,
+                      ).color,
+                    },
                   ]}
                 >
                   {" "}
@@ -385,7 +412,10 @@ export default function Index() {
                 <Text
                   style={[
                     styles.statValue,
-                    { color: getIndicator(totals.sugar, recommendedIntake.sugar).color },
+                    {
+                      color: getIndicator(totals.sugar, recommendedIntake.sugar)
+                        .color,
+                    },
                   ]}
                 >
                   {" "}
@@ -400,11 +430,16 @@ export default function Index() {
             <View style={styles.statCell}>
               <Text style={styles.statLabel}>Protein</Text>
               <View style={styles.statValueRow}>
-                {getIndicator(totals.protein, recommendedIntake.protein, true).icon}
+                {getIndicator(totals.protein, recommendedIntake.protein).icon}
                 <Text
                   style={[
                     styles.statValue,
-                    { color: getIndicator(totals.protein, recommendedIntake.protein, true).color },
+                    {
+                      color: getIndicator(
+                        totals.protein,
+                        recommendedIntake.protein,
+                      ).color,
+                    },
                   ]}
                 >
                   {" "}
@@ -423,7 +458,10 @@ export default function Index() {
                 <Text
                   style={[
                     styles.statValue,
-                    { color: getIndicator(totals.fiber, recommendedIntake.fiber).color },
+                    {
+                      color: getIndicator(totals.fiber, recommendedIntake.fiber)
+                        .color,
+                    },
                   ]}
                 >
                   {" "}
@@ -493,15 +531,11 @@ export default function Index() {
                 </View>
                 <View style={commonStyles.macroCell}>
                   <Text style={commonStyles.macroCellLabel}>Sugar</Text>
-                  <Text style={commonStyles.macroCellValue}>
-                    {meal.sugar}g
-                  </Text>
+                  <Text style={commonStyles.macroCellValue}>{meal.sugar}g</Text>
                 </View>
                 <View style={commonStyles.macroCell}>
                   <Text style={commonStyles.macroCellLabel}>Fiber</Text>
-                  <Text style={commonStyles.macroCellValue}>
-                    {meal.fiber}g
-                  </Text>
+                  <Text style={commonStyles.macroCellValue}>{meal.fiber}g</Text>
                 </View>
               </View>
               <View style={styles.mealButtons}>
