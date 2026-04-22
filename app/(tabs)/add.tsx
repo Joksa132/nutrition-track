@@ -205,7 +205,8 @@ export default function AddMeal() {
     DateTimePickerAndroid.open({
       value: new Date(foodInfo.date),
       onChange: (e, selectedDate) => {
-        const convertedDate = selectedDate!.toISOString().split("T")[0];
+        if (!selectedDate) return;
+        const convertedDate = selectedDate.toISOString().split("T")[0];
         setFoodInfo((prev) => ({ ...prev, date: convertedDate }));
       },
       mode: "date",

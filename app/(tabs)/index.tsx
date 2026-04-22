@@ -186,7 +186,8 @@ export default function Index() {
     DateTimePickerAndroid.open({
       value: new Date(selectedDate),
       onChange: (e, date) => {
-        const convertedDate = date!.toISOString().split("T")[0];
+        if (!date) return;
+        const convertedDate = date.toISOString().split("T")[0];
         setSelectedDate(convertedDate);
       },
       mode: "date",

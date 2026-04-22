@@ -86,7 +86,8 @@ export default function Search() {
     DateTimePickerAndroid.open({
       value: new Date(selectedDate),
       onChange: (e, selectedDate) => {
-        const convertedDate = selectedDate!.toISOString().split("T")[0];
+        if (!selectedDate) return;
+        const convertedDate = selectedDate.toISOString().split("T")[0];
         setSelectedDate(convertedDate);
       },
       mode: "date",
