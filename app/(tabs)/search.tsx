@@ -66,18 +66,6 @@ export default function Search() {
     enabled: false,
   });
 
-  if (isLoading) {
-    return <Loading message="Searching..." />;
-  }
-
-  if (isError) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Error loading.</Text>
-      </View>
-    );
-  }
-
   const handleSearch = () => {
     refetch();
   };
@@ -174,6 +162,11 @@ export default function Search() {
           <Text style={styles.searchButtonText}>Search</Text>
         </TouchableHighlight>
       </View>
+
+      {isLoading && <Loading message="Searching..." />}
+      {isError && (
+        <Text style={styles.errorText}>Error loading search results.</Text>
+      )}
 
       <ScrollView
         contentContainerStyle={{ paddingBottom: 20 }}
