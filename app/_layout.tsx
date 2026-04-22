@@ -67,7 +67,6 @@ const createDbIfNeeded = async (db: SQLiteDatabase) => {
       FOREIGN KEY(user_id) REFERENCES users(id)
     );
     `);
-    console.log("Database initialized successfully.");
   } catch (error) {
     console.error("Error initializing database:", error);
   }
