@@ -74,29 +74,23 @@ export const addMealToDb = async (
   fiber: number,
   db: SQLiteDatabase,
 ) => {
-  try {
-    const result = await db.runAsync(
-      "INSERT INTO nutrition_info (id, user_id, date, mealType, foodName, quantity, calories, fat, carbohydrates, sugar, protein, fiber) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [
-        id,
-        userId,
-        date,
-        mealType,
-        foodName,
-        quantity,
-        Math.round(calories * 100) / 100,
-        Math.round(fat * 100) / 100,
-        Math.round(carbohydrates * 100) / 100,
-        Math.round(sugar * 100) / 100,
-        Math.round(protein * 100) / 100,
-        Math.round(fiber * 100) / 100,
-      ],
-    );
-
-    return result;
-  } catch (error) {
-    console.log(error);
-  }
+  return await db.runAsync(
+    "INSERT INTO nutrition_info (id, user_id, date, mealType, foodName, quantity, calories, fat, carbohydrates, sugar, protein, fiber) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [
+      id,
+      userId,
+      date,
+      mealType,
+      foodName,
+      quantity,
+      Math.round(calories * 100) / 100,
+      Math.round(fat * 100) / 100,
+      Math.round(carbohydrates * 100) / 100,
+      Math.round(sugar * 100) / 100,
+      Math.round(protein * 100) / 100,
+      Math.round(fiber * 100) / 100,
+    ],
+  );
 };
 
 export const addProductToDb = async (
@@ -111,26 +105,20 @@ export const addProductToDb = async (
   barcode: string,
   db: SQLiteDatabase,
 ) => {
-  try {
-    const result = await db.runAsync(
-      "INSERT INTO product_info (id, product_name, calories, fat, carbohydrates, sugar, protein, fiber, barcode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [
-        id,
-        productName,
-        Math.round(calories * 100) / 100,
-        Math.round(fat * 100) / 100,
-        Math.round(carbohydrates * 100) / 100,
-        Math.round(sugar * 100) / 100,
-        Math.round(protein * 100) / 100,
-        Math.round(fiber * 100) / 100,
-        barcode,
-      ],
-    );
-
-    return result;
-  } catch (error) {
-    console.log(error);
-  }
+  return await db.runAsync(
+    "INSERT INTO product_info (id, product_name, calories, fat, carbohydrates, sugar, protein, fiber, barcode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [
+      id,
+      productName,
+      Math.round(calories * 100) / 100,
+      Math.round(fat * 100) / 100,
+      Math.round(carbohydrates * 100) / 100,
+      Math.round(sugar * 100) / 100,
+      Math.round(protein * 100) / 100,
+      Math.round(fiber * 100) / 100,
+      barcode,
+    ],
+  );
 };
 
 export const addProductToTemplates = async (
@@ -145,71 +133,43 @@ export const addProductToTemplates = async (
   fiber: number,
   db: SQLiteDatabase,
 ) => {
-  try {
-    const result = await db.runAsync(
-      "INSERT INTO product_templates (id, user_id, product_name, calories, fat, carbohydrates, sugar, protein, fiber) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [
-        id,
-        userId,
-        productName,
-        Math.round(calories * 100) / 100,
-        Math.round(fat * 100) / 100,
-        Math.round(carbohydrates * 100) / 100,
-        Math.round(sugar * 100) / 100,
-        Math.round(protein * 100) / 100,
-        Math.round(fiber * 100) / 100,
-      ],
-    );
-
-    return result;
-  } catch (error) {
-    console.log(error);
-  }
+  return await db.runAsync(
+    "INSERT INTO product_templates (id, user_id, product_name, calories, fat, carbohydrates, sugar, protein, fiber) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [
+      id,
+      userId,
+      productName,
+      Math.round(calories * 100) / 100,
+      Math.round(fat * 100) / 100,
+      Math.round(carbohydrates * 100) / 100,
+      Math.round(sugar * 100) / 100,
+      Math.round(protein * 100) / 100,
+      Math.round(fiber * 100) / 100,
+    ],
+  );
 };
 
 export const getProductFromDb = async (barcode: string, db: SQLiteDatabase) => {
-  try {
-    const result = await db.getFirstAsync(
-      "SELECT * FROM product_info WHERE barcode = (?)",
-      [barcode],
-    );
-
-    return result;
-  } catch (error) {
-    console.log(error);
-    return null;
-  }
+  return await db.getFirstAsync(
+    "SELECT * FROM product_info WHERE barcode = (?)",
+    [barcode],
+  );
 };
 
 export const getAllTemplates = async (userId: string, db: SQLiteDatabase) => {
-  try {
-    const result = await db.getAllAsync(
-      "SELECT * FROM product_templates WHERE user_id = (?)",
-      [userId],
-    );
-
-    return result;
-  } catch (error) {
-    console.log(error);
-    return null;
-  }
+  return await db.getAllAsync(
+    "SELECT * FROM product_templates WHERE user_id = (?)",
+    [userId],
+  );
 };
 
 export const deleteTemplate = async (
   templateId: string,
   db: SQLiteDatabase,
 ) => {
-  try {
-    const result = await db.runAsync(
-      "DELETE FROM product_templates WHERE id = (?)",
-      [templateId],
-    );
-
-    return result;
-  } catch (error) {
-    console.log(error);
-    return null;
-  }
+  return await db.runAsync("DELETE FROM product_templates WHERE id = (?)", [
+    templateId,
+  ]);
 };
 
 export const registerUser = async (

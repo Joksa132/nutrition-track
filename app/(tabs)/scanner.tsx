@@ -125,7 +125,7 @@ export default function Scanner() {
     );
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const validatedData = SaveModalSchema.safeParse({
       amount,
       mealType,
@@ -160,21 +160,27 @@ export default function Scanner() {
         (product.nutriments?.fiber_100g || product.fiber || 0) *
         (validatedData.data.amount / 100);
 
-      addMealToDb(
-        Crypto.randomUUID(),
-        auth?.user?.id as string,
-        validatedData.data.selectedDate,
-        validatedData.data.mealType,
-        product.product_name_en || product.product_name,
-        validatedData.data.amount,
-        parseFloat(calories.toFixed(2)),
-        parseFloat(fat.toFixed(2)),
-        parseFloat(carbs.toFixed(2)),
-        parseFloat(sugar.toFixed(2)),
-        parseFloat(protein.toFixed(2)),
-        parseFloat(fiber.toFixed(2)),
-        db,
-      );
+      try {
+        await addMealToDb(
+          Crypto.randomUUID(),
+          auth?.user?.id as string,
+          validatedData.data.selectedDate,
+          validatedData.data.mealType,
+          product.product_name_en || product.product_name,
+          validatedData.data.amount,
+          parseFloat(calories.toFixed(2)),
+          parseFloat(fat.toFixed(2)),
+          parseFloat(carbs.toFixed(2)),
+          parseFloat(sugar.toFixed(2)),
+          parseFloat(protein.toFixed(2)),
+          parseFloat(fiber.toFixed(2)),
+          db,
+        );
+      } catch (error) {
+        console.log("Error saving meal:", error);
+        Alert.alert("Error", "Failed to save meal.");
+        return;
+      }
 
       Alert.alert("Success", "Successfully saved this meal");
       queryClient.invalidateQueries({ queryKey: ["foodInfo"] });
