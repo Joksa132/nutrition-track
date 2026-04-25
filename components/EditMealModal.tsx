@@ -1,4 +1,4 @@
-import { FoodInfoFull } from "@/util/types";
+import { FoodInfo, FoodInfoFull } from "@/util/types";
 import { Picker } from "@react-native-picker/picker";
 import { useEffect, useState } from "react";
 import {
@@ -20,30 +20,35 @@ type EditMealModalProps = {
   onSave: (meal: FoodInfoFull) => void;
 };
 
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
 export default function EditMealModal({
   visible,
   setVisible,
   meal,
   onSave,
 }: EditMealModalProps) {
-  const [editedMeal, setEditedMeal] = useState<FoodInfoFull | null>(null);
+  const [quantity, setQuantity] = useState<string>("");
+  const [mealType, setMealType] =
+    useState<FoodInfo["mealType"]>("breakfast");
+  const [date, setDate] = useState<string>("");
 
   useEffect(() => {
     if (visible && meal) {
-      setEditedMeal({ ...meal });
+      setQuantity(String(meal.quantity));
+      setMealType(meal.mealType);
+      setDate(meal.date);
     }
   }, [visible, meal]);
 
-  if (!editedMeal) return null;
+  if (!meal) return null;
 
   const showDatepicker = () => {
     DateTimePickerAndroid.open({
-      value: new Date(editedMeal.date),
-      onChange: (_e, date) => {
-        if (date) {
-          const convertedDate = date.toISOString().split("T")[0];
-          setEditedMeal((prev) => prev ? { ...prev, date: convertedDate } : prev);
-        }
+      value: new Date(date),
+      onChange: (_e, picked) => {
+        if (!picked) return;
+        setDate(picked.toISOString().split("T")[0]);
       },
       mode: "date",
       is24Hour: true,
@@ -51,204 +56,194 @@ export default function EditMealModal({
   };
 
   const handleSave = () => {
-    if (!editedMeal.foodName.trim()) {
-      Alert.alert("Error", "Food name cannot be empty.");
+    const newQ = parseFloat(quantity);
+    if (isNaN(newQ) || newQ <= 0) {
+      Alert.alert("Error", "Quantity must be a positive number.");
       return;
     }
-    onSave(editedMeal);
+    const oldQ = parseFloat(String(meal.quantity)) || 1;
+    const scale = newQ / oldQ;
+    onSave({
+      ...meal,
+      quantity: String(newQ),
+      mealType,
+      date,
+      calories: String(round2(parseFloat(String(meal.calories)) * scale)),
+      fat: String(round2(parseFloat(String(meal.fat)) * scale)),
+      carbohydrates: String(
+        round2(parseFloat(String(meal.carbohydrates)) * scale),
+      ),
+      sugar: String(round2(parseFloat(String(meal.sugar)) * scale)),
+      protein: String(round2(parseFloat(String(meal.protein)) * scale)),
+      fiber: String(round2(parseFloat(String(meal.fiber)) * scale)),
+    });
     setVisible(false);
   };
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible}>
-      <View style={styles.modalContainer}>
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1, justifyContent: "center", alignItems: "center" }}
-          keyboardShouldPersistTaps="handled"
-        >
+      <View style={styles.dimOverlay}>
+        <View style={styles.modalCard}>
           <Text style={styles.modalTitle}>Edit Meal</Text>
+          <Text style={styles.foodName} numberOfLines={1}>
+            {meal.foodName}
+          </Text>
 
-          <Text style={styles.label}>Food Name</Text>
-          <TextInput
-            style={styles.input}
-            value={editedMeal.foodName}
-            onChangeText={(text) =>
-              setEditedMeal((prev) => prev ? { ...prev, foodName: text } : prev)
-            }
-          />
+          <ScrollView
+            style={styles.formScroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={styles.fieldLabel}>Quantity (g)</Text>
+            <TextInput
+              style={styles.input}
+              value={quantity}
+              onChangeText={setQuantity}
+              inputMode="decimal"
+            />
 
-          <Text style={styles.label}>Meal Type</Text>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={editedMeal.mealType}
-              onValueChange={(value) =>
-                setEditedMeal((prev) => prev ? { ...prev, mealType: value } : prev)
-              }
-            >
-              <Picker.Item label="Breakfast" value="breakfast" />
-              <Picker.Item label="Lunch" value="lunch" />
-              <Picker.Item label="Dinner" value="dinner" />
-              <Picker.Item label="Snack" value="snack" />
-            </Picker>
-          </View>
+            <Text style={styles.fieldLabel}>Meal Type</Text>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={mealType}
+                onValueChange={setMealType}
+              >
+                <Picker.Item label="Breakfast" value="breakfast" />
+                <Picker.Item label="Lunch" value="lunch" />
+                <Picker.Item label="Dinner" value="dinner" />
+                <Picker.Item label="Snack" value="snack" />
+              </Picker>
+            </View>
 
-          <Text style={styles.label}>Quantity (g)</Text>
-          <TextInput
-            style={styles.input}
-            value={String(editedMeal.quantity)}
-            onChangeText={(text) =>
-              setEditedMeal((prev) => prev ? { ...prev, quantity: text } : prev)
-            }
-            inputMode="decimal"
-          />
-
-          <Text style={styles.label}>Calories</Text>
-          <TextInput
-            style={styles.input}
-            value={String(editedMeal.calories)}
-            onChangeText={(text) =>
-              setEditedMeal((prev) => prev ? { ...prev, calories: text } : prev)
-            }
-            inputMode="decimal"
-          />
-
-          <Text style={styles.label}>Fat (g)</Text>
-          <TextInput
-            style={styles.input}
-            value={String(editedMeal.fat)}
-            onChangeText={(text) =>
-              setEditedMeal((prev) => prev ? { ...prev, fat: text } : prev)
-            }
-            inputMode="decimal"
-          />
-
-          <Text style={styles.label}>Carbohydrates (g)</Text>
-          <TextInput
-            style={styles.input}
-            value={String(editedMeal.carbohydrates)}
-            onChangeText={(text) =>
-              setEditedMeal((prev) => prev ? { ...prev, carbohydrates: text } : prev)
-            }
-            inputMode="decimal"
-          />
-
-          <Text style={styles.label}>Sugar (g)</Text>
-          <TextInput
-            style={styles.input}
-            value={String(editedMeal.sugar)}
-            onChangeText={(text) =>
-              setEditedMeal((prev) => prev ? { ...prev, sugar: text } : prev)
-            }
-            inputMode="decimal"
-          />
-
-          <Text style={styles.label}>Protein (g)</Text>
-          <TextInput
-            style={styles.input}
-            value={String(editedMeal.protein)}
-            onChangeText={(text) =>
-              setEditedMeal((prev) => prev ? { ...prev, protein: text } : prev)
-            }
-            inputMode="decimal"
-          />
-
-          <Text style={styles.label}>Fiber (g)</Text>
-          <TextInput
-            style={styles.input}
-            value={String(editedMeal.fiber)}
-            onChangeText={(text) =>
-              setEditedMeal((prev) => prev ? { ...prev, fiber: text } : prev)
-            }
-            inputMode="decimal"
-          />
-
-          <TouchableHighlight style={styles.dateButton} onPress={showDatepicker}>
-            <Text style={styles.dateButtonText}>Date: {editedMeal.date}</Text>
-          </TouchableHighlight>
-
-          <View style={styles.buttonContainer}>
-            <TouchableHighlight style={styles.button} onPress={handleSave}>
-              <Text style={styles.buttonText}>Save</Text>
-            </TouchableHighlight>
+            <Text style={styles.fieldLabel}>Date</Text>
             <TouchableHighlight
-              style={styles.button}
+              style={styles.dateButton}
+              underlayColor="#f0f0f0"
+              onPress={showDatepicker}
+            >
+              <Text style={styles.dateButtonText}>{date}</Text>
+            </TouchableHighlight>
+          </ScrollView>
+
+          <View style={styles.buttonRow}>
+            <TouchableHighlight
+              style={styles.outlineButton}
+              underlayColor="#f0f0f0"
               onPress={() => setVisible(false)}
             >
-              <Text style={styles.buttonText}>Cancel</Text>
+              <Text style={styles.outlineButtonText}>Cancel</Text>
+            </TouchableHighlight>
+            <TouchableHighlight
+              style={styles.primaryButton}
+              underlayColor="#333"
+              onPress={handleSave}
+            >
+              <Text style={styles.primaryButtonText}>Save</Text>
             </TouchableHighlight>
           </View>
-        </ScrollView>
+        </View>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalContainer: {
+  dimOverlay: {
     flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalCard: {
     backgroundColor: "white",
-    padding: 20,
+    borderRadius: 16,
+    padding: 24,
+    width: "90%",
+    maxHeight: "85%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 20,
+    marginBottom: 4,
   },
-  label: {
-    fontSize: 16,
-    color: "rgba(0, 0, 0, 0.7)",
-    alignSelf: "flex-start",
-    width: "80%",
+  foodName: {
+    fontSize: 14,
+    color: "rgba(0,0,0,0.6)",
+    marginBottom: 16,
+  },
+  formScroll: {
+    flexGrow: 0,
+  },
+  fieldLabel: {
+    fontSize: 13,
+    color: "rgba(0,0,0,0.5)",
+    marginBottom: 4,
   },
   input: {
-    height: 40,
+    height: 44,
     borderColor: "rgb(204, 204, 204)",
     borderWidth: 1,
     marginBottom: 12,
-    paddingHorizontal: 8,
-    borderRadius: 4,
-    width: "80%",
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    fontSize: 15,
   },
   pickerContainer: {
     borderColor: "rgb(204, 204, 204)",
     borderWidth: 1,
     marginBottom: 12,
-    borderRadius: 4,
-    height: 40,
-    width: "80%",
+    borderRadius: 8,
+    height: 44,
     justifyContent: "center",
   },
   dateButton: {
     backgroundColor: "transparent",
-    borderRadius: 10,
+    borderRadius: 8,
     borderColor: "rgba(0, 0, 0, 0.3)",
     borderWidth: 1,
-    width: "80%",
-    padding: 10,
+    padding: 12,
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 12,
   },
   dateButtonText: {
-    fontSize: 16,
+    fontSize: 15,
+    color: "black",
+    fontWeight: "500",
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 16,
+  },
+  outlineButton: {
+    flex: 1,
+    backgroundColor: "white",
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "black",
+    padding: 12,
+    alignItems: "center",
+  },
+  outlineButtonText: {
     color: "black",
     fontWeight: "bold",
+    fontSize: 15,
   },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "80%",
-    gap: 10,
-  },
-  button: {
-    backgroundColor: "black",
-    padding: 10,
-    borderRadius: 5,
-    alignItems: "center",
+  primaryButton: {
     flex: 1,
+    backgroundColor: "black",
+    borderRadius: 10,
+    padding: 12,
+    alignItems: "center",
   },
-  buttonText: {
+  primaryButtonText: {
     color: "white",
     fontWeight: "bold",
-    fontSize: 16,
+    fontSize: 15,
   },
 });
