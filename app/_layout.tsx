@@ -59,14 +59,23 @@ const createDbIfNeeded = async (db: SQLiteDatabase) => {
         user_id TEXT NOT NULL,
         product_name TEXT NOT NULL,
         calories REAL NOT NULL,
-        fat REAL NOT NULL, 
+        fat REAL NOT NULL,
         carbohydrates REAL NOT NULL,
         sugar REAL NOT NULL,
         protein REAL NOT NULL,
         fiber REAL NOT NULL,
+        position INTEGER NOT NULL DEFAULT 0,
       FOREIGN KEY(user_id) REFERENCES users(id)
     );
     `);
+
+    try {
+      await db.execAsync(
+        `ALTER TABLE product_templates ADD COLUMN position INTEGER NOT NULL DEFAULT 0;`,
+      );
+    } catch {
+      // column already exists; ignore
+    }
   } catch (error) {
     console.error("Error initializing database:", error);
   }

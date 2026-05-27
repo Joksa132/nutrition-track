@@ -6,20 +6,27 @@ import {
   Alert,
   StyleSheet,
   TouchableHighlight,
-  ScrollView,
   Pressable,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Updates from "expo-updates";
 import EditUserInfoModal from "@/components/EditUserInfoModal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addMealToDb, deleteTemplate, getAllTemplates } from "@/util/queries";
+import {
+  addMealToDb,
+  deleteTemplate,
+  getAllTemplates,
+  reorderTemplates,
+} from "@/util/queries";
 import { useSQLiteContext } from "expo-sqlite";
 import { ProductTemplate } from "@/util/types";
 import * as Crypto from "expo-crypto";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import SaveModal from "@/components/SaveModal";
 import { commonStyles } from "@/styles/common";
+import DraggableFlatList, {
+  RenderItemParams,
+} from "react-native-draggable-flatlist";
 
 export default function Account() {
   const auth = useContext(AuthContext);
@@ -72,6 +79,16 @@ export default function Account() {
     onError: (error: Error) => {
       console.error("Error deleting template:", error);
       Alert.alert("Error", "Failed to delete template.");
+    },
+  });
+
+  const { mutate: reorderTemplatesMutation } = useMutation({
+    mutationFn: (orderedIds: string[]) => reorderTemplates(orderedIds, db),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["templateInfo"] });
+    },
+    onError: (error: Error) => {
+      console.error("Error reordering templates:", error);
     },
   });
 
@@ -153,7 +170,6 @@ export default function Account() {
           style: "destructive",
           onPress: () => {
             deleteProductTemplate(templateId);
-            queryClient.invalidateQueries({ queryKey: ["templateInfo"] });
           },
         },
       ],
@@ -224,197 +240,217 @@ export default function Account() {
     return goal.charAt(0).toUpperCase() + goal.slice(1);
   };
 
-  return (
-    <ScrollView
-      contentContainerStyle={{ flexGrow: 1 }}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={styles.container}>
-        <View style={styles.profileBanner}>
-          <Text style={styles.profileUsername}>{auth?.user?.username}</Text>
-          {auth?.user?.goal && (
-            <View style={styles.goalBadge}>
-              <Text style={styles.goalBadgeText}>
-                {formatGoal(auth.user.goal)}
-              </Text>
-            </View>
-          )}
-          <Text style={styles.profileStatsLine}>
-            Age {auth?.user?.age} · {auth?.user?.height}cm ·{" "}
-            {auth?.user?.weight}kg · {auth?.user?.activityLevel} active
-          </Text>
-        </View>
-
-        <View style={styles.buttonRow}>
-          <TouchableHighlight
-            style={styles.primaryButton}
-            underlayColor="#333"
-            onPress={handleEditInfo}
-          >
-            <Text style={styles.primaryButtonText}>Edit Info</Text>
-          </TouchableHighlight>
-          <TouchableHighlight
-            style={styles.outlineButton}
-            underlayColor="#f0f0f0"
-            onPress={handleLogout}
-          >
-            <Text style={styles.outlineButtonText}>Logout</Text>
-          </TouchableHighlight>
-        </View>
-
-        <TouchableHighlight
-          style={styles.utilityButton}
-          underlayColor="#e0e0e0"
-          onPress={handleCheckForUpdates}
-          disabled={isCheckingUpdates}
+  const renderTemplate = ({
+    item: template,
+    drag,
+    isActive,
+  }: RenderItemParams<ProductTemplate>) => {
+    const isExpanded = expandedTemplates.has(template.id);
+    return (
+      <View
+        style={[styles.templateCard, isActive && styles.templateCardActive]}
+      >
+        <Pressable
+          onPress={() => toggleTemplate(template.id)}
+          onLongPress={drag}
+          delayLongPress={250}
+          android_ripple={{ color: "#e8e8e8" }}
         >
-          <Text style={styles.utilityButtonText}>
-            {isCheckingUpdates ? "Checking..." : "Check for Updates"}
-          </Text>
-        </TouchableHighlight>
-
-        <Text style={styles.sectionTitle}>Product Templates</Text>
-        {isLoading ? (
-          <Text style={styles.emptyText}>Loading product templates...</Text>
-        ) : isError ? (
-          <Text style={styles.emptyText}>
-            Error loading product templates: {error.message}
-          </Text>
-        ) : !productTemplates || productTemplates.length === 0 ? (
-          <Text style={styles.emptyText}>No product templates saved.</Text>
-        ) : (
-          productTemplates.map((template) => {
-            const isExpanded = expandedTemplates.has(template.id);
-            return (
-              <View key={template.id} style={styles.templateCard}>
-                <Pressable
-                  onPress={() => toggleTemplate(template.id)}
-                  android_ripple={{ color: "#e8e8e8" }}
-                >
-                  <View style={styles.templateCardHeader}>
-                    <Text style={styles.templateName} numberOfLines={1}>
-                      {template.product_name}
-                    </Text>
-                    <View style={styles.templateChips}>
-                      <View style={styles.calorieChip}>
-                        <Text style={styles.calorieChipText}>
-                          {template.calories} kcal
-                        </Text>
-                      </View>
-                      <View style={styles.proteinChip}>
-                        <Text style={styles.proteinChipText}>
-                          {template.protein}g P
-                        </Text>
-                      </View>
-                    </View>
-                    <Ionicons
-                      name={
-                        isExpanded
-                          ? "chevron-up-outline"
-                          : "chevron-down-outline"
-                      }
-                      size={18}
-                      color="rgba(0,0,0,0.4)"
-                    />
-                  </View>
-                </Pressable>
-
-                {isExpanded && (
-                  <View style={styles.templateExpanded}>
-                    <View style={styles.separator} />
-                    <View style={commonStyles.macroGrid}>
-                      <View style={commonStyles.macroCell}>
-                        <Text style={commonStyles.macroCellLabel}>Calories</Text>
-                        <Text style={commonStyles.macroCellValue}>
-                          {template.calories} kcal
-                        </Text>
-                      </View>
-                      <View style={commonStyles.macroCell}>
-                        <Text style={commonStyles.macroCellLabel}>Protein</Text>
-                        <Text style={commonStyles.macroCellValue}>
-                          {template.protein}g
-                        </Text>
-                      </View>
-                      <View style={commonStyles.macroCell}>
-                        <Text style={commonStyles.macroCellLabel}>Carbs</Text>
-                        <Text style={commonStyles.macroCellValue}>
-                          {template.carbohydrates}g
-                        </Text>
-                      </View>
-                      <View style={commonStyles.macroCell}>
-                        <Text style={commonStyles.macroCellLabel}>Fat</Text>
-                        <Text style={commonStyles.macroCellValue}>
-                          {template.fat}g
-                        </Text>
-                      </View>
-                      <View style={commonStyles.macroCell}>
-                        <Text style={commonStyles.macroCellLabel}>Sugar</Text>
-                        <Text style={commonStyles.macroCellValue}>
-                          {template.sugar}g
-                        </Text>
-                      </View>
-                      <View style={commonStyles.macroCell}>
-                        <Text style={commonStyles.macroCellLabel}>Fiber</Text>
-                        <Text style={commonStyles.macroCellValue}>
-                          {template.fiber}g
-                        </Text>
-                      </View>
-                    </View>
-                    <View style={styles.templateActions}>
-                      <TouchableHighlight
-                        style={styles.saveMealButton}
-                        underlayColor="#333"
-                        onPress={() => {
-                          setSelectedTemplate(template);
-                          setTemplateModalVisible(true);
-                        }}
-                      >
-                        <Text style={styles.saveMealButtonText}>Save meal</Text>
-                      </TouchableHighlight>
-                      <TouchableHighlight
-                        style={styles.deleteTemplateButton}
-                        underlayColor="#f0f0f0"
-                        onPress={() => handleDeleteTemplate(template.id)}
-                      >
-                        <Text style={styles.deleteTemplateButtonText}>
-                          Delete
-                        </Text>
-                      </TouchableHighlight>
-                    </View>
-                  </View>
-                )}
+          <View style={styles.templateCardHeader}>
+            <Text style={styles.templateName} numberOfLines={1}>
+              {template.product_name}
+            </Text>
+            <View style={styles.templateChips}>
+              <View style={styles.calorieChip}>
+                <Text style={styles.calorieChipText}>
+                  {template.calories} kcal
+                </Text>
               </View>
-            );
-          })
+              <View style={styles.proteinChip}>
+                <Text style={styles.proteinChipText}>
+                  {template.protein}g P
+                </Text>
+              </View>
+            </View>
+            <Ionicons
+              name={
+                isExpanded ? "chevron-up-outline" : "chevron-down-outline"
+              }
+              size={18}
+              color="rgba(0,0,0,0.4)"
+            />
+          </View>
+        </Pressable>
+
+        {isExpanded && (
+          <View style={styles.templateExpanded}>
+            <View style={styles.separator} />
+            <View style={commonStyles.macroGrid}>
+              <View style={commonStyles.macroCell}>
+                <Text style={commonStyles.macroCellLabel}>Calories</Text>
+                <Text style={commonStyles.macroCellValue}>
+                  {template.calories} kcal
+                </Text>
+              </View>
+              <View style={commonStyles.macroCell}>
+                <Text style={commonStyles.macroCellLabel}>Protein</Text>
+                <Text style={commonStyles.macroCellValue}>
+                  {template.protein}g
+                </Text>
+              </View>
+              <View style={commonStyles.macroCell}>
+                <Text style={commonStyles.macroCellLabel}>Carbs</Text>
+                <Text style={commonStyles.macroCellValue}>
+                  {template.carbohydrates}g
+                </Text>
+              </View>
+              <View style={commonStyles.macroCell}>
+                <Text style={commonStyles.macroCellLabel}>Fat</Text>
+                <Text style={commonStyles.macroCellValue}>
+                  {template.fat}g
+                </Text>
+              </View>
+              <View style={commonStyles.macroCell}>
+                <Text style={commonStyles.macroCellLabel}>Sugar</Text>
+                <Text style={commonStyles.macroCellValue}>
+                  {template.sugar}g
+                </Text>
+              </View>
+              <View style={commonStyles.macroCell}>
+                <Text style={commonStyles.macroCellLabel}>Fiber</Text>
+                <Text style={commonStyles.macroCellValue}>
+                  {template.fiber}g
+                </Text>
+              </View>
+            </View>
+            <View style={styles.templateActions}>
+              <TouchableHighlight
+                style={styles.saveMealButton}
+                underlayColor="#333"
+                onPress={() => {
+                  setSelectedTemplate(template);
+                  setTemplateModalVisible(true);
+                }}
+              >
+                <Text style={styles.saveMealButtonText}>Save meal</Text>
+              </TouchableHighlight>
+              <TouchableHighlight
+                style={styles.deleteTemplateButton}
+                underlayColor="#f0f0f0"
+                onPress={() => handleDeleteTemplate(template.id)}
+              >
+                <Text style={styles.deleteTemplateButtonText}>Delete</Text>
+              </TouchableHighlight>
+            </View>
+          </View>
         )}
-
-        <EditUserInfoModal
-          user={auth?.user!}
-          setUser={auth?.setUser!}
-          visible={editModalVisible}
-          setModalVisible={setEditModalVisible}
-        />
-
-        <SaveModal
-          modalVisible={templateModalVisible}
-          setModalVisible={setTemplateModalVisible}
-          amount={amount}
-          setAmount={setAmount}
-          mealType={mealType}
-          setMealType={setMealType}
-          handleSave={handleAddTemplateMeal}
-          showDatepicker={showDatepicker}
-          selectedDate={selectedDate}
-        />
       </View>
-    </ScrollView>
+    );
+  };
+
+  const ListHeader = (
+    <>
+      <View style={styles.profileBanner}>
+        <Text style={styles.profileUsername}>{auth?.user?.username}</Text>
+        {auth?.user?.goal && (
+          <View style={styles.goalBadge}>
+            <Text style={styles.goalBadgeText}>
+              {formatGoal(auth.user.goal)}
+            </Text>
+          </View>
+        )}
+        <Text style={styles.profileStatsLine}>
+          Age {auth?.user?.age} · {auth?.user?.height}cm ·{" "}
+          {auth?.user?.weight}kg · {auth?.user?.activityLevel} active
+        </Text>
+      </View>
+
+      <View style={styles.buttonRow}>
+        <TouchableHighlight
+          style={styles.primaryButton}
+          underlayColor="#333"
+          onPress={handleEditInfo}
+        >
+          <Text style={styles.primaryButtonText}>Edit Info</Text>
+        </TouchableHighlight>
+        <TouchableHighlight
+          style={styles.outlineButton}
+          underlayColor="#f0f0f0"
+          onPress={handleLogout}
+        >
+          <Text style={styles.outlineButtonText}>Logout</Text>
+        </TouchableHighlight>
+      </View>
+
+      <TouchableHighlight
+        style={styles.utilityButton}
+        underlayColor="#e0e0e0"
+        onPress={handleCheckForUpdates}
+        disabled={isCheckingUpdates}
+      >
+        <Text style={styles.utilityButtonText}>
+          {isCheckingUpdates ? "Checking..." : "Check for Updates"}
+        </Text>
+      </TouchableHighlight>
+
+      <Text style={styles.sectionTitle}>Product Templates</Text>
+    </>
+  );
+
+  const ListEmpty = isLoading ? (
+    <Text style={styles.emptyText}>Loading product templates...</Text>
+  ) : isError ? (
+    <Text style={styles.emptyText}>
+      Error loading product templates: {error.message}
+    </Text>
+  ) : (
+    <Text style={styles.emptyText}>No product templates saved.</Text>
+  );
+
+  return (
+    <View style={styles.screen}>
+      <DraggableFlatList
+        data={productTemplates ?? []}
+        keyExtractor={(item) => item.id}
+        renderItem={renderTemplate}
+        onDragEnd={({ data }) =>
+          reorderTemplatesMutation(data.map((t) => t.id))
+        }
+        ListHeaderComponent={ListHeader}
+        ListEmptyComponent={ListEmpty}
+        contentContainerStyle={styles.listContent}
+        keyboardShouldPersistTaps="handled"
+      />
+
+      <EditUserInfoModal
+        user={auth?.user!}
+        setUser={auth?.setUser!}
+        visible={editModalVisible}
+        setModalVisible={setEditModalVisible}
+      />
+
+      <SaveModal
+        modalVisible={templateModalVisible}
+        setModalVisible={setTemplateModalVisible}
+        amount={amount}
+        setAmount={setAmount}
+        mealType={mealType}
+        setMealType={setMealType}
+        handleSave={handleAddTemplateMeal}
+        showDatepicker={showDatepicker}
+        selectedDate={selectedDate}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
+  },
+  listContent: {
     padding: 20,
+    flexGrow: 1,
   },
   profileBanner: {
     backgroundColor: "white",
@@ -502,6 +538,13 @@ const styles = StyleSheet.create({
     color: "rgba(0,0,0,0.5)",
   },
   templateCard: commonStyles.card,
+  templateCardActive: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 8,
+  },
   templateCardHeader: {
     flexDirection: "row",
     alignItems: "center",
