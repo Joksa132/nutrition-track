@@ -1,12 +1,12 @@
 import { Picker } from "@react-native-picker/picker";
 import React from "react";
 import {
-  Modal,
   View,
   Text,
   TextInput,
   TouchableHighlight,
   StyleSheet,
+  Pressable,
 } from "react-native";
 
 type ModalProps = {
@@ -33,77 +33,82 @@ const SaveModal = React.memo(
     showDatepicker,
     selectedDate,
   }: ModalProps) => {
+    if (!modalVisible) return null;
+
     return (
-      <Modal
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-        hardwareAccelerated={true}
-      >
-        <View style={styles.dimOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Log Meal</Text>
+      <View style={styles.dimOverlay}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={() => setModalVisible(false)}
+        />
+        <View style={styles.modalCard}>
+          <Text style={styles.modalTitle}>Log Meal</Text>
 
-            <Text style={styles.fieldLabel}>Amount (grams)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. 150"
-              inputMode="decimal"
-              value={amount}
-              onChangeText={setAmount}
-            />
+          <Text style={styles.fieldLabel}>Amount (grams)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. 150"
+            inputMode="decimal"
+            value={amount}
+            onChangeText={setAmount}
+          />
 
-            <Text style={styles.fieldLabel}>Meal Type</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={mealType}
-                onValueChange={(value) => setMealType(value)}
-              >
-                <Picker.Item label="Breakfast" value="breakfast" />
-                <Picker.Item label="Lunch" value="lunch" />
-                <Picker.Item label="Dinner" value="dinner" />
-                <Picker.Item label="Snack" value="snack" />
-              </Picker>
-            </View>
-
-            <Text style={styles.fieldLabel}>Date</Text>
-            <TouchableHighlight
-              style={styles.dateButton}
-              underlayColor="#f0f0f0"
-              onPress={showDatepicker}
+          <Text style={styles.fieldLabel}>Meal Type</Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={mealType}
+              onValueChange={(value) => setMealType(value)}
             >
-              <Text style={styles.dateButtonText}>{selectedDate}</Text>
-            </TouchableHighlight>
+              <Picker.Item label="Breakfast" value="breakfast" />
+              <Picker.Item label="Lunch" value="lunch" />
+              <Picker.Item label="Dinner" value="dinner" />
+              <Picker.Item label="Snack" value="snack" />
+            </Picker>
+          </View>
 
-            <View style={styles.buttonRow}>
-              <TouchableHighlight
-                style={styles.outlineButton}
-                underlayColor="#f0f0f0"
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.outlineButtonText}>Cancel</Text>
-              </TouchableHighlight>
-              <TouchableHighlight
-                style={styles.primaryButton}
-                underlayColor="#333"
-                onPress={handleSave}
-              >
-                <Text style={styles.primaryButtonText}>Save</Text>
-              </TouchableHighlight>
-            </View>
+          <Text style={styles.fieldLabel}>Date</Text>
+          <TouchableHighlight
+            style={styles.dateButton}
+            underlayColor="#f0f0f0"
+            onPress={showDatepicker}
+          >
+            <Text style={styles.dateButtonText}>{selectedDate}</Text>
+          </TouchableHighlight>
+
+          <View style={styles.buttonRow}>
+            <TouchableHighlight
+              style={styles.outlineButton}
+              underlayColor="#f0f0f0"
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.outlineButtonText}>Cancel</Text>
+            </TouchableHighlight>
+            <TouchableHighlight
+              style={styles.primaryButton}
+              underlayColor="#333"
+              onPress={handleSave}
+            >
+              <Text style={styles.primaryButtonText}>Save</Text>
+            </TouchableHighlight>
           </View>
         </View>
-      </Modal>
+      </View>
     );
-  }
+  },
 );
 
 const styles = StyleSheet.create({
   dimOverlay: {
-    flex: 1,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.5)",
+    zIndex: 1000,
+    elevation: 1000,
   },
   modalCard: {
     backgroundColor: "white",

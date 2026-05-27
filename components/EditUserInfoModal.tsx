@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useSQLiteContext } from "expo-sqlite";
 import {
   Alert,
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -150,10 +149,11 @@ export default function EditUserInfoModal({
     }
   };
 
+  if (!visible) return null;
+
   return (
-    <Modal animationType="slide" transparent={true} visible={visible}>
-      <View style={styles.dimOverlay}>
-        <View style={styles.modalCard}>
+    <View style={styles.dimOverlay}>
+      <View style={styles.modalCard}>
           <Text style={styles.modalTitle}>Edit Info</Text>
 
           <View style={styles.tabRow}>
@@ -360,16 +360,21 @@ export default function EditUserInfoModal({
           </View>
         </View>
       </View>
-    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   dimOverlay: {
-    flex: 1,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.5)",
+    zIndex: 1000,
+    elevation: 1000,
   },
   modalCard: {
     backgroundColor: "white",

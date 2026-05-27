@@ -122,7 +122,7 @@ export default function RootLayout() {
   return (
     <SQLiteProvider databaseName="nutrition-track.db" onInit={createDbIfNeeded}>
       <QueryClientProvider client={queryClient}>
-        <GestureHandlerRootView>
+        <GestureHandlerRootView style={{ flex: 1 }}>
           <AuthProvider>
             <StatusBar barStyle={"dark-content"} />
             <Stack
