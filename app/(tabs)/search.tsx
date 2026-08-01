@@ -4,7 +4,7 @@ import { OpenFoodFactsProduct } from "@/util/types";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import * as Crypto from "expo-crypto";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useContext, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -24,8 +24,53 @@ type OpenFoodFactsResponse = {
   products: OpenFoodFactsProduct[];
 };
 
+const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const scoreProduct = (product: OpenFoodFactsProduct, query: string): number => {
+  const rawName = product.product_name_en || product.product_name || "";
+  const name = rawName.toLowerCase().trim();
+  const q = query.toLowerCase().trim();
+  if (!name || !q) return -1;
+
+  const qAlt = q.endsWith("s") ? q.slice(0, -1) : q + "s";
+  if (name === q) return 1000;
+  if (name === qAlt) return 950;
+
+  const words = name.split(/[\s,\-()/]+/).filter(Boolean);
+  if (words[0] === q) return 900;
+  if (words[0] === qAlt) return 880;
+  if (words.includes(q)) return 700;
+  if (words.includes(qAlt)) return 680;
+
+  if (name.startsWith(q)) return 500;
+  if (name.startsWith(qAlt)) return 480;
+
+  const wb = new RegExp(`\\b${escapeRegex(q)}\\b`, "i");
+  if (wb.test(name)) return 300;
+
+  if (name.includes(q)) return 100;
+  if (name.includes(qAlt)) return 80;
+  return -1;
+};
+
+const rankProducts = (
+  products: OpenFoodFactsProduct[],
+  query: string,
+): OpenFoodFactsProduct[] => {
+  return products
+    .map((p) => ({
+      p,
+      score: scoreProduct(p, query),
+      len: (p.product_name_en || p.product_name || "").length,
+    }))
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score || a.len - b.len)
+    .map((x) => x.p);
+};
+
 export default function Search() {
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [submittedTerm, setSubmittedTerm] = useState<string>("");
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
@@ -42,32 +87,29 @@ export default function Search() {
     data: searchResults,
     isLoading,
     isError,
-    refetch,
   } = useQuery<OpenFoodFactsResponse>({
-    queryKey: ["productSearch", searchTerm],
-    queryFn: async () => {
-      if (!searchTerm) {
-        return { products: [] };
-      }
+    queryKey: ["productSearch", submittedTerm],
+    queryFn: async ({ signal }) => {
+      const url =
+        `https://world.openfoodfacts.org/cgi/search.pl?` +
+        `search_terms=${encodeURIComponent(submittedTerm)}` +
+        `&search_simple=1&action=process&json=1&page_size=40`;
 
-      const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
-        searchTerm
-      )}&search_simple=1&action=process&json=1&page_size=40`;
-
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
+      const response = await fetch(url, { signal });
+      if (!response.ok) throw new Error(`Error: ${response.status}`);
+      return await response.json();
     },
-    enabled: false,
+    enabled: !!submittedTerm,
   });
 
+  const rankedProducts = useMemo(() => {
+    if (!searchResults?.products || !submittedTerm) return [];
+    return rankProducts(searchResults.products, submittedTerm);
+  }, [searchResults, submittedTerm]);
+
   const handleSearch = () => {
-    refetch();
+    const trimmed = searchTerm.trim();
+    if (trimmed) setSubmittedTerm(trimmed);
   };
 
   const showDatepicker = () => {
@@ -172,7 +214,7 @@ export default function Search() {
         contentContainerStyle={{ paddingBottom: 20 }}
         keyboardShouldPersistTaps="handled"
       >
-        {searchResults?.products?.map((result) => (
+        {rankedProducts.map((result) => (
           <View key={result.code} style={styles.productCard}>
             <Text style={styles.productName}>
               {result.product_name_en || result.product_name}
