@@ -1,7 +1,9 @@
 import { AuthContext } from "@/components/AuthContext";
 import Loading from "@/components/Loading";
 import EditMealModal from "@/components/EditMealModal";
+import SaveModal from "@/components/SaveModal";
 import {
+  addMealToDb,
   addProductToTemplates,
   deleteMeal,
   fetchFoodInfo,
@@ -35,6 +37,14 @@ export default function Index() {
   const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
   const [selectedMeal, setSelectedMeal] = useState<FoodInfoFull | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  const [repeatModalVisible, setRepeatModalVisible] = useState<boolean>(false);
+  const [mealToRepeat, setMealToRepeat] = useState<FoodInfoFull | null>(null);
+  const [repeatAmount, setRepeatAmount] = useState<string>("");
+  const [repeatMealType, setRepeatMealType] = useState<string>("breakfast");
+  const [repeatDate, setRepeatDate] = useState<string>(
+    new Date().toISOString().split("T")[0],
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -154,6 +164,78 @@ export default function Index() {
 
   const handleSaveAsTemplate = (meal: FoodInfoFull) => {
     saveAsTemplate(meal);
+  };
+
+  const { mutate: repeatMeal } = useMutation({
+    mutationFn: (vars: {
+      meal: FoodInfoFull;
+      amount: number;
+      mealType: string;
+      date: string;
+    }) => {
+      const { meal, amount, mealType, date } = vars;
+      const oldQ = parseFloat(String(meal.quantity)) || 1;
+      const scale = amount / oldQ;
+      return addMealToDb(
+        Crypto.randomUUID(),
+        auth?.user?.id as string,
+        date,
+        mealType,
+        meal.foodName,
+        amount,
+        parseFloat(String(meal.calories)) * scale,
+        parseFloat(String(meal.fat)) * scale,
+        parseFloat(String(meal.carbohydrates)) * scale,
+        parseFloat(String(meal.sugar)) * scale,
+        parseFloat(String(meal.protein)) * scale,
+        parseFloat(String(meal.fiber)) * scale,
+        db,
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["foodInfo"] });
+      setRepeatModalVisible(false);
+      Alert.alert("Success", "Meal logged.");
+    },
+    onError: (error) => {
+      console.log("Error logging meal again:", error);
+      Alert.alert("Error", "Failed to log meal.");
+    },
+  });
+
+  const handleRepeat = (meal: FoodInfoFull) => {
+    setMealToRepeat(meal);
+    setRepeatAmount(String(meal.quantity));
+    setRepeatMealType(meal.mealType);
+    setRepeatDate(new Date().toISOString().split("T")[0]);
+    setRepeatModalVisible(true);
+  };
+
+  const handleRepeatSave = () => {
+    if (!mealToRepeat) return;
+    const amountNum = parseFloat(repeatAmount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      Alert.alert("Error", "Amount must be a positive number.");
+      return;
+    }
+    repeatMeal({
+      meal: mealToRepeat,
+      amount: amountNum,
+      mealType: repeatMealType,
+      date: repeatDate,
+    });
+  };
+
+  const showRepeatDatepicker = () => {
+    DateTimePickerAndroid.open({
+      value: new Date(repeatDate),
+      onChange: (_e, date) => {
+        if (!date) return;
+        setRepeatDate(date.toISOString().split("T")[0]);
+      },
+      mode: "date",
+      is24Hour: true,
+    });
   };
 
   const handleEdit = (meal: FoodInfoFull) => {
@@ -318,6 +400,7 @@ export default function Index() {
   }
 
   return (
+    <View style={{ flex: 1 }}>
     <ScrollView
       contentContainerStyle={{ flexGrow: 1 }}
       keyboardShouldPersistTaps="handled"
@@ -539,28 +622,37 @@ export default function Index() {
                   <Text style={commonStyles.macroCellValue}>{meal.fiber}g</Text>
                 </View>
               </View>
-              <View style={styles.mealButtons}>
+              <View style={styles.mealActions}>
                 <TouchableHighlight
-                  style={styles.editButton}
+                  style={styles.repeatButton}
                   underlayColor="#333"
-                  onPress={() => handleEdit(meal)}
+                  onPress={() => handleRepeat(meal)}
                 >
-                  <Text style={styles.editButtonText}>Edit</Text>
+                  <Text style={styles.repeatButtonText}>Repeat</Text>
                 </TouchableHighlight>
-                <TouchableHighlight
-                  style={styles.templateButton}
-                  underlayColor="#f0f0f0"
-                  onPress={() => handleSaveAsTemplate(meal)}
-                >
-                  <Text style={styles.templateButtonText}>Template</Text>
-                </TouchableHighlight>
-                <TouchableHighlight
-                  style={styles.deleteButton}
-                  underlayColor="#f0f0f0"
-                  onPress={() => handleDelete(meal.id)}
-                >
-                  <Text style={styles.deleteButtonText}>Delete</Text>
-                </TouchableHighlight>
+                <View style={styles.mealSecondaryRow}>
+                  <TouchableHighlight
+                    style={styles.secondaryButton}
+                    underlayColor="#f0f0f0"
+                    onPress={() => handleEdit(meal)}
+                  >
+                    <Text style={styles.secondaryButtonText}>Edit</Text>
+                  </TouchableHighlight>
+                  <TouchableHighlight
+                    style={styles.secondaryButton}
+                    underlayColor="#f0f0f0"
+                    onPress={() => handleSaveAsTemplate(meal)}
+                  >
+                    <Text style={styles.secondaryButtonText}>Template</Text>
+                  </TouchableHighlight>
+                  <TouchableHighlight
+                    style={styles.secondaryButton}
+                    underlayColor="#f0f0f0"
+                    onPress={() => handleDelete(meal.id)}
+                  >
+                    <Text style={styles.secondaryButtonText}>Delete</Text>
+                  </TouchableHighlight>
+                </View>
               </View>
             </View>
           ))
@@ -574,6 +666,19 @@ export default function Index() {
         onSave={(meal) => editFoodInfo(meal)}
       />
     </ScrollView>
+
+    <SaveModal
+      modalVisible={repeatModalVisible}
+      setModalVisible={setRepeatModalVisible}
+      amount={repeatAmount}
+      setAmount={setRepeatAmount}
+      mealType={repeatMealType}
+      setMealType={setRepeatMealType}
+      handleSave={handleRepeatSave}
+      showDatepicker={showRepeatDatepicker}
+      selectedDate={repeatDate}
+    />
+    </View>
   );
 }
 
@@ -671,50 +776,39 @@ const styles = StyleSheet.create({
     backgroundColor: "#e8e8e8",
     marginBottom: 8,
   },
-  mealButtons: {
-    flexDirection: "row",
+  mealActions: {
+    flexDirection: "column",
     gap: 8,
     marginTop: 10,
   },
-  editButton: {
+  repeatButton: {
     backgroundColor: "black",
     borderRadius: 8,
     padding: 10,
     alignItems: "center",
-    flex: 1,
   },
-  editButtonText: {
+  repeatButtonText: {
     color: "white",
     fontWeight: "bold",
     fontSize: 14,
   },
-  templateButton: {
+  mealSecondaryRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  secondaryButton: {
+    flex: 1,
     backgroundColor: "white",
     borderRadius: 8,
     borderWidth: 1.5,
     borderColor: "black",
-    padding: 10,
+    paddingVertical: 8,
     alignItems: "center",
-    flex: 1,
   },
-  templateButtonText: {
+  secondaryButtonText: {
     color: "black",
     fontWeight: "bold",
-    fontSize: 14,
-  },
-  deleteButton: {
-    backgroundColor: "white",
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: "black",
-    padding: 10,
-    alignItems: "center",
-    flex: 1,
-  },
-  deleteButtonText: {
-    color: "black",
-    fontWeight: "bold",
-    fontSize: 14,
+    fontSize: 13,
   },
   emptyState: {
     padding: 20,
