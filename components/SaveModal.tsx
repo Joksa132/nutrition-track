@@ -1,12 +1,12 @@
 import { Picker } from "@react-native-picker/picker";
 import React from "react";
 import {
+  Modal,
   View,
   Text,
   TextInput,
   TouchableHighlight,
   StyleSheet,
-  Pressable,
 } from "react-native";
 
 type ModalProps = {
@@ -34,13 +34,16 @@ const SaveModal = React.memo(
     selectedDate,
   }: ModalProps) => {
     if (!modalVisible) return null;
-
     return (
-      <View style={styles.dimOverlay}>
-        <Pressable
-          style={StyleSheet.absoluteFill}
-          onPress={() => setModalVisible(false)}
-        />
+      <Modal
+        transparent={true}
+        statusBarTranslucent={true}
+        animationType="slide"
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+        hardwareAccelerated={true}
+      >
+        <View style={styles.dimOverlay}>
         <View style={styles.modalCard}>
           <Text style={styles.modalTitle}>Log Meal</Text>
 
@@ -92,23 +95,18 @@ const SaveModal = React.memo(
             </TouchableHighlight>
           </View>
         </View>
-      </View>
+        </View>
+      </Modal>
     );
   },
 );
 
 const styles = StyleSheet.create({
   dimOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.5)",
-    zIndex: 1000,
-    elevation: 1000,
   },
   modalCard: {
     backgroundColor: "white",
