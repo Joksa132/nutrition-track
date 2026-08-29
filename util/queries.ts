@@ -174,6 +174,34 @@ export const deleteTemplate = async (
   ]);
 };
 
+export const updateTemplate = async (
+  id: string,
+  productName: string,
+  calories: number,
+  fat: number,
+  carbohydrates: number,
+  sugar: number,
+  protein: number,
+  fiber: number,
+  db: SQLiteDatabase,
+) => {
+  return await db.runAsync(
+    `UPDATE product_templates
+     SET product_name = ?, calories = ?, fat = ?, carbohydrates = ?, sugar = ?, protein = ?, fiber = ?
+     WHERE id = ?`,
+    [
+      productName,
+      Math.round(calories * 100) / 100,
+      Math.round(fat * 100) / 100,
+      Math.round(carbohydrates * 100) / 100,
+      Math.round(sugar * 100) / 100,
+      Math.round(protein * 100) / 100,
+      Math.round(fiber * 100) / 100,
+      id,
+    ],
+  );
+};
+
 export const reorderTemplates = async (
   orderedIds: string[],
   db: SQLiteDatabase,

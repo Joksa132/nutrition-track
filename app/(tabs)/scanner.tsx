@@ -18,6 +18,9 @@ import {
 import { AuthContext } from "@/components/AuthContext";
 import * as Crypto from "expo-crypto";
 import SaveModal from "@/components/SaveModal";
+import TemplateFormModal, {
+  TemplateFormValues,
+} from "@/components/TemplateFormModal";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { SaveModalSchema } from "@/util/validations";
 import Loading from "@/components/Loading";
@@ -46,6 +49,17 @@ export default function Scanner() {
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0],
   );
+  const [templateModalVisible, setTemplateModalVisible] =
+    useState<boolean>(false);
+  const [templateInitial, setTemplateInitial] = useState<TemplateFormValues>({
+    productName: "",
+    calories: "0",
+    fat: "0",
+    carbohydrates: "0",
+    sugar: "0",
+    protein: "0",
+    fiber: "0",
+  });
   const db = useSQLiteContext();
   const queryClient = useQueryClient();
   const auth = useContext(AuthContext);
@@ -191,37 +205,53 @@ export default function Scanner() {
 
   const handleSaveAsTemplate = () => {
     if (!product) return;
+    setTemplateInitial({
+      productName: product.product_name_en || product.product_name || "",
+      calories: String(
+        product.nutriments?.["energy-kcal_100g"] || product.calories || 0,
+      ),
+      fat: String(product.nutriments?.fat_100g || product.fat || 0),
+      carbohydrates: String(
+        product.nutriments?.carbohydrates_100g || product.carbohydrates || 0,
+      ),
+      sugar: String(product.nutriments?.sugars_100g || product.sugar || 0),
+      protein: String(
+        product.nutriments?.proteins_100g || product.protein || 0,
+      ),
+      fiber: String(product.nutriments?.fiber_100g || product.fiber || 0),
+    });
+    setTemplateModalVisible(true);
+  };
 
-    const productName = product.product_name_en || product.product_name;
-    const calories =
-      product.nutriments?.["energy-kcal_100g"] || product.calories || 0;
-    const fat = product.nutriments?.fat_100g || product.fat || 0;
-    const carbs =
-      product.nutriments?.carbohydrates_100g || product.carbohydrates || 0;
-    const sugar = product.nutriments?.sugars_100g || product.sugar || 0;
-    const protein = product.nutriments?.proteins_100g || product.protein || 0;
-    const fiber = product.nutriments?.fiber_100g || product.fiber || 0;
-
-    addProductToTemplates(
-      Crypto.randomUUID(),
-      auth?.user?.id as string,
-      productName,
-      calories,
-      fat,
-      carbs,
-      sugar,
-      protein,
-      fiber,
-      db,
-    )
-      .then(() => {
-        Alert.alert("Success", "Product saved as template.");
-        queryClient.invalidateQueries({ queryKey: ["templateInfo"] });
-      })
-      .catch((error) => {
-        console.log("Error saving template:", error);
-        Alert.alert("Error", "Failed to save template.");
-      });
+  const handleTemplateSubmit = async (values: {
+    productName: string;
+    calories: number;
+    fat: number;
+    carbohydrates: number;
+    sugar: number;
+    protein: number;
+    fiber: number;
+  }) => {
+    try {
+      await addProductToTemplates(
+        Crypto.randomUUID(),
+        auth?.user?.id as string,
+        values.productName,
+        values.calories,
+        values.fat,
+        values.carbohydrates,
+        values.sugar,
+        values.protein,
+        values.fiber,
+        db,
+      );
+      Alert.alert("Success", "Product saved as template.");
+      queryClient.invalidateQueries({ queryKey: ["templateInfo"] });
+      setTemplateModalVisible(false);
+    } catch (error) {
+      console.log("Error saving template:", error);
+      Alert.alert("Error", "Failed to save template.");
+    }
   };
 
   const openAmountModal = () => {
@@ -366,6 +396,14 @@ export default function Scanner() {
         handleSave={handleSave}
         showDatepicker={showDatepicker}
         selectedDate={selectedDate}
+      />
+
+      <TemplateFormModal
+        visible={templateModalVisible}
+        setVisible={setTemplateModalVisible}
+        title="Save Template"
+        initial={templateInitial}
+        onSubmit={handleTemplateSubmit}
       />
     </View>
   );

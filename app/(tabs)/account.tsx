@@ -18,12 +18,14 @@ import {
   deleteTemplate,
   getAllTemplates,
   reorderTemplates,
+  updateTemplate,
 } from "@/util/queries";
 import { useSQLiteContext } from "expo-sqlite";
 import { ProductTemplate } from "@/util/types";
 import * as Crypto from "expo-crypto";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import SaveModal from "@/components/SaveModal";
+import TemplateFormModal from "@/components/TemplateFormModal";
 import { commonStyles } from "@/styles/common";
 
 export default function Account() {
@@ -40,6 +42,11 @@ export default function Account() {
     useState<ProductTemplate | null>(null);
   const [expandedTemplates, setExpandedTemplates] = useState<Set<string>>(
     new Set(),
+  );
+  const [editTemplateModalVisible, setEditTemplateModalVisible] =
+    useState<boolean>(false);
+  const [templateToEdit, setTemplateToEdit] = useState<ProductTemplate | null>(
+    null,
   );
   const db = useSQLiteContext();
   const queryClient = useQueryClient();
@@ -79,6 +86,44 @@ export default function Account() {
       Alert.alert("Error", "Failed to delete template.");
     },
   });
+
+  const { mutate: updateTemplateMutation } = useMutation({
+    mutationFn: (vars: {
+      id: string;
+      productName: string;
+      calories: number;
+      fat: number;
+      carbohydrates: number;
+      sugar: number;
+      protein: number;
+      fiber: number;
+    }) =>
+      updateTemplate(
+        vars.id,
+        vars.productName,
+        vars.calories,
+        vars.fat,
+        vars.carbohydrates,
+        vars.sugar,
+        vars.protein,
+        vars.fiber,
+        db,
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["templateInfo"] });
+      setEditTemplateModalVisible(false);
+      Alert.alert("Success", "Template updated.");
+    },
+    onError: (error: Error) => {
+      console.error("Error updating template:", error);
+      Alert.alert("Error", "Failed to update template.");
+    },
+  });
+
+  const handleEditTemplate = (template: ProductTemplate) => {
+    setTemplateToEdit(template);
+    setEditTemplateModalVisible(true);
+  };
 
   const { mutate: reorderTemplatesMutation } = useMutation({
     mutationFn: (orderedIds: string[]) => reorderTemplates(orderedIds, db),
@@ -428,6 +473,13 @@ export default function Account() {
                       <TouchableHighlight
                         style={styles.deleteTemplateButton}
                         underlayColor="#f0f0f0"
+                        onPress={() => handleEditTemplate(template)}
+                      >
+                        <Text style={styles.deleteTemplateButtonText}>Edit</Text>
+                      </TouchableHighlight>
+                      <TouchableHighlight
+                        style={styles.deleteTemplateButton}
+                        underlayColor="#f0f0f0"
                         onPress={() => handleDeleteTemplate(template.id)}
                       >
                         <Text style={styles.deleteTemplateButtonText}>
@@ -461,6 +513,26 @@ export default function Account() {
         showDatepicker={showDatepicker}
         selectedDate={selectedDate}
       />
+
+      {templateToEdit && (
+        <TemplateFormModal
+          visible={editTemplateModalVisible}
+          setVisible={setEditTemplateModalVisible}
+          title="Edit Template"
+          initial={{
+            productName: templateToEdit.product_name,
+            calories: String(templateToEdit.calories),
+            fat: String(templateToEdit.fat),
+            carbohydrates: String(templateToEdit.carbohydrates),
+            sugar: String(templateToEdit.sugar),
+            protein: String(templateToEdit.protein),
+            fiber: String(templateToEdit.fiber),
+          }}
+          onSubmit={(values) =>
+            updateTemplateMutation({ id: templateToEdit.id, ...values })
+          }
+        />
+      )}
     </View>
   );
 }
