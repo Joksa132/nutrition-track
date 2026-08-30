@@ -5,8 +5,8 @@ import {
   ScrollView,
   Alert,
   TouchableHighlight,
+  Pressable,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import { useContext, useState } from "react";
 import { AuthContext } from "@/components/AuthContext";
 import { FoodInfo, ProductInfo } from "@/util/types";
@@ -22,6 +22,8 @@ import MealForm from "@/components/MealForm";
 import ProductForm from "@/components/ProductForm";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { FoodInfoSchema, ProductInfoSchema } from "@/util/validations";
+import { commonStyles } from "@/styles/common";
+import { colors, radius, space, type } from "@/styles/theme";
 
 const currentDate = new Date().toISOString().split("T")[0];
 
@@ -204,7 +206,7 @@ export default function AddMeal() {
   const showDatepicker = () => {
     DateTimePickerAndroid.open({
       value: new Date(foodInfo.date),
-      onChange: (e, selectedDate) => {
+      onChange: (_e, selectedDate) => {
         if (!selectedDate) return;
         const convertedDate = selectedDate.toISOString().split("T")[0];
         setFoodInfo((prev) => ({ ...prev, date: convertedDate }));
@@ -216,19 +218,35 @@ export default function AddMeal() {
 
   return (
     <ScrollView
+      style={{ backgroundColor: colors.bg }}
       contentContainerStyle={{ flexGrow: 1 }}
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.container}>
         <Text style={styles.title}>
-          Add {selectedForm === "meals" ? "Meals" : "Products"}
+          Add {selectedForm === "meals" ? "Meal" : "Product"}
         </Text>
 
-        <View style={styles.pickerCard}>
-          <Picker selectedValue={selectedForm} onValueChange={setSelectedForm}>
-            <Picker.Item label="Meals" value="meals" />
-            <Picker.Item label="Products" value="products" />
-          </Picker>
+        <View style={styles.segment}>
+          {(["meals", "products"] as const).map((value) => {
+            const active = selectedForm === value;
+            return (
+              <Pressable
+                key={value}
+                style={[styles.segmentItem, active && styles.segmentItemActive]}
+                onPress={() => setSelectedForm(value)}
+                android_ripple={{ color: colors.surfaceAlt }}
+              >
+                <Text
+                  style={
+                    active ? styles.segmentTextActive : styles.segmentText
+                  }
+                >
+                  {value === "meals" ? "Meals" : "Products"}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
 
         {selectedForm === "meals" ? (
@@ -248,37 +266,37 @@ export default function AddMeal() {
 
         {selectedForm === "meals" ? (
           <TouchableHighlight
-            style={styles.primaryButton}
-            underlayColor="#333"
+            style={commonStyles.btnPrimary}
+            underlayColor={colors.accentPress}
             onPress={handleSave}
             disabled={saveMealMutation.isPending}
           >
-            <Text style={styles.primaryButtonText}>
+            <Text style={commonStyles.btnPrimaryText}>
               {saveMealMutation.isPending ? "Saving..." : "Save Meal"}
             </Text>
           </TouchableHighlight>
         ) : (
           <View style={styles.buttonRow}>
             <TouchableHighlight
-              style={styles.primaryButtonFlex}
-              underlayColor="#333"
+              style={[commonStyles.btnPrimary, styles.flexBtn]}
+              underlayColor={colors.accentPress}
               onPress={handleSave}
               disabled={saveProductMutation.isPending}
             >
-              <Text style={styles.primaryButtonText}>
+              <Text style={commonStyles.btnPrimaryText}>
                 {saveProductMutation.isPending ? "Saving..." : "Save Product"}
               </Text>
             </TouchableHighlight>
             <TouchableHighlight
-              style={styles.outlineButtonFlex}
-              underlayColor="#f0f0f0"
+              style={[commonStyles.btnGhost, styles.flexBtn]}
+              underlayColor={colors.surfaceAlt}
               onPress={handleSaveTemplate}
               disabled={saveProductTemplateMutation.isPending}
             >
-              <Text style={styles.outlineButtonText}>
+              <Text style={commonStyles.btnGhostText}>
                 {saveProductTemplateMutation.isPending
                   ? "Saving..."
-                  : "Save Template"}
+                  : "Template"}
               </Text>
             </TouchableHighlight>
           </View>
@@ -291,108 +309,92 @@ export default function AddMeal() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    backgroundColor: colors.bg,
+    padding: space.lg,
   },
   title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 12,
+    ...type.h1,
+    marginBottom: space.md,
   },
-  pickerCard: {
-    backgroundColor: "white",
-    borderRadius: 10,
-    marginBottom: 12,
-    height: 44,
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-    elevation: 1,
+  segment: {
+    flexDirection: "row",
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 3,
+    marginBottom: space.lg,
+  },
+  segmentItem: {
+    flex: 1,
+    paddingVertical: space.sm,
+    borderRadius: radius.sm - 2,
+    alignItems: "center",
+  },
+  segmentItemActive: {
+    backgroundColor: colors.accent,
+  },
+  segmentText: {
+    ...type.button,
+    fontSize: 14,
+    color: colors.textMuted,
+  },
+  segmentTextActive: {
+    ...type.button,
+    fontSize: 14,
+    color: "#FFFFFF",
   },
   section: {
-    backgroundColor: "white",
-    borderRadius: 10,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: "black",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: space.lg,
+    marginBottom: space.lg,
   },
   label: {
-    fontSize: 16,
-    color: "rgba(0, 0, 0, 0.7)",
+    ...type.label,
+    marginBottom: space.xs,
   },
   input: {
-    height: 40,
-    borderColor: "rgb(204, 204, 204)",
+    height: 46,
+    backgroundColor: colors.surfaceAlt,
+    borderColor: colors.border,
     borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 8,
-    borderRadius: 4,
+    marginBottom: space.md,
+    paddingHorizontal: space.md,
+    borderRadius: radius.sm,
+    color: colors.text,
+    fontFamily: type.body.fontFamily,
+    fontSize: 15,
   },
   pickerContainer: {
-    borderColor: "rgb(204, 204, 204)",
+    backgroundColor: colors.surfaceAlt,
+    borderColor: colors.border,
     borderWidth: 1,
-    marginBottom: 12,
-    borderRadius: 4,
-    height: 40,
+    marginBottom: space.md,
+    borderRadius: radius.sm,
+    height: 46,
     justifyContent: "center",
-  },
-  primaryButton: {
-    backgroundColor: "black",
-    borderRadius: 10,
-    padding: 15,
-    alignItems: "center",
-  },
-  primaryButtonFlex: {
-    flex: 1,
-    backgroundColor: "black",
-    borderRadius: 10,
-    padding: 15,
-    alignItems: "center",
-  },
-  primaryButtonText: {
-    fontSize: 16,
-    color: "white",
-    fontWeight: "bold",
-  },
-  outlineButtonFlex: {
-    flex: 1,
-    backgroundColor: "white",
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: "black",
-    padding: 15,
-    alignItems: "center",
-  },
-  outlineButtonText: {
-    fontSize: 16,
-    color: "black",
-    fontWeight: "bold",
+    overflow: "hidden",
   },
   buttonRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: space.sm,
   },
-  buttonText: {
-    fontSize: 18,
-    color: "white",
-    fontWeight: "bold",
+  flexBtn: {
+    flex: 1,
   },
   dateButton: {
-    backgroundColor: "transparent",
-    borderRadius: 10,
-    borderColor: "rgba(0, 0, 0, 0.3)",
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.sm,
+    borderColor: colors.border,
     borderWidth: 1,
-    padding: 10,
+    paddingVertical: space.md,
     alignItems: "center",
   },
   dateButtonText: {
+    ...type.num,
     fontSize: 16,
-    color: "black",
-    fontWeight: "bold",
   },
 });

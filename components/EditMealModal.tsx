@@ -12,6 +12,8 @@ import {
   View,
 } from "react-native";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import { commonStyles } from "@/styles/common";
+import { colors, radius, space, type } from "@/styles/theme";
 
 type EditMealModalProps = {
   visible: boolean;
@@ -19,6 +21,13 @@ type EditMealModalProps = {
   meal: FoodInfoFull | null;
   onSave: (meal: FoodInfoFull) => void;
 };
+
+const MEAL_TYPES = [
+  { label: "Breakfast", value: "breakfast" },
+  { label: "Lunch", value: "lunch" },
+  { label: "Dinner", value: "dinner" },
+  { label: "Snack", value: "snack" },
+];
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -29,8 +38,7 @@ export default function EditMealModal({
   onSave,
 }: EditMealModalProps) {
   const [quantity, setQuantity] = useState<string>("");
-  const [mealType, setMealType] =
-    useState<FoodInfo["mealType"]>("breakfast");
+  const [mealType, setMealType] = useState<FoodInfo["mealType"]>("breakfast");
   const [date, setDate] = useState<string>("");
 
   useEffect(() => {
@@ -41,7 +49,7 @@ export default function EditMealModal({
     }
   }, [visible, meal]);
 
-  if (!meal) return null;
+  if (!visible || !meal) return null;
 
   const showDatepicker = () => {
     DateTimePickerAndroid.open({
@@ -81,64 +89,79 @@ export default function EditMealModal({
   };
 
   return (
-    <Modal animationType="slide" transparent={true} visible={visible}>
-      <View style={styles.dimOverlay}>
-        <View style={styles.modalCard}>
-          <Text style={styles.modalTitle}>Edit Meal</Text>
+    <Modal
+      transparent
+      statusBarTranslucent
+      animationType="fade"
+      visible={visible}
+      onRequestClose={() => setVisible(false)}
+      hardwareAccelerated
+    >
+      <View style={commonStyles.modalOverlay}>
+        <View style={commonStyles.modalCard}>
+          <Text style={styles.title}>Edit Meal</Text>
           <Text style={styles.foodName} numberOfLines={1}>
             {meal.foodName}
           </Text>
 
           <ScrollView
-            style={styles.formScroll}
+            style={styles.scroll}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.fieldLabel}>Quantity (g)</Text>
+            <Text style={commonStyles.fieldLabel}>Quantity (g)</Text>
             <TextInput
-              style={styles.input}
+              style={commonStyles.input}
               value={quantity}
+              placeholderTextColor={colors.textFaint}
               onChangeText={setQuantity}
               inputMode="decimal"
             />
 
-            <Text style={styles.fieldLabel}>Meal Type</Text>
-            <View style={styles.pickerContainer}>
+            <Text style={commonStyles.fieldLabel}>Meal Type</Text>
+            <View style={commonStyles.pickerWrap}>
               <Picker
                 selectedValue={mealType}
                 onValueChange={setMealType}
+                style={commonStyles.picker}
+                dropdownIconColor={colors.textMuted}
               >
-                <Picker.Item label="Breakfast" value="breakfast" />
-                <Picker.Item label="Lunch" value="lunch" />
-                <Picker.Item label="Dinner" value="dinner" />
-                <Picker.Item label="Snack" value="snack" />
+                {MEAL_TYPES.map(({ label, value }) => (
+                  <Picker.Item
+                    key={value}
+                    label={label}
+                    value={value}
+                    color={colors.text}
+                    style={{ backgroundColor: colors.surfaceAlt }}
+                  />
+                ))}
               </Picker>
             </View>
 
-            <Text style={styles.fieldLabel}>Date</Text>
+            <Text style={commonStyles.fieldLabel}>Date</Text>
             <TouchableHighlight
               style={styles.dateButton}
-              underlayColor="#f0f0f0"
+              underlayColor={colors.surfaceAlt}
               onPress={showDatepicker}
             >
               <Text style={styles.dateButtonText}>{date}</Text>
             </TouchableHighlight>
           </ScrollView>
 
-          <View style={styles.buttonRow}>
+          <View style={commonStyles.modalButtonRow}>
             <TouchableHighlight
-              style={styles.outlineButton}
-              underlayColor="#f0f0f0"
+              style={[commonStyles.btnGhost, styles.flexBtn]}
+              underlayColor={colors.surfaceAlt}
               onPress={() => setVisible(false)}
             >
-              <Text style={styles.outlineButtonText}>Cancel</Text>
+              <Text style={commonStyles.btnGhostText}>Cancel</Text>
             </TouchableHighlight>
             <TouchableHighlight
-              style={styles.primaryButton}
-              underlayColor="#333"
+              style={[commonStyles.btnPrimary, styles.flexBtn]}
+              underlayColor={colors.accentPress}
               onPress={handleSave}
             >
-              <Text style={styles.primaryButtonText}>Save</Text>
+              <Text style={commonStyles.btnPrimaryText}>Save</Text>
             </TouchableHighlight>
           </View>
         </View>
@@ -148,102 +171,30 @@ export default function EditMealModal({
 }
 
 const styles = StyleSheet.create({
-  dimOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  modalCard: {
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 24,
-    width: "90%",
-    maxHeight: "85%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 4,
+  title: {
+    ...type.h1,
+    marginBottom: 2,
   },
   foodName: {
-    fontSize: 14,
-    color: "rgba(0,0,0,0.6)",
-    marginBottom: 16,
+    ...type.caption,
+    marginBottom: space.lg,
   },
-  formScroll: {
+  scroll: {
     flexGrow: 0,
   },
-  fieldLabel: {
-    fontSize: 13,
-    color: "rgba(0,0,0,0.5)",
-    marginBottom: 4,
-  },
-  input: {
-    height: 44,
-    borderColor: "rgb(204, 204, 204)",
-    borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    fontSize: 15,
-  },
-  pickerContainer: {
-    borderColor: "rgb(204, 204, 204)",
-    borderWidth: 1,
-    marginBottom: 12,
-    borderRadius: 8,
-    height: 44,
-    justifyContent: "center",
-  },
   dateButton: {
-    backgroundColor: "transparent",
-    borderRadius: 8,
-    borderColor: "rgba(0, 0, 0, 0.3)",
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.sm,
+    borderColor: colors.border,
     borderWidth: 1,
-    padding: 12,
+    paddingVertical: space.md,
     alignItems: "center",
-    marginBottom: 12,
   },
   dateButtonText: {
-    fontSize: 15,
-    color: "black",
-    fontWeight: "500",
+    ...type.num,
+    fontSize: 16,
   },
-  buttonRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 16,
-  },
-  outlineButton: {
+  flexBtn: {
     flex: 1,
-    backgroundColor: "white",
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: "black",
-    padding: 12,
-    alignItems: "center",
-  },
-  outlineButtonText: {
-    color: "black",
-    fontWeight: "bold",
-    fontSize: 15,
-  },
-  primaryButton: {
-    flex: 1,
-    backgroundColor: "black",
-    borderRadius: 10,
-    padding: 12,
-    alignItems: "center",
-  },
-  primaryButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 15,
   },
 });

@@ -1,13 +1,37 @@
 import { AuthProvider } from "@/components/AuthContext";
 import { Stack } from "expo-router";
 import { SQLiteDatabase, SQLiteProvider } from "expo-sqlite";
-import { StatusBar } from "react-native";
+import { StatusBar, View } from "react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useEffect } from "react";
 import Constants from "expo-constants";
 import * as FileSystem from "expo-file-system";
 import AsyncStorage from "expo-sqlite/kv-store";
+import { useFonts } from "expo-font";
+import {
+  Barlow_400Regular,
+  Barlow_500Medium,
+} from "@expo-google-fonts/barlow";
+import {
+  BarlowCondensed_600SemiBold,
+  BarlowCondensed_700Bold,
+} from "@expo-google-fonts/barlow-condensed";
+import { colors } from "@/styles/theme";
+import { DarkTheme, ThemeProvider } from "@react-navigation/native";
+
+const navTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: colors.bg,
+    card: colors.surface,
+    border: colors.border,
+    text: colors.text,
+    primary: colors.accent,
+    notification: colors.accent,
+  },
+};
 
 const createDbIfNeeded = async (db: SQLiteDatabase) => {
   try {
@@ -115,25 +139,42 @@ const backupDbIfVersionChanged = async () => {
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Barlow_400Regular,
+    Barlow_500Medium,
+    BarlowCondensed_600SemiBold,
+    BarlowCondensed_700Bold,
+  });
+
   useEffect(() => {
     backupDbIfVersionChanged();
   }, []);
 
+  if (!fontsLoaded) {
+    return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+  }
+
   return (
     <SQLiteProvider databaseName="nutrition-track.db" onInit={createDbIfNeeded}>
       <QueryClientProvider client={queryClient}>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <AuthProvider>
-            <StatusBar barStyle={"dark-content"} />
-            <Stack
-              screenOptions={{
-                headerShown: false,
-              }}
-            >
-              <Stack.Screen name="(auth)" />
-              <Stack.Screen name="(tabs)" />
-            </Stack>
-          </AuthProvider>
+        <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
+          <ThemeProvider value={navTheme}>
+            <AuthProvider>
+              <StatusBar
+                barStyle="light-content"
+                backgroundColor={colors.bg}
+              />
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: colors.bg },
+                }}
+              >
+                <Stack.Screen name="(auth)" />
+                <Stack.Screen name="(tabs)" />
+              </Stack>
+            </AuthProvider>
+          </ThemeProvider>
         </GestureHandlerRootView>
       </QueryClientProvider>
     </SQLiteProvider>

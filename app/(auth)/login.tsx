@@ -1,5 +1,7 @@
 import { AuthContext } from "@/components/AuthContext";
 import { UserLoginSchema } from "@/util/validations";
+import { commonStyles } from "@/styles/common";
+import { colors, radius, space, type } from "@/styles/theme";
 import { Link, useRouter } from "expo-router";
 import { useContext, useState } from "react";
 import {
@@ -43,32 +45,47 @@ export default function Login() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Username"
-        value={username}
-        onChangeText={setUsername}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-      <TouchableHighlight
-        style={isLoading ? styles.loginButtonDisabled : styles.loginButton}
-        onPress={handleLogin}
-        disabled={isLoading}
-      >
-        <Text style={styles.loginButtonText}>
-          {isLoading ? "Logging in..." : "Login"}
-        </Text>
-      </TouchableHighlight>
-      <Link href="/register" asChild>
-        <Text style={styles.link}>Don't have an account? Register here.</Text>
-      </Link>
+      <View style={styles.card}>
+        <Text style={styles.brand}>NUTRITION</Text>
+        <Text style={styles.brandAccent}>TRACK</Text>
+        <Text style={styles.subtitle}>Sign in to continue</Text>
+
+        <Text style={commonStyles.fieldLabel}>Username</Text>
+        <TextInput
+          style={commonStyles.input}
+          placeholder="Username"
+          placeholderTextColor={colors.textFaint}
+          autoCapitalize="none"
+          value={username}
+          onChangeText={setUsername}
+        />
+        <Text style={commonStyles.fieldLabel}>Password</Text>
+        <TextInput
+          style={commonStyles.input}
+          placeholder="Password"
+          placeholderTextColor={colors.textFaint}
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+        <TouchableHighlight
+          style={[
+            commonStyles.btnPrimary,
+            styles.submit,
+            isLoading && commonStyles.btnDisabled,
+          ]}
+          underlayColor={colors.accentPress}
+          onPress={handleLogin}
+          disabled={isLoading}
+        >
+          <Text style={commonStyles.btnPrimaryText}>
+            {isLoading ? "Logging in..." : "Login"}
+          </Text>
+        </TouchableHighlight>
+        <Link href="/register" asChild>
+          <Text style={styles.link}>Don't have an account? Register here.</Text>
+        </Link>
+      </View>
     </View>
   );
 }
@@ -77,44 +94,40 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    padding: 16,
+    backgroundColor: colors.bg,
+    padding: space.lg,
   },
-  title: {
-    fontSize: 30,
-    marginBottom: 16,
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-  input: {
-    height: 40,
-    borderColor: "rgb(204, 204, 204)",
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 8,
-    borderRadius: 4,
+    borderColor: colors.border,
+    padding: space.xl,
   },
-  loginButton: {
-    backgroundColor: "black",
-    borderRadius: 10,
-    padding: 15,
-    alignItems: "center",
-    marginTop: 20,
+  brand: {
+    ...type.display,
+    fontSize: 34,
+    lineHeight: 36,
+    letterSpacing: 1,
   },
-  loginButtonDisabled: {
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    borderRadius: 10,
-    padding: 15,
-    alignItems: "center",
-    marginTop: 20,
+  brandAccent: {
+    ...type.display,
+    fontSize: 34,
+    lineHeight: 36,
+    letterSpacing: 1,
+    color: colors.accent,
   },
-  loginButtonText: {
-    fontSize: 18,
-    color: "white",
-    fontWeight: "bold",
+  subtitle: {
+    ...type.caption,
+    marginTop: space.xs,
+    marginBottom: space.xl,
+  },
+  submit: {
+    marginTop: space.sm,
   },
   link: {
-    marginTop: 16,
-    color: "rgba(0, 0, 0, 0.8)",
+    ...type.caption,
+    marginTop: space.lg,
     textAlign: "center",
   },
 });

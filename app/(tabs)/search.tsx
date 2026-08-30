@@ -18,7 +18,9 @@ import { useSQLiteContext } from "expo-sqlite";
 import { AuthContext } from "@/components/AuthContext";
 import { SaveModalSchema } from "@/util/validations";
 import Loading from "@/components/Loading";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { commonStyles } from "@/styles/common";
+import { colors, radius, space, type } from "@/styles/theme";
 
 type OpenFoodFactsResponse = {
   products: OpenFoodFactsProduct[];
@@ -115,7 +117,7 @@ export default function Search() {
   const showDatepicker = () => {
     DateTimePickerAndroid.open({
       value: new Date(selectedDate),
-      onChange: (e, selectedDate) => {
+      onChange: (_e, selectedDate) => {
         if (!selectedDate) return;
         const convertedDate = selectedDate.toISOString().split("T")[0];
         setSelectedDate(convertedDate);
@@ -188,34 +190,50 @@ export default function Search() {
         <TextInput
           style={styles.input}
           placeholder="Search for a product..."
+          placeholderTextColor={colors.textFaint}
           value={searchTerm}
           onChangeText={setSearchTerm}
+          returnKeyType="search"
+          onSubmitEditing={handleSearch}
         />
         <TouchableHighlight
-          style={
-            !searchTerm.trim()
-              ? styles.searchButtonDisabled
-              : styles.searchButton
-          }
-          underlayColor="#333"
+          style={[
+            styles.searchButton,
+            !searchTerm.trim() && styles.searchButtonDisabled,
+          ]}
+          underlayColor={colors.accentPress}
           onPress={handleSearch}
           disabled={!searchTerm.trim()}
         >
-          <Text style={styles.searchButtonText}>Search</Text>
+          <Ionicons
+            name="search"
+            size={20}
+            color={!searchTerm.trim() ? colors.textFaint : "#FFFFFF"}
+          />
         </TouchableHighlight>
       </View>
 
       {isLoading && <Loading message="Searching..." />}
       {isError && (
-        <Text style={styles.errorText}>Error loading search results.</Text>
+        <Text style={commonStyles.errorText}>
+          Error loading search results.
+        </Text>
+      )}
+
+      {!isLoading && !isError && rankedProducts.length === 0 && (
+        <Text style={commonStyles.emptyText}>
+          {submittedTerm
+            ? `No results for "${submittedTerm}".`
+            : "Search the Open Food Facts database."}
+        </Text>
       )}
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={{ paddingBottom: space.xxxl }}
         keyboardShouldPersistTaps="handled"
       >
         {rankedProducts.map((result) => (
-          <View key={result.code} style={styles.productCard}>
+          <View key={result.code} style={commonStyles.card}>
             <Text style={styles.productName}>
               {result.product_name_en || result.product_name}
             </Text>
@@ -225,19 +243,7 @@ export default function Search() {
               <View style={commonStyles.macroCell}>
                 <Text style={commonStyles.macroCellLabel}>Calories</Text>
                 <Text style={commonStyles.macroCellValue}>
-                  {result.nutriments["energy-kcal_100g"]?.toFixed(0) || 0} kcal
-                </Text>
-              </View>
-              <View style={commonStyles.macroCell}>
-                <Text style={commonStyles.macroCellLabel}>Protein</Text>
-                <Text style={commonStyles.macroCellValue}>
-                  {result.nutriments.proteins_100g?.toFixed(1) || 0}g
-                </Text>
-              </View>
-              <View style={commonStyles.macroCell}>
-                <Text style={commonStyles.macroCellLabel}>Carbs</Text>
-                <Text style={commonStyles.macroCellValue}>
-                  {result.nutriments.carbohydrates_100g?.toFixed(1) || 0}g
+                  {result.nutriments["energy-kcal_100g"]?.toFixed(0) || 0}
                 </Text>
               </View>
               <View style={commonStyles.macroCell}>
@@ -247,9 +253,21 @@ export default function Search() {
                 </Text>
               </View>
               <View style={commonStyles.macroCell}>
+                <Text style={commonStyles.macroCellLabel}>Carbs</Text>
+                <Text style={commonStyles.macroCellValue}>
+                  {result.nutriments.carbohydrates_100g?.toFixed(1) || 0}g
+                </Text>
+              </View>
+              <View style={commonStyles.macroCell}>
                 <Text style={commonStyles.macroCellLabel}>Sugar</Text>
                 <Text style={commonStyles.macroCellValue}>
                   {result.nutriments.sugars_100g?.toFixed(1) || 0}g
+                </Text>
+              </View>
+              <View style={commonStyles.macroCell}>
+                <Text style={commonStyles.macroCellLabel}>Protein</Text>
+                <Text style={commonStyles.macroCellValue}>
+                  {result.nutriments.proteins_100g?.toFixed(1) || 0}g
                 </Text>
               </View>
               <View style={commonStyles.macroCell}>
@@ -261,13 +279,13 @@ export default function Search() {
             </View>
             <TouchableHighlight
               style={styles.saveButton}
-              underlayColor="#333"
+              underlayColor={colors.accentPress}
               onPress={() => {
                 setSelectedProduct(result);
                 setModalVisible(true);
               }}
             >
-              <Text style={styles.saveButtonText}>Save</Text>
+              <Text style={commonStyles.btnPrimaryText}>Save</Text>
             </TouchableHighlight>
           </View>
         ))}
@@ -296,74 +314,56 @@ export default function Search() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    backgroundColor: colors.bg,
+    padding: space.lg,
   },
   searchRow: {
     flexDirection: "row",
-    gap: 10,
-    marginBottom: 16,
+    gap: space.sm,
+    marginBottom: space.lg,
   },
   input: {
     flex: 1,
-    height: 44,
-    borderColor: "rgb(204, 204, 204)",
+    height: 46,
+    backgroundColor: colors.surfaceAlt,
+    borderColor: colors.border,
     borderWidth: 1,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    backgroundColor: "white",
+    paddingHorizontal: space.md,
+    borderRadius: radius.sm,
+    color: colors.text,
+    fontFamily: type.body.fontFamily,
     fontSize: 15,
   },
   searchButton: {
-    backgroundColor: "black",
-    borderRadius: 10,
-    paddingHorizontal: 20,
+    backgroundColor: colors.accent,
+    borderRadius: radius.sm,
+    paddingHorizontal: space.lg,
     justifyContent: "center",
     alignItems: "center",
   },
   searchButtonDisabled: {
-    backgroundColor: "rgba(0,0,0,0.3)",
-    borderRadius: 10,
-    paddingHorizontal: 20,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: colors.surfaceAlt,
   },
-  searchButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 15,
-  },
-  productCard: commonStyles.card,
   productName: {
-    fontSize: 15,
-    fontWeight: "bold",
+    ...type.h2,
+    fontSize: 16,
     marginBottom: 2,
   },
   productSubtext: {
-    fontSize: 12,
-    color: "rgba(0,0,0,0.5)",
-    marginBottom: 8,
+    ...type.label,
+    fontSize: 10,
+    marginBottom: space.sm,
   },
   separator: {
     height: 1,
-    backgroundColor: "#e8e8e8",
-    marginBottom: 8,
+    backgroundColor: colors.border,
+    marginBottom: space.sm,
   },
   saveButton: {
-    backgroundColor: "black",
-    borderRadius: 8,
-    padding: 10,
+    backgroundColor: colors.accent,
+    borderRadius: radius.sm,
+    paddingVertical: space.sm,
     alignItems: "center",
-    marginTop: 10,
-  },
-  saveButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 14,
-  },
-  errorText: {
-    textAlign: "center",
-    fontSize: 16,
-    color: "red",
-    marginTop: 20,
+    marginTop: space.md,
   },
 });

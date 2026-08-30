@@ -1,4 +1,5 @@
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { colors, space, type } from "@/styles/theme";
 
 type LoadingProps = {
   message?: string;
@@ -7,7 +8,7 @@ type LoadingProps = {
 export default function Loading({ message = "Loading..." }: LoadingProps) {
   return (
     <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color="black" />
+      <ActivityIndicator size="large" color={colors.accent} />
       <Text style={styles.loadingText}>{message}</Text>
     </View>
   );
@@ -18,9 +19,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: colors.bg,
+    paddingVertical: space.xl,
   },
   loadingText: {
-    marginTop: 10,
-    fontSize: 16,
+    ...type.label,
+    marginTop: space.md,
   },
 });

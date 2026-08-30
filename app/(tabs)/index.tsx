@@ -24,8 +24,10 @@ import {
   Alert,
   ScrollView,
   RefreshControl,
+  Pressable,
 } from "react-native";
 import { commonStyles } from "@/styles/common";
+import { colors, radius, space, type } from "@/styles/theme";
 
 export default function Index() {
   const auth = useContext(AuthContext);
@@ -267,7 +269,7 @@ export default function Index() {
   const showDatepicker = () => {
     DateTimePickerAndroid.open({
       value: new Date(selectedDate),
-      onChange: (e, date) => {
+      onChange: (_e, date) => {
         if (!date) return;
         const convertedDate = date.toISOString().split("T")[0];
         setSelectedDate(convertedDate);
@@ -363,28 +365,32 @@ export default function Index() {
     auth?.user?.goal || "weight loss",
   );
 
-  const getIndicator = (actual: number, recommended: number) => {
+  const statusColor = (actual: number, recommended: number) => {
     const lower = recommended * 0.9;
     const upper = recommended * 1.1;
-
-    if (actual < lower)
-      return {
-        color: "blue",
-        icon: <Ionicons name="arrow-down-outline" size={14} color="blue" />,
-      };
-    if (actual > upper)
-      return {
-        color: "red",
-        icon: <Ionicons name="arrow-up-outline" size={14} color="red" />,
-      };
-    return {
-      color: "green",
-      icon: <Ionicons name="checkmark-outline" size={14} color="green" />,
-    };
+    if (actual < lower) return colors.neutral;
+    if (actual > upper) return colors.warn;
+    return colors.success;
   };
 
   const formatMealType = (type: string) => {
     return type.charAt(0).toUpperCase() + type.slice(1);
+  };
+
+  const formatDateLabel = (iso: string) => {
+    const [y, m, d] = iso.split("-").map(Number);
+    const dt = new Date(y, m - 1, d);
+    const today = new Date();
+    const isToday =
+      dt.getFullYear() === today.getFullYear() &&
+      dt.getMonth() === today.getMonth() &&
+      dt.getDate() === today.getDate();
+    if (isToday) return "Today";
+    return dt.toLocaleDateString(undefined, {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
   };
 
   if (isLoading) {
@@ -393,189 +399,130 @@ export default function Index() {
 
   if (isError) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Error loading food information.</Text>
+      <View style={commonStyles.screen}>
+        <Text style={commonStyles.errorText}>
+          Error loading food information.
+        </Text>
       </View>
     );
   }
 
+  const caloriePct = Math.min(
+    (totals.calories / (recommendedIntake.calories || 1)) * 100,
+    100,
+  );
+  const caloriesLeft = recommendedIntake.calories - totals.calories;
+
+  const macros = [
+    { key: "fat", label: "Fat", unit: "g" },
+    { key: "carbohydrates", label: "Carbs", unit: "g" },
+    { key: "sugar", label: "Sugar", unit: "g" },
+    { key: "protein", label: "Protein", unit: "g" },
+    { key: "fiber", label: "Fiber", unit: "g" },
+  ] as const;
+
   return (
-    <View style={{ flex: 1 }}>
-    <ScrollView
-      contentContainerStyle={{ flexGrow: 1 }}
-      keyboardShouldPersistTaps="handled"
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
-      <View style={styles.container}>
-        <View style={styles.statsContainer}>
-          <Text style={styles.statsTitle}>
-            Nutrition Stats for {selectedDate.split("-").reverse().join(".")}
+    <View style={commonStyles.screen}>
+      <ScrollView
+        contentContainerStyle={commonStyles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.accent}
+            colors={[colors.accent]}
+            progressBackgroundColor={colors.surface}
+          />
+        }
+      >
+        <Pressable style={styles.datePill} onPress={showDatepicker}>
+          <Ionicons
+            name="calendar-outline"
+            size={16}
+            color={colors.textMuted}
+          />
+          <Text style={styles.datePillText}>
+            {formatDateLabel(selectedDate)}
           </Text>
-          <View style={styles.statsGrid}>
-            <View style={styles.statCell}>
-              <Text style={styles.statLabel}>Calories</Text>
-              <View style={styles.statValueRow}>
-                {getIndicator(totals.calories, recommendedIntake.calories).icon}
-                <Text
-                  style={[
-                    styles.statValue,
-                    {
-                      color: getIndicator(
-                        totals.calories,
-                        recommendedIntake.calories,
-                      ).color,
-                    },
-                  ]}
-                >
-                  {" "}
-                  {totals.calories}
-                </Text>
-                <Text style={styles.statRecommended}>
-                  {" "}
-                  / {recommendedIntake.calories} kcal
-                </Text>
-              </View>
-            </View>
-            <View style={styles.statCell}>
-              <Text style={styles.statLabel}>Fat</Text>
-              <View style={styles.statValueRow}>
-                {getIndicator(totals.fat, recommendedIntake.fat).icon}
-                <Text
-                  style={[
-                    styles.statValue,
-                    {
-                      color: getIndicator(totals.fat, recommendedIntake.fat)
-                        .color,
-                    },
-                  ]}
-                >
-                  {" "}
-                  {totals.fat}
-                </Text>
-                <Text style={styles.statRecommended}>
-                  {" "}
-                  / {recommendedIntake.fat}g
-                </Text>
-              </View>
-            </View>
-            <View style={styles.statCell}>
-              <Text style={styles.statLabel}>Carbs</Text>
-              <View style={styles.statValueRow}>
-                {
-                  getIndicator(
-                    totals.carbohydrates,
-                    recommendedIntake.carbohydrates,
-                  ).icon
-                }
-                <Text
-                  style={[
-                    styles.statValue,
-                    {
-                      color: getIndicator(
-                        totals.carbohydrates,
-                        recommendedIntake.carbohydrates,
-                      ).color,
-                    },
-                  ]}
-                >
-                  {" "}
-                  {totals.carbohydrates}
-                </Text>
-                <Text style={styles.statRecommended}>
-                  {" "}
-                  / {recommendedIntake.carbohydrates}g
-                </Text>
-              </View>
-            </View>
-            <View style={styles.statCell}>
-              <Text style={styles.statLabel}>Sugar</Text>
-              <View style={styles.statValueRow}>
-                {getIndicator(totals.sugar, recommendedIntake.sugar).icon}
-                <Text
-                  style={[
-                    styles.statValue,
-                    {
-                      color: getIndicator(totals.sugar, recommendedIntake.sugar)
-                        .color,
-                    },
-                  ]}
-                >
-                  {" "}
-                  {totals.sugar}
-                </Text>
-                <Text style={styles.statRecommended}>
-                  {" "}
-                  / {recommendedIntake.sugar}g
-                </Text>
-              </View>
-            </View>
-            <View style={styles.statCell}>
-              <Text style={styles.statLabel}>Protein</Text>
-              <View style={styles.statValueRow}>
-                {getIndicator(totals.protein, recommendedIntake.protein).icon}
-                <Text
-                  style={[
-                    styles.statValue,
-                    {
-                      color: getIndicator(
-                        totals.protein,
-                        recommendedIntake.protein,
-                      ).color,
-                    },
-                  ]}
-                >
-                  {" "}
-                  {totals.protein}
-                </Text>
-                <Text style={styles.statRecommended}>
-                  {" "}
-                  / {recommendedIntake.protein}g
-                </Text>
-              </View>
-            </View>
-            <View style={styles.statCell}>
-              <Text style={styles.statLabel}>Fiber</Text>
-              <View style={styles.statValueRow}>
-                {getIndicator(totals.fiber, recommendedIntake.fiber).icon}
-                <Text
-                  style={[
-                    styles.statValue,
-                    {
-                      color: getIndicator(totals.fiber, recommendedIntake.fiber)
-                        .color,
-                    },
-                  ]}
-                >
-                  {" "}
-                  {totals.fiber}
-                </Text>
-                <Text style={styles.statRecommended}>
-                  {" "}
-                  / {recommendedIntake.fiber}g
-                </Text>
-              </View>
-            </View>
+          <Text style={styles.datePillSub}>
+            {selectedDate.split("-").reverse().join(".")}
+          </Text>
+          <Ionicons name="chevron-down" size={16} color={colors.textFaint} />
+        </Pressable>
+
+        <View style={styles.hero}>
+          <Text style={commonStyles.fieldLabel}>
+            {caloriesLeft >= 0 ? "Calories left" : "Over by"}
+          </Text>
+          <View style={styles.heroRow}>
+            <Text style={styles.heroNumber}>
+              {Math.abs(caloriesLeft).toLocaleString()}
+            </Text>
+            <Text style={styles.heroUnit}>kcal</Text>
           </View>
-          <TouchableHighlight
-            style={styles.datePickerButton}
-            underlayColor="#f0f0f0"
-            onPress={showDatepicker}
-          >
-            <Text style={styles.datePickerButtonText}>Select Date</Text>
-          </TouchableHighlight>
+          <View style={styles.rail}>
+            <View
+              style={[
+                styles.railFill,
+                {
+                  width: `${caloriePct}%`,
+                  backgroundColor: statusColor(
+                    totals.calories,
+                    recommendedIntake.calories,
+                  ),
+                },
+              ]}
+            />
+          </View>
+          <Text style={styles.heroFooter}>
+            {totals.calories.toLocaleString()} of{" "}
+            {recommendedIntake.calories.toLocaleString()} kcal
+          </Text>
         </View>
 
+        <View style={styles.macroPanel}>
+          {macros.map(({ key, label, unit }) => {
+            const actual = totals[key];
+            const target = recommendedIntake[key];
+            const pct = Math.min((actual / (target || 1)) * 100, 100);
+            const tint = statusColor(actual, target);
+            return (
+              <View key={key} style={styles.macroStat}>
+                <Text style={styles.macroStatLabel}>{label}</Text>
+                <Text style={styles.macroStatValue}>
+                  {actual}
+                  <Text style={styles.macroStatTarget}>
+                    {" "}
+                    / {target}
+                    {unit}
+                  </Text>
+                </Text>
+                <View style={styles.miniRail}>
+                  <View
+                    style={[
+                      styles.miniRailFill,
+                      { width: `${pct}%`, backgroundColor: tint },
+                    ]}
+                  />
+                </View>
+              </View>
+            );
+          })}
+        </View>
+
+        <Text style={commonStyles.sectionTitle}>
+          Meals{" "}
+          <Text style={styles.mealCount}>{foodInfo ? foodInfo.length : 0}</Text>
+        </Text>
+
         {!foodInfo || foodInfo.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>
-              No meals logged for this date.
-            </Text>
-          </View>
+          <Text style={commonStyles.emptyText}>
+            No meals logged for this date.
+          </Text>
         ) : (
           foodInfo.map((meal) => (
-            <View key={meal.id} style={styles.mealCard}>
+            <View key={meal.id} style={commonStyles.card}>
               <View style={styles.mealHeader}>
                 <Text style={styles.mealName} numberOfLines={1}>
                   {meal.foodName}
@@ -594,14 +541,12 @@ export default function Index() {
                 <View style={commonStyles.macroCell}>
                   <Text style={commonStyles.macroCellLabel}>Calories</Text>
                   <Text style={commonStyles.macroCellValue}>
-                    {meal.calories} kcal
+                    {meal.calories}
                   </Text>
                 </View>
                 <View style={commonStyles.macroCell}>
-                  <Text style={commonStyles.macroCellLabel}>Protein</Text>
-                  <Text style={commonStyles.macroCellValue}>
-                    {meal.protein}g
-                  </Text>
+                  <Text style={commonStyles.macroCellLabel}>Fat</Text>
+                  <Text style={commonStyles.macroCellValue}>{meal.fat}g</Text>
                 </View>
                 <View style={commonStyles.macroCell}>
                   <Text style={commonStyles.macroCellLabel}>Carbs</Text>
@@ -610,12 +555,14 @@ export default function Index() {
                   </Text>
                 </View>
                 <View style={commonStyles.macroCell}>
-                  <Text style={commonStyles.macroCellLabel}>Fat</Text>
-                  <Text style={commonStyles.macroCellValue}>{meal.fat}g</Text>
-                </View>
-                <View style={commonStyles.macroCell}>
                   <Text style={commonStyles.macroCellLabel}>Sugar</Text>
                   <Text style={commonStyles.macroCellValue}>{meal.sugar}g</Text>
+                </View>
+                <View style={commonStyles.macroCell}>
+                  <Text style={commonStyles.macroCellLabel}>Protein</Text>
+                  <Text style={commonStyles.macroCellValue}>
+                    {meal.protein}g
+                  </Text>
                 </View>
                 <View style={commonStyles.macroCell}>
                   <Text style={commonStyles.macroCellLabel}>Fiber</Text>
@@ -624,40 +571,40 @@ export default function Index() {
               </View>
               <View style={styles.mealActions}>
                 <TouchableHighlight
-                  style={styles.repeatButton}
-                  underlayColor="#333"
+                  style={commonStyles.btnPrimary}
+                  underlayColor={colors.accentPress}
                   onPress={() => handleRepeat(meal)}
                 >
-                  <Text style={styles.repeatButtonText}>Repeat</Text>
+                  <Text style={commonStyles.btnPrimaryText}>Repeat</Text>
                 </TouchableHighlight>
                 <View style={styles.mealSecondaryRow}>
                   <TouchableHighlight
-                    style={styles.secondaryButton}
-                    underlayColor="#f0f0f0"
+                    style={[commonStyles.btnGhost, styles.flexBtn]}
+                    underlayColor={colors.surfaceAlt}
                     onPress={() => handleEdit(meal)}
                   >
-                    <Text style={styles.secondaryButtonText}>Edit</Text>
+                    <Text style={styles.secondaryText}>Edit</Text>
                   </TouchableHighlight>
                   <TouchableHighlight
-                    style={styles.secondaryButton}
-                    underlayColor="#f0f0f0"
+                    style={[commonStyles.btnGhost, styles.flexBtn]}
+                    underlayColor={colors.surfaceAlt}
                     onPress={() => handleSaveAsTemplate(meal)}
                   >
-                    <Text style={styles.secondaryButtonText}>Template</Text>
+                    <Text style={styles.secondaryText}>Template</Text>
                   </TouchableHighlight>
                   <TouchableHighlight
-                    style={styles.secondaryButton}
-                    underlayColor="#f0f0f0"
+                    style={[commonStyles.btnGhost, styles.flexBtn]}
+                    underlayColor={colors.surfaceAlt}
                     onPress={() => handleDelete(meal.id)}
                   >
-                    <Text style={styles.secondaryButtonText}>Delete</Text>
+                    <Text style={styles.secondaryText}>Delete</Text>
                   </TouchableHighlight>
                 </View>
               </View>
             </View>
           ))
         )}
-      </View>
+      </ScrollView>
 
       <EditMealModal
         visible={editModalVisible}
@@ -665,162 +612,179 @@ export default function Index() {
         meal={selectedMeal}
         onSave={(meal) => editFoodInfo(meal)}
       />
-    </ScrollView>
 
-    <SaveModal
-      modalVisible={repeatModalVisible}
-      setModalVisible={setRepeatModalVisible}
-      amount={repeatAmount}
-      setAmount={setRepeatAmount}
-      mealType={repeatMealType}
-      setMealType={setRepeatMealType}
-      handleSave={handleRepeatSave}
-      showDatepicker={showRepeatDatepicker}
-      selectedDate={repeatDate}
-    />
+      <SaveModal
+        modalVisible={repeatModalVisible}
+        setModalVisible={setRepeatModalVisible}
+        amount={repeatAmount}
+        setAmount={setRepeatAmount}
+        mealType={repeatMealType}
+        setMealType={setRepeatMealType}
+        handleSave={handleRepeatSave}
+        showDatepicker={showRepeatDatepicker}
+        selectedDate={repeatDate}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
+  datePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.sm,
+    alignSelf: "flex-start",
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
+    paddingVertical: space.sm,
+    paddingHorizontal: space.md,
+    marginBottom: space.lg,
   },
-  statsContainer: {
-    marginBottom: 16,
-    padding: 16,
-    backgroundColor: "white",
-    borderRadius: 10,
-    shadowColor: "black",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+  datePillText: {
+    ...type.h2,
+    fontSize: 16,
   },
-  statsTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 12,
+  datePillSub: {
+    ...type.caption,
+    color: colors.textFaint,
   },
-  statsGrid: {
+
+  hero: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: space.lg,
+    marginBottom: space.sm,
+  },
+  heroRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: space.sm,
+  },
+  heroNumber: {
+    ...type.numLarge,
+    fontSize: 48,
+    lineHeight: 52,
+  },
+  heroUnit: {
+    ...type.h2,
+    color: colors.textMuted,
+  },
+  rail: {
+    height: 6,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceAlt,
+    overflow: "hidden",
+    marginTop: space.md,
+  },
+  railFill: {
+    height: "100%",
+    borderRadius: radius.pill,
+  },
+  heroFooter: {
+    ...type.caption,
+    marginTop: space.sm,
+  },
+
+  macroPanel: {
     flexDirection: "row",
     flexWrap: "wrap",
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: space.md,
+    paddingHorizontal: space.sm,
+    marginBottom: space.xl,
   },
-  statCell: {
-    width: "50%",
-    paddingVertical: 6,
-    paddingHorizontal: 4,
+  macroStat: {
+    width: "33.33%",
+    paddingHorizontal: space.sm,
+    paddingVertical: space.sm,
   },
-  statLabel: {
-    fontSize: 11,
-    color: "rgba(0,0,0,0.5)",
+  macroStatLabel: {
+    ...type.label,
+    fontSize: 10,
     marginBottom: 2,
   },
-  statValueRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  macroStatValue: {
+    fontFamily: type.num.fontFamily,
+    fontSize: 17,
+    color: colors.text,
   },
-  statValue: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  statRecommended: {
+  macroStatTarget: {
+    fontFamily: type.body.fontFamily,
     fontSize: 12,
-    color: "rgba(0,0,0,0.4)",
+    color: colors.textFaint,
   },
-  datePickerButton: {
-    backgroundColor: "transparent",
-    borderColor: "rgba(0,0,0,0.3)",
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
-    alignItems: "center",
-    marginTop: 12,
+  miniRail: {
+    height: 3,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceAlt,
+    overflow: "hidden",
+    marginTop: space.sm,
   },
-  datePickerButtonText: {
-    color: "black",
-    fontWeight: "bold",
-    fontSize: 14,
+  miniRailFill: {
+    height: "100%",
+    borderRadius: radius.pill,
   },
-  mealCard: commonStyles.card,
+
+  mealCount: {
+    ...type.h2,
+    color: colors.textFaint,
+  },
   mealHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 4,
+    gap: space.sm,
+    marginBottom: 2,
   },
   mealName: {
+    ...type.h2,
     flex: 1,
-    fontSize: 15,
-    fontWeight: "bold",
+    fontSize: 17,
   },
   mealTypeBadge: {
-    backgroundColor: "#f0f0f0",
-    borderRadius: 12,
-    paddingHorizontal: 10,
+    backgroundColor: colors.accentSoft,
+    borderRadius: radius.sm,
+    paddingHorizontal: space.sm,
     paddingVertical: 3,
   },
   mealTypeBadgeText: {
-    fontSize: 12,
-    color: "rgba(0,0,0,0.6)",
-    fontWeight: "500",
+    fontFamily: type.label.fontFamily,
+    fontSize: 10,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+    color: colors.accent,
   },
   mealSubtext: {
-    fontSize: 12,
-    color: "rgba(0,0,0,0.5)",
-    marginBottom: 8,
+    ...type.caption,
+    color: colors.textFaint,
+    marginBottom: space.sm,
   },
   separator: {
     height: 1,
-    backgroundColor: "#e8e8e8",
-    marginBottom: 8,
+    backgroundColor: colors.border,
+    marginBottom: space.sm,
   },
   mealActions: {
-    flexDirection: "column",
-    gap: 8,
-    marginTop: 10,
-  },
-  repeatButton: {
-    backgroundColor: "black",
-    borderRadius: 8,
-    padding: 10,
-    alignItems: "center",
-  },
-  repeatButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 14,
+    gap: space.sm,
+    marginTop: space.md,
   },
   mealSecondaryRow: {
     flexDirection: "row",
-    gap: 8,
+    gap: space.sm,
   },
-  secondaryButton: {
+  flexBtn: {
     flex: 1,
-    backgroundColor: "white",
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: "black",
-    paddingVertical: 8,
-    alignItems: "center",
+    paddingVertical: space.sm,
   },
-  secondaryButtonText: {
-    color: "black",
-    fontWeight: "bold",
+  secondaryText: {
+    ...type.button,
     fontSize: 13,
-  },
-  emptyState: {
-    padding: 20,
-    alignItems: "center",
-  },
-  emptyStateText: {
-    fontSize: 14,
-    color: "rgba(0,0,0,0.5)",
-  },
-  errorText: {
-    textAlign: "center",
-    fontSize: 16,
-    color: "red",
+    color: colors.textMuted,
   },
 });

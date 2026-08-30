@@ -16,6 +16,51 @@ import { Picker } from "@react-native-picker/picker";
 import { UserRegister } from "@/util/types";
 import { UserRegisterSchema } from "@/util/validations";
 import { registerUser } from "@/util/queries";
+import { commonStyles } from "@/styles/common";
+import { colors, radius, space, type } from "@/styles/theme";
+
+const GENDERS = [
+  { label: "Male", value: "male" },
+  { label: "Female", value: "female" },
+];
+
+const ACTIVITY_LEVELS = [
+  { label: "Sedentary (little to no activity)", value: "sedentary" },
+  { label: "Lightly Active (exercise 1-3 days a week)", value: "lightly" },
+  { label: "Moderately Active (exercise 3-5 days a week)", value: "moderately" },
+  { label: "Very Active (exercise 6-7 days a week)", value: "very" },
+];
+
+const GOALS = [
+  { label: "Weight loss", value: "weight loss" },
+  { label: "Weight gain", value: "weight gain" },
+  { label: "Maintenance", value: "maintenance" },
+];
+
+const renderPicker = (
+  selectedValue: string,
+  onValueChange: (v: string) => void,
+  items: { label: string; value: string }[],
+) => (
+  <View style={commonStyles.pickerWrap}>
+    <Picker
+      selectedValue={selectedValue}
+      onValueChange={onValueChange}
+      style={commonStyles.picker}
+      dropdownIconColor={colors.textMuted}
+    >
+      {items.map(({ label, value }) => (
+        <Picker.Item
+          key={value}
+          label={label}
+          value={value}
+          color={colors.text}
+          style={{ backgroundColor: colors.surfaceAlt }}
+        />
+      ))}
+    </Picker>
+  </View>
+);
 
 export default function Register() {
   const [userInfo, setUserInfo] = useState<UserRegister>({
@@ -81,124 +126,123 @@ export default function Register() {
 
   return (
     <ScrollView
+      style={{ backgroundColor: colors.bg }}
       contentContainerStyle={{ flexGrow: 1 }}
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.container}>
-        <Text style={styles.title}>Register</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Username"
-          value={userInfo.username}
-          onChangeText={(value) =>
-            setUserInfo((prev) => ({ ...prev, username: value }))
-          }
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          secureTextEntry
-          value={userInfo.password}
-          onChangeText={(value) =>
-            setUserInfo((prev) => ({ ...prev, password: value }))
-          }
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Confirm Password"
-          secureTextEntry
-          value={userInfo.confirmPassword}
-          onChangeText={(value) =>
-            setUserInfo((prev) => ({ ...prev, confirmPassword: value }))
-          }
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Age"
-          value={userInfo.age}
-          onChangeText={(value) =>
-            setUserInfo((prev) => ({ ...prev, age: value }))
-          }
-          inputMode="decimal"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Height (cm)"
-          value={userInfo.height}
-          onChangeText={(value) =>
-            setUserInfo((prev) => ({ ...prev, height: value }))
-          }
-          inputMode="decimal"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Weight (kg)"
-          value={userInfo.weight}
-          onChangeText={(value) =>
-            setUserInfo((prev) => ({ ...prev, weight: value }))
-          }
-          inputMode="decimal"
-        />
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={userInfo.gender}
-            onValueChange={(value) =>
-              setUserInfo((prev) => ({ ...prev, gender: value }))
+        <Text style={styles.brand}>CREATE</Text>
+        <Text style={styles.brandAccent}>ACCOUNT</Text>
+        <Text style={styles.subtitle}>Set up your daily targets</Text>
+
+        <View style={styles.card}>
+          <Text style={commonStyles.fieldLabel}>Username</Text>
+          <TextInput
+            style={commonStyles.input}
+            placeholder="Username"
+            placeholderTextColor={colors.textFaint}
+            autoCapitalize="none"
+            value={userInfo.username}
+            onChangeText={(value) =>
+              setUserInfo((prev) => ({ ...prev, username: value }))
             }
-          >
-            <Picker.Item label="Male" value="male" />
-            <Picker.Item label="Female" value="female" />
-          </Picker>
-        </View>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={userInfo.activityLevel}
-            onValueChange={(value) =>
-              setUserInfo((prev) => ({ ...prev, activityLevel: value }))
+          />
+          <Text style={commonStyles.fieldLabel}>Password</Text>
+          <TextInput
+            style={commonStyles.input}
+            placeholder="Password"
+            placeholderTextColor={colors.textFaint}
+            secureTextEntry
+            value={userInfo.password}
+            onChangeText={(value) =>
+              setUserInfo((prev) => ({ ...prev, password: value }))
             }
-          >
-            <Picker.Item
-              label="Sedentary (little to no activity)"
-              value="sedentary"
-            />
-            <Picker.Item
-              label="Lightly Active (exercise 1-3 days a week)"
-              value="lightly"
-            />
-            <Picker.Item
-              label="Moderately Active (exercise 3-5 days a week)"
-              value="moderately"
-            />
-            <Picker.Item
-              label="Very Active (exercise 6-7 days a week)"
-              value="very"
-            />
-          </Picker>
-        </View>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={userInfo.goal}
-            onValueChange={(value) =>
-              setUserInfo((prev) => ({ ...prev, goal: value }))
+          />
+          <Text style={commonStyles.fieldLabel}>Confirm Password</Text>
+          <TextInput
+            style={commonStyles.input}
+            placeholder="Confirm Password"
+            placeholderTextColor={colors.textFaint}
+            secureTextEntry
+            value={userInfo.confirmPassword}
+            onChangeText={(value) =>
+              setUserInfo((prev) => ({ ...prev, confirmPassword: value }))
             }
+          />
+          <Text style={commonStyles.fieldLabel}>Age</Text>
+          <TextInput
+            style={commonStyles.input}
+            placeholder="Age"
+            placeholderTextColor={colors.textFaint}
+            value={userInfo.age}
+            onChangeText={(value) =>
+              setUserInfo((prev) => ({ ...prev, age: value }))
+            }
+            inputMode="decimal"
+          />
+          <Text style={commonStyles.fieldLabel}>Height (cm)</Text>
+          <TextInput
+            style={commonStyles.input}
+            placeholder="Height (cm)"
+            placeholderTextColor={colors.textFaint}
+            value={userInfo.height}
+            onChangeText={(value) =>
+              setUserInfo((prev) => ({ ...prev, height: value }))
+            }
+            inputMode="decimal"
+          />
+          <Text style={commonStyles.fieldLabel}>Weight (kg)</Text>
+          <TextInput
+            style={commonStyles.input}
+            placeholder="Weight (kg)"
+            placeholderTextColor={colors.textFaint}
+            value={userInfo.weight}
+            onChangeText={(value) =>
+              setUserInfo((prev) => ({ ...prev, weight: value }))
+            }
+            inputMode="decimal"
+          />
+
+          <Text style={commonStyles.fieldLabel}>Gender</Text>
+          {renderPicker(
+            userInfo.gender,
+            (value) => setUserInfo((prev) => ({ ...prev, gender: value })),
+            GENDERS,
+          )}
+
+          <Text style={commonStyles.fieldLabel}>Activity Level</Text>
+          {renderPicker(
+            userInfo.activityLevel,
+            (value) =>
+              setUserInfo((prev) => ({ ...prev, activityLevel: value })),
+            ACTIVITY_LEVELS,
+          )}
+
+          <Text style={commonStyles.fieldLabel}>Goal</Text>
+          {renderPicker(
+            userInfo.goal,
+            (value) => setUserInfo((prev) => ({ ...prev, goal: value })),
+            GOALS,
+          )}
+
+          <TouchableHighlight
+            style={[
+              commonStyles.btnPrimary,
+              styles.submit,
+              isLoading && commonStyles.btnDisabled,
+            ]}
+            underlayColor={colors.accentPress}
+            onPress={handleRegister}
+            disabled={isLoading}
           >
-            <Picker.Item label="Weight loss" value="weight loss" />
-            <Picker.Item label="Weight gain" value="weight gain" />
-            <Picker.Item label="Maintenance" value="maintenance" />
-          </Picker>
+            <Text style={commonStyles.btnPrimaryText}>
+              {isLoading ? "Registering..." : "Register"}
+            </Text>
+          </TouchableHighlight>
+          <Link href="/login" asChild>
+            <Text style={styles.link}>Already have an account? Login here.</Text>
+          </Link>
         </View>
-        <TouchableHighlight
-          style={isLoading ? styles.registerButtonDisabled : styles.registerButton}
-          onPress={handleRegister}
-          disabled={isLoading}
-        >
-          <Text style={styles.registerButtonText}>
-            {isLoading ? "Registering..." : "Register"}
-          </Text>
-        </TouchableHighlight>
-        <Link href="/login" asChild>
-          <Text style={styles.link}>Already have an account? Login here.</Text>
-        </Link>
       </View>
     </ScrollView>
   );
@@ -208,52 +252,40 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    padding: 16,
+    backgroundColor: colors.bg,
+    padding: space.lg,
   },
-  title: {
+  brand: {
+    ...type.display,
     fontSize: 30,
-    marginBottom: 16,
-    textAlign: "center",
-    fontWeight: "bold",
+    lineHeight: 32,
+    letterSpacing: 1,
   },
-  input: {
-    height: 40,
-    borderColor: "rgb(204, 204, 204)",
+  brandAccent: {
+    ...type.display,
+    fontSize: 30,
+    lineHeight: 32,
+    letterSpacing: 1,
+    color: colors.accent,
+  },
+  subtitle: {
+    ...type.caption,
+    marginTop: space.xs,
+    marginBottom: space.lg,
+  },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 8,
-    borderRadius: 4,
+    borderColor: colors.border,
+    padding: space.xl,
   },
-  registerButton: {
-    backgroundColor: "black",
-    borderRadius: 10,
-    padding: 15,
-    alignItems: "center",
-    marginTop: 20,
-  },
-  registerButtonDisabled: {
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    borderRadius: 10,
-    padding: 15,
-    alignItems: "center",
-    marginTop: 20,
-  },
-  registerButtonText: {
-    fontSize: 18,
-    color: "white",
-    fontWeight: "bold",
+  submit: {
+    marginTop: space.sm,
   },
   link: {
-    marginTop: 16,
-    color: "rgba(0, 0, 0, 0.8)",
+    ...type.caption,
+    marginTop: space.lg,
     textAlign: "center",
-  },
-  pickerContainer: {
-    borderColor: "rgb(204, 204, 204)",
-    borderWidth: 1,
-    marginBottom: 12,
-    borderRadius: 4,
-    height: 40,
-    justifyContent: "center",
   },
 });

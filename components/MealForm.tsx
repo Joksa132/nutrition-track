@@ -2,6 +2,7 @@ import { View, Text, TextInput, TouchableHighlight } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { FoodInfo } from "@/util/types";
 import { ViewStyle, TextStyle } from "react-native";
+import { colors } from "@/styles/theme";
 
 type Styles = {
   section: ViewStyle;
@@ -43,11 +44,23 @@ export default function MealForm({
           onValueChange={(value) =>
             setFoodInfo((prev) => ({ ...prev, mealType: value }))
           }
+          style={{ color: colors.text }}
+          dropdownIconColor={colors.textMuted}
         >
-          <Picker.Item label="Breakfast" value="breakfast" />
-          <Picker.Item label="Lunch" value="lunch" />
-          <Picker.Item label="Dinner" value="dinner" />
-          <Picker.Item label="Snack" value="snack" />
+          {[
+            { label: "Breakfast", value: "breakfast" },
+            { label: "Lunch", value: "lunch" },
+            { label: "Dinner", value: "dinner" },
+            { label: "Snack", value: "snack" },
+          ].map(({ label, value }) => (
+            <Picker.Item
+              key={value}
+              label={label}
+              value={value}
+              color={colors.text}
+              style={{ backgroundColor: colors.surfaceAlt }}
+            />
+          ))}
         </Picker>
       </View>
 

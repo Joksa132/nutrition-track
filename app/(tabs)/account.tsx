@@ -27,6 +27,7 @@ import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import SaveModal from "@/components/SaveModal";
 import TemplateFormModal from "@/components/TemplateFormModal";
 import { commonStyles } from "@/styles/common";
+import { colors, radius, space, type } from "@/styles/theme";
 
 export default function Account() {
   const auth = useContext(AuthContext);
@@ -233,7 +234,7 @@ export default function Account() {
   const showDatepicker = () => {
     DateTimePickerAndroid.open({
       value: new Date(selectedDate),
-      onChange: (e, selectedDateValue) => {
+      onChange: (_e, selectedDateValue) => {
         if (!selectedDateValue) return;
         const convertedDate = selectedDateValue.toISOString().split("T")[0];
         setSelectedDate(convertedDate);
@@ -296,9 +297,9 @@ export default function Account() {
   const templates = productTemplates ?? [];
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={commonStyles.screen}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={commonStyles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.profileBanner}>
@@ -318,78 +319,86 @@ export default function Account() {
 
         <View style={styles.buttonRow}>
           <TouchableHighlight
-            style={styles.primaryButton}
-            underlayColor="#333"
+            style={[commonStyles.btnPrimary, styles.flexBtn]}
+            underlayColor={colors.accentPress}
             onPress={handleEditInfo}
           >
-            <Text style={styles.primaryButtonText}>Edit Info</Text>
+            <Text style={commonStyles.btnPrimaryText}>Edit Info</Text>
           </TouchableHighlight>
           <TouchableHighlight
-            style={styles.outlineButton}
-            underlayColor="#f0f0f0"
+            style={[commonStyles.btnGhost, styles.flexBtn]}
+            underlayColor={colors.surfaceAlt}
             onPress={handleLogout}
           >
-            <Text style={styles.outlineButtonText}>Logout</Text>
+            <Text style={commonStyles.btnGhostText}>Logout</Text>
           </TouchableHighlight>
         </View>
 
-        <TouchableHighlight
+        <Pressable
           style={styles.utilityButton}
-          underlayColor="#e0e0e0"
           onPress={handleCheckForUpdates}
           disabled={isCheckingUpdates}
+          android_ripple={{ color: colors.surfaceAlt }}
         >
+          <Ionicons
+            name="cloud-download-outline"
+            size={15}
+            color={colors.textFaint}
+          />
           <Text style={styles.utilityButtonText}>
             {isCheckingUpdates ? "Checking..." : "Check for Updates"}
           </Text>
-        </TouchableHighlight>
+        </Pressable>
 
-        <Text style={styles.sectionTitle}>Product Templates</Text>
+        <Text style={commonStyles.sectionTitle}>
+          Product Templates{" "}
+          <Text style={styles.countBadge}>{templates.length}</Text>
+        </Text>
 
         {isLoading ? (
-          <Text style={styles.emptyText}>Loading product templates...</Text>
+          <Text style={commonStyles.emptyText}>Loading templates...</Text>
         ) : isError ? (
-          <Text style={styles.emptyText}>
-            Error loading product templates: {error.message}
+          <Text style={commonStyles.errorText}>
+            Error loading templates: {error.message}
           </Text>
         ) : templates.length === 0 ? (
-          <Text style={styles.emptyText}>No product templates saved.</Text>
+          <Text style={commonStyles.emptyText}>No product templates saved.</Text>
         ) : (
           templates.map((template, index) => {
             const isExpanded = expandedTemplates.has(template.id);
             const isFirst = index === 0;
             const isLast = index === templates.length - 1;
             return (
-              <View key={template.id} style={styles.templateCard}>
+              <View key={template.id} style={commonStyles.card}>
                 <View style={styles.templateCardHeader}>
                   <View style={styles.reorderColumn}>
                     <Pressable
                       onPress={() => moveTemplate(index, -1)}
                       disabled={isFirst}
-                      hitSlop={6}
+                      hitSlop={8}
                     >
                       <Ionicons
                         name="chevron-up"
                         size={16}
-                        color={isFirst ? "#ccc" : "#555"}
+                        color={isFirst ? colors.border : colors.textMuted}
                       />
                     </Pressable>
                     <Pressable
                       onPress={() => moveTemplate(index, 1)}
                       disabled={isLast}
-                      hitSlop={6}
+                      hitSlop={8}
                     >
                       <Ionicons
                         name="chevron-down"
                         size={16}
-                        color={isLast ? "#ccc" : "#555"}
+                        color={isLast ? colors.border : colors.textMuted}
                       />
                     </Pressable>
                   </View>
                   <Pressable
                     style={styles.templateHeaderTapArea}
                     onPress={() => toggleTemplate(template.id)}
-                    android_ripple={{ color: "#e8e8e8" }}
+                    android_ripple={{ color: colors.surfaceAlt }}
                   >
                     <Text style={styles.templateName} numberOfLines={1}>
                       {template.product_name}
@@ -407,13 +416,9 @@ export default function Account() {
                       </View>
                     </View>
                     <Ionicons
-                      name={
-                        isExpanded
-                          ? "chevron-up-outline"
-                          : "chevron-down-outline"
-                      }
-                      size={18}
-                      color="rgba(0,0,0,0.4)"
+                      name={isExpanded ? "chevron-up" : "chevron-down"}
+                      size={16}
+                      color={colors.textFaint}
                     />
                   </Pressable>
                 </View>
@@ -425,19 +430,7 @@ export default function Account() {
                       <View style={commonStyles.macroCell}>
                         <Text style={commonStyles.macroCellLabel}>Calories</Text>
                         <Text style={commonStyles.macroCellValue}>
-                          {template.calories} kcal
-                        </Text>
-                      </View>
-                      <View style={commonStyles.macroCell}>
-                        <Text style={commonStyles.macroCellLabel}>Protein</Text>
-                        <Text style={commonStyles.macroCellValue}>
-                          {template.protein}g
-                        </Text>
-                      </View>
-                      <View style={commonStyles.macroCell}>
-                        <Text style={commonStyles.macroCellLabel}>Carbs</Text>
-                        <Text style={commonStyles.macroCellValue}>
-                          {template.carbohydrates}g
+                          {template.calories}
                         </Text>
                       </View>
                       <View style={commonStyles.macroCell}>
@@ -447,9 +440,21 @@ export default function Account() {
                         </Text>
                       </View>
                       <View style={commonStyles.macroCell}>
+                        <Text style={commonStyles.macroCellLabel}>Carbs</Text>
+                        <Text style={commonStyles.macroCellValue}>
+                          {template.carbohydrates}g
+                        </Text>
+                      </View>
+                      <View style={commonStyles.macroCell}>
                         <Text style={commonStyles.macroCellLabel}>Sugar</Text>
                         <Text style={commonStyles.macroCellValue}>
                           {template.sugar}g
+                        </Text>
+                      </View>
+                      <View style={commonStyles.macroCell}>
+                        <Text style={commonStyles.macroCellLabel}>Protein</Text>
+                        <Text style={commonStyles.macroCellValue}>
+                          {template.protein}g
                         </Text>
                       </View>
                       <View style={commonStyles.macroCell}>
@@ -461,30 +466,30 @@ export default function Account() {
                     </View>
                     <View style={styles.templateActions}>
                       <TouchableHighlight
-                        style={styles.saveMealButton}
-                        underlayColor="#333"
+                        style={[commonStyles.btnPrimary, styles.actionBtn]}
+                        underlayColor={colors.accentPress}
                         onPress={() => {
                           setSelectedTemplate(template);
                           setTemplateModalVisible(true);
                         }}
                       >
-                        <Text style={styles.saveMealButtonText}>Save meal</Text>
+                        <Text style={commonStyles.btnPrimaryText}>
+                          Save meal
+                        </Text>
                       </TouchableHighlight>
                       <TouchableHighlight
-                        style={styles.deleteTemplateButton}
-                        underlayColor="#f0f0f0"
+                        style={[commonStyles.btnGhost, styles.actionBtn]}
+                        underlayColor={colors.surfaceAlt}
                         onPress={() => handleEditTemplate(template)}
                       >
-                        <Text style={styles.deleteTemplateButtonText}>Edit</Text>
+                        <Text style={styles.actionGhostText}>Edit</Text>
                       </TouchableHighlight>
                       <TouchableHighlight
-                        style={styles.deleteTemplateButton}
-                        underlayColor="#f0f0f0"
+                        style={[commonStyles.btnGhost, styles.actionBtn]}
+                        underlayColor={colors.surfaceAlt}
                         onPress={() => handleDeleteTemplate(template.id)}
                       >
-                        <Text style={styles.deleteTemplateButtonText}>
-                          Delete
-                        </Text>
+                        <Text style={styles.actionGhostText}>Delete</Text>
                       </TouchableHighlight>
                     </View>
                   </View>
@@ -538,182 +543,125 @@ export default function Account() {
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    padding: 20,
-    flexGrow: 1,
-  },
   profileBanner: {
-    backgroundColor: "white",
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: "black",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: space.lg,
+    marginBottom: space.lg,
   },
   profileUsername: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 6,
+    ...type.display,
+    marginBottom: space.sm,
   },
   goalBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "#f0f0f0",
-    borderRadius: 12,
-    paddingHorizontal: 10,
+    backgroundColor: colors.accentSoft,
+    borderRadius: radius.sm,
+    paddingHorizontal: space.sm,
     paddingVertical: 3,
-    marginBottom: 8,
+    marginBottom: space.sm,
   },
   goalBadgeText: {
-    fontSize: 12,
-    color: "rgba(0,0,0,0.6)",
-    fontWeight: "500",
+    ...type.label,
+    fontSize: 10,
+    color: colors.accent,
   },
   profileStatsLine: {
-    fontSize: 13,
-    color: "rgba(0,0,0,0.6)",
+    ...type.caption,
   },
   buttonRow: {
     flexDirection: "row",
-    gap: 10,
-    marginBottom: 10,
+    gap: space.sm,
+    marginBottom: space.sm,
   },
-  primaryButton: {
+  flexBtn: {
     flex: 1,
-    backgroundColor: "black",
-    borderRadius: 10,
-    padding: 12,
-    alignItems: "center",
-  },
-  primaryButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 15,
-  },
-  outlineButton: {
-    flex: 1,
-    backgroundColor: "white",
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: "black",
-    padding: 12,
-    alignItems: "center",
-  },
-  outlineButtonText: {
-    color: "black",
-    fontWeight: "bold",
-    fontSize: 15,
   },
   utilityButton: {
-    backgroundColor: "#f0f0f0",
-    borderRadius: 10,
-    padding: 10,
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    justifyContent: "center",
+    gap: space.sm,
+    paddingVertical: space.md,
+    borderRadius: radius.sm,
+    marginBottom: space.xl,
   },
   utilityButtonText: {
-    color: "black",
-    fontWeight: "500",
-    fontSize: 14,
+    ...type.label,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
+  countBadge: {
+    ...type.h2,
+    color: colors.textFaint,
   },
-  emptyText: {
-    fontSize: 14,
-    color: "rgba(0,0,0,0.5)",
-  },
-  templateCard: commonStyles.card,
   templateCardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: space.sm,
   },
   reorderColumn: {
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 2,
     gap: 2,
   },
   templateHeaderTapArea: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: space.sm,
   },
   templateName: {
+    ...type.h2,
     flex: 1,
-    fontSize: 15,
-    fontWeight: "bold",
-    color: "black",
+    fontSize: 16,
   },
   templateChips: {
     flexDirection: "row",
-    gap: 6,
+    gap: space.xs,
   },
   calorieChip: {
-    backgroundColor: "#1a1a1a",
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: colors.accentSoft,
+    borderRadius: radius.sm,
+    paddingHorizontal: space.sm,
+    paddingVertical: 3,
   },
   calorieChipText: {
-    color: "white",
+    fontFamily: type.num.fontFamily,
     fontSize: 12,
-    fontWeight: "600",
+    color: colors.accent,
   },
   proteinChip: {
-    backgroundColor: "#f0f0f0",
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.sm,
+    paddingHorizontal: space.sm,
+    paddingVertical: 3,
   },
   proteinChipText: {
-    color: "black",
+    fontFamily: type.num.fontFamily,
     fontSize: 12,
-    fontWeight: "600",
+    color: colors.textMuted,
   },
   templateExpanded: {
-    marginTop: 4,
+    marginTop: space.xs,
   },
   separator: {
     height: 1,
-    backgroundColor: "#e8e8e8",
-    marginVertical: 8,
+    backgroundColor: colors.border,
+    marginVertical: space.sm,
   },
   templateActions: {
     flexDirection: "row",
-    gap: 8,
-    marginTop: 10,
+    gap: space.sm,
+    marginTop: space.md,
   },
-  saveMealButton: {
+  actionBtn: {
     flex: 1,
-    backgroundColor: "black",
-    borderRadius: 8,
-    padding: 10,
-    alignItems: "center",
+    paddingVertical: space.sm,
   },
-  saveMealButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 14,
-  },
-  deleteTemplateButton: {
-    flex: 1,
-    backgroundColor: "white",
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: "black",
-    padding: 10,
-    alignItems: "center",
-  },
-  deleteTemplateButtonText: {
-    color: "black",
-    fontWeight: "bold",
-    fontSize: 14,
+  actionGhostText: {
+    ...type.button,
+    fontSize: 13,
+    color: colors.textMuted,
   },
 });

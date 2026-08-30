@@ -20,6 +20,8 @@ import {
   UserProfileUpdateSchema,
   PasswordUpdateSchema,
 } from "@/util/validations";
+import { commonStyles } from "@/styles/common";
+import { colors, radius, space, type } from "@/styles/theme";
 
 type UserInfoModalProps = {
   user: UserInfo;
@@ -27,6 +29,24 @@ type UserInfoModalProps = {
   visible: boolean;
   setModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
 };
+
+const GENDERS = [
+  { label: "Male", value: "male" },
+  { label: "Female", value: "female" },
+];
+
+const ACTIVITY_LEVELS = [
+  { label: "Sedentary (little to no activity)", value: "sedentary" },
+  { label: "Lightly Active (1-3 days/week)", value: "lightly" },
+  { label: "Moderately Active (3-5 days/week)", value: "moderately" },
+  { label: "Very Active (6-7 days/week)", value: "very" },
+];
+
+const GOALS = [
+  { label: "Weight loss", value: "weight loss" },
+  { label: "Weight gain", value: "weight gain" },
+  { label: "Maintenance", value: "maintenance" },
+];
 
 export default function EditUserInfoModal({
   user,
@@ -151,18 +171,44 @@ export default function EditUserInfoModal({
   };
 
   if (!visible) return null;
+
+  const renderPicker = (
+    selectedValue: string,
+    onValueChange: (v: string) => void,
+    items: { label: string; value: string }[],
+  ) => (
+    <View style={commonStyles.pickerWrap}>
+      <Picker
+        selectedValue={selectedValue}
+        onValueChange={onValueChange}
+        style={commonStyles.picker}
+        dropdownIconColor={colors.textMuted}
+      >
+        {items.map(({ label, value }) => (
+          <Picker.Item
+            key={value}
+            label={label}
+            value={value}
+            color={colors.text}
+            style={{ backgroundColor: colors.surfaceAlt }}
+          />
+        ))}
+      </Picker>
+    </View>
+  );
+
   return (
     <Modal
-      transparent={true}
-      statusBarTranslucent={true}
-      animationType="slide"
+      transparent
+      statusBarTranslucent
+      animationType="fade"
       visible={visible}
       onRequestClose={() => setModalVisible(false)}
-      hardwareAccelerated={true}
+      hardwareAccelerated
     >
-      <View style={styles.dimOverlay}>
-      <View style={styles.modalCard}>
-          <Text style={styles.modalTitle}>Edit Info</Text>
+      <View style={commonStyles.modalOverlay}>
+        <View style={commonStyles.modalCard}>
+          <Text style={commonStyles.modalTitle}>Edit Info</Text>
 
           <View style={styles.tabRow}>
             <TouchableHighlight
@@ -170,7 +216,9 @@ export default function EditUserInfoModal({
                 styles.tab,
                 activeTab === "profile" ? styles.tabActive : styles.tabInactive,
               ]}
-              underlayColor={activeTab === "profile" ? "#333" : "#f0f0f0"}
+              underlayColor={
+                activeTab === "profile" ? colors.accentPress : colors.surfaceAlt
+              }
               onPress={() => setActiveTab("profile")}
             >
               <Text
@@ -180,7 +228,7 @@ export default function EditUserInfoModal({
                     : styles.tabTextInactive
                 }
               >
-                Personal Info
+                Personal
               </Text>
             </TouchableHighlight>
             <TouchableHighlight
@@ -190,7 +238,11 @@ export default function EditUserInfoModal({
                   ? styles.tabActive
                   : styles.tabInactive,
               ]}
-              underlayColor={activeTab === "password" ? "#333" : "#f0f0f0"}
+              underlayColor={
+                activeTab === "password"
+                  ? colors.accentPress
+                  : colors.surfaceAlt
+              }
               onPress={() => setActiveTab("password")}
             >
               <Text
@@ -200,7 +252,7 @@ export default function EditUserInfoModal({
                     : styles.tabTextInactive
                 }
               >
-                Change Password
+                Password
               </Text>
             </TouchableHighlight>
           </View>
@@ -212,20 +264,22 @@ export default function EditUserInfoModal({
           >
             {activeTab === "profile" ? (
               <>
-                <Text style={styles.fieldLabel}>Username</Text>
+                <Text style={commonStyles.fieldLabel}>Username</Text>
                 <TextInput
-                  style={styles.input}
+                  style={commonStyles.input}
                   placeholder="Username"
+                  placeholderTextColor={colors.textFaint}
                   value={userInfo.username}
                   onChangeText={(value) =>
                     setUserInfo((prev) => ({ ...prev, username: value }))
                   }
                 />
 
-                <Text style={styles.fieldLabel}>Age</Text>
+                <Text style={commonStyles.fieldLabel}>Age</Text>
                 <TextInput
-                  style={styles.input}
+                  style={commonStyles.input}
                   placeholder="Age"
+                  placeholderTextColor={colors.textFaint}
                   value={userInfo.age}
                   onChangeText={(value) =>
                     setUserInfo((prev) => ({ ...prev, age: value }))
@@ -233,10 +287,11 @@ export default function EditUserInfoModal({
                   inputMode="decimal"
                 />
 
-                <Text style={styles.fieldLabel}>Height (cm)</Text>
+                <Text style={commonStyles.fieldLabel}>Height (cm)</Text>
                 <TextInput
-                  style={styles.input}
+                  style={commonStyles.input}
                   placeholder="Height (cm)"
+                  placeholderTextColor={colors.textFaint}
                   value={userInfo.height}
                   onChangeText={(value) =>
                     setUserInfo((prev) => ({ ...prev, height: value }))
@@ -244,10 +299,11 @@ export default function EditUserInfoModal({
                   inputMode="decimal"
                 />
 
-                <Text style={styles.fieldLabel}>Weight (kg)</Text>
+                <Text style={commonStyles.fieldLabel}>Weight (kg)</Text>
                 <TextInput
-                  style={styles.input}
+                  style={commonStyles.input}
                   placeholder="Weight (kg)"
+                  placeholderTextColor={colors.textFaint}
                   value={userInfo.weight}
                   onChangeText={(value) =>
                     setUserInfo((prev) => ({ ...prev, weight: value }))
@@ -255,69 +311,36 @@ export default function EditUserInfoModal({
                   inputMode="decimal"
                 />
 
-                <Text style={styles.fieldLabel}>Gender</Text>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={userInfo.gender}
-                    onValueChange={(value) =>
-                      setUserInfo((prev) => ({ ...prev, gender: value }))
-                    }
-                  >
-                    <Picker.Item label="Male" value="male" />
-                    <Picker.Item label="Female" value="female" />
-                  </Picker>
-                </View>
+                <Text style={commonStyles.fieldLabel}>Gender</Text>
+                {renderPicker(
+                  userInfo.gender,
+                  (value) =>
+                    setUserInfo((prev) => ({ ...prev, gender: value })),
+                  GENDERS,
+                )}
 
-                <Text style={styles.fieldLabel}>Activity Level</Text>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={userInfo.activityLevel}
-                    onValueChange={(value) =>
-                      setUserInfo((prev) => ({
-                        ...prev,
-                        activityLevel: value,
-                      }))
-                    }
-                  >
-                    <Picker.Item
-                      label="Sedentary (little to no activity)"
-                      value="sedentary"
-                    />
-                    <Picker.Item
-                      label="Lightly Active (1-3 days/week)"
-                      value="lightly"
-                    />
-                    <Picker.Item
-                      label="Moderately Active (3-5 days/week)"
-                      value="moderately"
-                    />
-                    <Picker.Item
-                      label="Very Active (6-7 days/week)"
-                      value="very"
-                    />
-                  </Picker>
-                </View>
+                <Text style={commonStyles.fieldLabel}>Activity Level</Text>
+                {renderPicker(
+                  userInfo.activityLevel,
+                  (value) =>
+                    setUserInfo((prev) => ({ ...prev, activityLevel: value })),
+                  ACTIVITY_LEVELS,
+                )}
 
-                <Text style={styles.fieldLabel}>Goal</Text>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={userInfo.goal}
-                    onValueChange={(value) =>
-                      setUserInfo((prev) => ({ ...prev, goal: value }))
-                    }
-                  >
-                    <Picker.Item label="Weight loss" value="weight loss" />
-                    <Picker.Item label="Weight gain" value="weight gain" />
-                    <Picker.Item label="Maintenance" value="maintenance" />
-                  </Picker>
-                </View>
+                <Text style={commonStyles.fieldLabel}>Goal</Text>
+                {renderPicker(
+                  userInfo.goal,
+                  (value) => setUserInfo((prev) => ({ ...prev, goal: value })),
+                  GOALS,
+                )}
               </>
             ) : (
               <>
-                <Text style={styles.fieldLabel}>New Password</Text>
+                <Text style={commonStyles.fieldLabel}>New Password</Text>
                 <TextInput
-                  style={styles.input}
+                  style={commonStyles.input}
                   placeholder="New Password"
+                  placeholderTextColor={colors.textFaint}
                   secureTextEntry
                   value={passwordFields.password}
                   onChangeText={(value) =>
@@ -328,10 +351,11 @@ export default function EditUserInfoModal({
                   }
                 />
 
-                <Text style={styles.fieldLabel}>Confirm Password</Text>
+                <Text style={commonStyles.fieldLabel}>Confirm Password</Text>
                 <TextInput
-                  style={styles.input}
+                  style={commonStyles.input}
                   placeholder="Confirm Password"
+                  placeholderTextColor={colors.textFaint}
                   secureTextEntry
                   value={passwordFields.confirmPassword}
                   onChangeText={(value) =>
@@ -350,20 +374,20 @@ export default function EditUserInfoModal({
             )}
           </ScrollView>
 
-          <View style={styles.buttonRow}>
+          <View style={commonStyles.modalButtonRow}>
             <TouchableHighlight
-              style={styles.outlineButton}
-              underlayColor="#f0f0f0"
+              style={[commonStyles.btnGhost, styles.flexBtn]}
+              underlayColor={colors.surfaceAlt}
               onPress={() => setModalVisible(false)}
             >
-              <Text style={styles.outlineButtonText}>Cancel</Text>
+              <Text style={commonStyles.btnGhostText}>Cancel</Text>
             </TouchableHighlight>
             <TouchableHighlight
-              style={styles.primaryButton}
-              underlayColor="#333"
+              style={[commonStyles.btnPrimary, styles.flexBtn]}
+              underlayColor={colors.accentPress}
               onPress={handleSave}
             >
-              <Text style={styles.primaryButtonText}>Save</Text>
+              <Text style={commonStyles.btnPrimaryText}>Save</Text>
             </TouchableHighlight>
           </View>
         </View>
@@ -373,117 +397,44 @@ export default function EditUserInfoModal({
 }
 
 const styles = StyleSheet.create({
-  dimOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  modalCard: {
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 24,
-    width: "90%",
-    maxHeight: "85%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 16,
-  },
   tabRow: {
     flexDirection: "row",
-    gap: 8,
-    marginBottom: 16,
+    gap: space.sm,
+    marginBottom: space.lg,
   },
   tab: {
     flex: 1,
-    borderRadius: 8,
-    padding: 10,
+    borderRadius: radius.sm,
+    paddingVertical: space.sm,
     alignItems: "center",
   },
   tabActive: {
-    backgroundColor: "black",
+    backgroundColor: colors.accent,
   },
   tabInactive: {
-    backgroundColor: "white",
-    borderWidth: 1.5,
-    borderColor: "black",
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   tabTextActive: {
-    color: "white",
-    fontWeight: "bold",
+    ...type.button,
     fontSize: 13,
+    color: "#FFFFFF",
   },
   tabTextInactive: {
-    color: "black",
-    fontWeight: "bold",
+    ...type.button,
     fontSize: 13,
+    color: colors.textMuted,
   },
   formScroll: {
     flexGrow: 0,
   },
-  fieldLabel: {
-    fontSize: 13,
-    color: "rgba(0,0,0,0.5)",
-    marginBottom: 4,
-  },
-  input: {
-    height: 44,
-    borderColor: "rgb(204, 204, 204)",
-    borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    fontSize: 15,
-  },
-  pickerContainer: {
-    borderColor: "rgb(204, 204, 204)",
-    borderWidth: 1,
-    marginBottom: 12,
-    borderRadius: 8,
-    height: 44,
-    justifyContent: "center",
-  },
   passwordHint: {
-    fontSize: 12,
-    color: "rgba(0,0,0,0.4)",
-    marginBottom: 12,
+    ...type.caption,
+    color: colors.textFaint,
+    marginBottom: space.md,
   },
-  buttonRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 16,
-  },
-  outlineButton: {
+  flexBtn: {
     flex: 1,
-    backgroundColor: "white",
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: "black",
-    padding: 12,
-    alignItems: "center",
-  },
-  outlineButtonText: {
-    color: "black",
-    fontWeight: "bold",
-    fontSize: 15,
-  },
-  primaryButton: {
-    flex: 1,
-    backgroundColor: "black",
-    borderRadius: 10,
-    padding: 12,
-    alignItems: "center",
-  },
-  primaryButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 15,
   },
 });

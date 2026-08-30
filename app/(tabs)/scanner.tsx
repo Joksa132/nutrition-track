@@ -2,7 +2,6 @@ import {
   Text,
   View,
   StyleSheet,
-  Button,
   TouchableHighlight,
   Alert,
   Linking,
@@ -26,6 +25,7 @@ import { SaveModalSchema } from "@/util/validations";
 import Loading from "@/components/Loading";
 import Constants, { ExecutionEnvironment } from "expo-constants";
 import { commonStyles } from "@/styles/common";
+import { colors, radius, space, type } from "@/styles/theme";
 
 const isExpoGo =
   Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
@@ -134,7 +134,13 @@ export default function Scanner() {
         <Text style={styles.message}>
           We need your permission to access the camera
         </Text>
-        <Button title="Grant Camera Access" onPress={handlePermissionRequest} />
+        <TouchableHighlight
+          style={[commonStyles.btnPrimary, styles.permissionButton]}
+          underlayColor={colors.accentPress}
+          onPress={handlePermissionRequest}
+        >
+          <Text style={commonStyles.btnPrimaryText}>Grant Camera Access</Text>
+        </TouchableHighlight>
       </View>
     );
   }
@@ -261,7 +267,7 @@ export default function Scanner() {
   const showDatepicker = () => {
     DateTimePickerAndroid.open({
       value: new Date(selectedDate),
-      onChange: (e, selectedDate) => {
+      onChange: (_e, selectedDate) => {
         if (!selectedDate) return;
         const convertedDate = selectedDate.toISOString().split("T")[0];
         setSelectedDate(convertedDate);
@@ -302,14 +308,13 @@ export default function Scanner() {
                   <Text style={commonStyles.macroCellValue}>
                     {product.nutriments?.["energy-kcal_100g"] ||
                       product.calories ||
-                      0}{" "}
-                    kcal
+                      0}
                   </Text>
                 </View>
                 <View style={commonStyles.macroCell}>
-                  <Text style={commonStyles.macroCellLabel}>Protein</Text>
+                  <Text style={commonStyles.macroCellLabel}>Fat</Text>
                   <Text style={commonStyles.macroCellValue}>
-                    {product.nutriments?.proteins_100g || product.protein || 0}g
+                    {product.nutriments?.fat_100g || product.fat || 0}g
                   </Text>
                 </View>
                 <View style={commonStyles.macroCell}>
@@ -322,15 +327,15 @@ export default function Scanner() {
                   </Text>
                 </View>
                 <View style={commonStyles.macroCell}>
-                  <Text style={commonStyles.macroCellLabel}>Fat</Text>
-                  <Text style={commonStyles.macroCellValue}>
-                    {product.nutriments?.fat_100g || product.fat || 0}g
-                  </Text>
-                </View>
-                <View style={commonStyles.macroCell}>
                   <Text style={commonStyles.macroCellLabel}>Sugar</Text>
                   <Text style={commonStyles.macroCellValue}>
                     {product.nutriments?.sugars_100g || product.sugar || 0}g
+                  </Text>
+                </View>
+                <View style={commonStyles.macroCell}>
+                  <Text style={commonStyles.macroCellLabel}>Protein</Text>
+                  <Text style={commonStyles.macroCellValue}>
+                    {product.nutriments?.proteins_100g || product.protein || 0}g
                   </Text>
                 </View>
                 <View style={commonStyles.macroCell}>
@@ -345,7 +350,7 @@ export default function Scanner() {
           <View style={styles.scanButtonsContainer}>
             <TouchableHighlight
               style={styles.outlineButton}
-              underlayColor="#f0f0f0"
+              underlayColor={colors.surfaceAlt}
               onPress={resetScanner}
             >
               <Text style={styles.outlineButtonText}>Scan again</Text>
@@ -356,11 +361,19 @@ export default function Scanner() {
                   ? styles.primaryButtonDisabled
                   : styles.primaryButton
               }
-              underlayColor="#333"
+              underlayColor={colors.accentPress}
               onPress={openAmountModal}
               disabled={product === null}
             >
-              <Text style={styles.primaryButtonText}>Save</Text>
+              <Text
+                style={
+                  product === null
+                    ? styles.outlineButtonTextDisabled
+                    : styles.primaryButtonText
+                }
+              >
+                Save
+              </Text>
             </TouchableHighlight>
             <TouchableHighlight
               style={
@@ -368,7 +381,7 @@ export default function Scanner() {
                   ? styles.outlineButtonDisabled
                   : styles.outlineButton
               }
-              underlayColor="#f0f0f0"
+              underlayColor={colors.surfaceAlt}
               onPress={handleSaveAsTemplate}
               disabled={product === null}
             >
@@ -413,13 +426,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
+    backgroundColor: colors.bg,
   },
   message: {
+    ...type.body,
+    color: colors.textMuted,
     textAlign: "center",
-    paddingBottom: 10,
+    paddingHorizontal: space.xl,
+    paddingBottom: space.md,
   },
-  camera: {
-    flex: 1,
+  permissionButton: {
+    marginHorizontal: space.xl,
   },
   buttonContainer: {
     flex: 1,
@@ -427,102 +444,96 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     justifyContent: "space-evenly",
     backgroundColor: "transparent",
-    marginBottom: 10,
+    marginBottom: space.md,
   },
   button: {
     flex: 1,
     alignItems: "center",
-  },
-  text: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "white",
   },
   overlay: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "rgba(255, 255, 255, 0.97)",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 16,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    padding: space.lg,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 8,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 12,
   },
   overlayText: {
+    ...type.body,
+    color: colors.textMuted,
     textAlign: "center",
-    fontSize: 16,
+    paddingVertical: space.sm,
   },
   productName: {
-    fontSize: 18,
-    fontWeight: "bold",
+    ...type.h1,
+    fontSize: 20,
     marginBottom: 2,
   },
   productSubtext: {
-    fontSize: 12,
-    color: "rgba(0,0,0,0.5)",
-    marginBottom: 8,
+    ...type.label,
+    fontSize: 10,
+    marginBottom: space.sm,
   },
   scanButtonsContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    gap: 8,
-    marginTop: 8,
+    gap: space.sm,
+    marginTop: space.md,
   },
   primaryButton: {
-    backgroundColor: "black",
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    alignItems: "center",
     flex: 1,
+    backgroundColor: colors.accent,
+    borderRadius: radius.sm,
+    paddingVertical: space.sm,
+    alignItems: "center",
   },
   primaryButtonDisabled: {
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    alignItems: "center",
     flex: 1,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.sm,
+    paddingVertical: space.sm,
+    alignItems: "center",
   },
   primaryButtonText: {
-    fontSize: 15,
-    color: "white",
-    fontWeight: "bold",
+    ...type.button,
+    fontSize: 14,
+    color: "#FFFFFF",
   },
   outlineButton: {
-    backgroundColor: "white",
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: "black",
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    alignItems: "center",
     flex: 1,
+    backgroundColor: "transparent",
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: space.sm,
+    alignItems: "center",
   },
   outlineButtonDisabled: {
-    backgroundColor: "white",
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: "rgba(0,0,0,0.3)",
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    alignItems: "center",
     flex: 1,
+    backgroundColor: "transparent",
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: space.sm,
+    alignItems: "center",
   },
   outlineButtonText: {
-    fontSize: 15,
-    color: "black",
-    fontWeight: "bold",
+    ...type.button,
+    fontSize: 14,
+    color: colors.textMuted,
   },
   outlineButtonTextDisabled: {
-    fontSize: 15,
-    color: "rgba(0,0,0,0.3)",
-    fontWeight: "bold",
+    ...type.button,
+    fontSize: 14,
+    color: colors.textFaint,
   },
 });

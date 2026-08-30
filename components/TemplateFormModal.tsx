@@ -9,6 +9,8 @@ import {
   TouchableHighlight,
   View,
 } from "react-native";
+import { commonStyles } from "@/styles/common";
+import { colors } from "@/styles/theme";
 
 export type TemplateFormValues = {
   productName: string;
@@ -78,7 +80,10 @@ export default function TemplateFormModal({
     for (const { key, label } of macroFields) {
       const v = parseFloat(form[key]);
       if (isNaN(v) || v < 0) {
-        Alert.alert("Error", `${label.split(" ")[0]} must be a positive number.`);
+        Alert.alert(
+          "Error",
+          `${label.split(" ")[0]} must be a positive number.`,
+        );
         return;
       }
       parsed[key] = v;
@@ -98,51 +103,53 @@ export default function TemplateFormModal({
     <Modal
       transparent
       statusBarTranslucent
-      animationType="slide"
+      animationType="fade"
       visible={visible}
       onRequestClose={() => setVisible(false)}
       hardwareAccelerated
     >
-      <View style={styles.dimOverlay}>
-        <View style={styles.modalCard}>
-          <Text style={styles.title}>{title}</Text>
+      <View style={commonStyles.modalOverlay}>
+        <View style={commonStyles.modalCard}>
+          <Text style={commonStyles.modalTitle}>{title}</Text>
           <ScrollView
             style={styles.scroll}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.label}>Name</Text>
+            <Text style={commonStyles.fieldLabel}>Name</Text>
             <TextInput
-              style={styles.input}
+              style={commonStyles.input}
               value={form.productName}
+              placeholderTextColor={colors.textFaint}
               onChangeText={(v) => setField("productName", v)}
             />
             {macroFields.map(({ key, label }) => (
               <View key={key}>
-                <Text style={styles.label}>{label}</Text>
+                <Text style={commonStyles.fieldLabel}>{label}</Text>
                 <TextInput
-                  style={styles.input}
+                  style={commonStyles.input}
                   value={form[key]}
+                  placeholderTextColor={colors.textFaint}
                   onChangeText={(v) => setField(key, v)}
                   inputMode="decimal"
                 />
               </View>
             ))}
           </ScrollView>
-          <View style={styles.buttonRow}>
+          <View style={commonStyles.modalButtonRow}>
             <TouchableHighlight
-              style={styles.outlineButton}
-              underlayColor="#f0f0f0"
+              style={[commonStyles.btnGhost, styles.flexBtn]}
+              underlayColor={colors.surfaceAlt}
               onPress={() => setVisible(false)}
             >
-              <Text style={styles.outlineButtonText}>Cancel</Text>
+              <Text style={commonStyles.btnGhostText}>Cancel</Text>
             </TouchableHighlight>
             <TouchableHighlight
-              style={styles.primaryButton}
-              underlayColor="#333"
+              style={[commonStyles.btnPrimary, styles.flexBtn]}
+              underlayColor={colors.accentPress}
               onPress={handleSave}
             >
-              <Text style={styles.primaryButtonText}>Save</Text>
+              <Text style={commonStyles.btnPrimaryText}>Save</Text>
             </TouchableHighlight>
           </View>
         </View>
@@ -152,71 +159,10 @@ export default function TemplateFormModal({
 }
 
 const styles = StyleSheet.create({
-  dimOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  modalCard: {
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 20,
-    width: "90%",
-    maxHeight: "85%",
-    elevation: 8,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 12,
-  },
   scroll: {
     flexGrow: 0,
   },
-  label: {
-    fontSize: 13,
-    color: "rgba(0,0,0,0.5)",
-    marginBottom: 4,
-  },
-  input: {
-    height: 44,
-    borderColor: "rgb(204, 204, 204)",
-    borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    fontSize: 15,
-  },
-  buttonRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 12,
-  },
-  outlineButton: {
+  flexBtn: {
     flex: 1,
-    backgroundColor: "white",
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: "black",
-    padding: 12,
-    alignItems: "center",
-  },
-  outlineButtonText: {
-    color: "black",
-    fontWeight: "bold",
-    fontSize: 15,
-  },
-  primaryButton: {
-    flex: 1,
-    backgroundColor: "black",
-    borderRadius: 10,
-    padding: 12,
-    alignItems: "center",
-  },
-  primaryButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 15,
   },
 });
