@@ -43,9 +43,9 @@ export type UserInfo = UserRegister & {
 };
 
 export type OpenFoodFactsProduct = {
-  product_name: string;
-  product_name_en: string;
-  nutriments: {
+  product_name?: string;
+  product_name_en?: string;
+  nutriments?: {
     "energy-kcal"?: number;
     "energy-kcal_100g"?: number;
     fat?: number;
@@ -59,7 +59,7 @@ export type OpenFoodFactsProduct = {
     fiber?: number;
     fiber_100g?: number;
   };
-  code: string;
+  code?: string;
 };
 
 export type ProductTemplate = {

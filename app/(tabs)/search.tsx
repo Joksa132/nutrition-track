@@ -7,7 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useContext, useMemo, useState } from "react";
 import {
   Alert,
-  ScrollView,
+  FlatList,
   StyleSheet,
   Text,
   TextInput,
@@ -26,48 +26,56 @@ type OpenFoodFactsResponse = {
   products: OpenFoodFactsProduct[];
 };
 
-const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-const scoreProduct = (product: OpenFoodFactsProduct, query: string): number => {
-  const rawName = product.product_name_en || product.product_name || "";
-  const name = rawName.toLowerCase().trim();
-  const q = query.toLowerCase().trim();
-  if (!name || !q) return -1;
-
-  const qAlt = q.endsWith("s") ? q.slice(0, -1) : q + "s";
-  if (name === q) return 1000;
-  if (name === qAlt) return 950;
-
-  const words = name.split(/[\s,\-()/]+/).filter(Boolean);
-  if (words[0] === q) return 900;
-  if (words[0] === qAlt) return 880;
-  if (words.includes(q)) return 700;
-  if (words.includes(qAlt)) return 680;
-
-  if (name.startsWith(q)) return 500;
-  if (name.startsWith(qAlt)) return 480;
-
-  const wb = new RegExp(`\\b${escapeRegex(q)}\\b`, "i");
-  if (wb.test(name)) return 300;
-
-  if (name.includes(q)) return 100;
-  if (name.includes(qAlt)) return 80;
-  return -1;
+type Macros = {
+  calories: number;
+  fat: number;
+  carbohydrates: number;
+  sugar: number;
+  protein: number;
+  fiber: number;
 };
 
-const rankProducts = (
-  products: OpenFoodFactsProduct[],
-  query: string,
-): OpenFoodFactsProduct[] => {
+type SearchResult = {
+  key: string;
+  name: string;
+  product: OpenFoodFactsProduct;
+  macros: Macros;
+};
+
+const toNumber = (v: unknown): number =>
+  typeof v === "number" && Number.isFinite(v) ? v : 0;
+
+const getMacros = (product: OpenFoodFactsProduct): Macros => {
+  const n = product?.nutriments ?? {};
+  return {
+    calories: toNumber(n["energy-kcal_100g"]),
+    fat: toNumber(n.fat_100g),
+    carbohydrates: toNumber(n.carbohydrates_100g),
+    sugar: toNumber(n.sugars_100g),
+    protein: toNumber(n.proteins_100g),
+    fiber: toNumber(n.fiber_100g),
+  };
+};
+
+const hasUsableMacros = (m: Macros): boolean =>
+  m.calories > 0 || m.fat > 0 || m.carbohydrates > 0 || m.protein > 0;
+
+const prepareResults = (products: OpenFoodFactsProduct[]): SearchResult[] => {
+  const seen = new Set<string>();
+
   return products
-    .map((p) => ({
-      p,
-      score: scoreProduct(p, query),
-      len: (p.product_name_en || p.product_name || "").length,
+    .map((product, i) => ({
+      key: product?.code || `row-${i}`,
+      name: (product?.product_name_en || product?.product_name || "").trim(),
+      product,
+      macros: getMacros(product),
     }))
-    .filter((x) => x.score > 0)
-    .sort((a, b) => b.score - a.score || a.len - b.len)
-    .map((x) => x.p);
+    .filter((x) => {
+      if (!x.name || !hasUsableMacros(x.macros)) return false;
+      if (seen.has(x.key)) return false;
+      seen.add(x.key);
+      return true;
+    });
 };
 
 export default function Search() {
@@ -75,7 +83,7 @@ export default function Search() {
   const [submittedTerm, setSubmittedTerm] = useState<string>("");
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
   const [amount, setAmount] = useState<string>("");
   const [mealType, setMealType] = useState<string>("breakfast");
@@ -95,19 +103,21 @@ export default function Search() {
       const url =
         `https://world.openfoodfacts.org/cgi/search.pl?` +
         `search_terms=${encodeURIComponent(submittedTerm)}` +
-        `&search_simple=1&action=process&json=1&page_size=40`;
+        `&search_simple=1&action=process&json=1&page_size=100` +
+        `&fields=code,product_name,product_name_en,nutriments`;
 
       const response = await fetch(url, { signal });
       if (!response.ok) throw new Error(`Error: ${response.status}`);
-      return await response.json();
+      const data = await response.json();
+      return { products: Array.isArray(data?.products) ? data.products : [] };
     },
     enabled: !!submittedTerm,
   });
 
-  const rankedProducts = useMemo(() => {
-    if (!searchResults?.products || !submittedTerm) return [];
-    return rankProducts(searchResults.products, submittedTerm);
-  }, [searchResults, submittedTerm]);
+  const results = useMemo(
+    () => prepareResults(searchResults?.products ?? []),
+    [searchResults],
+  );
 
   const handleSearch = () => {
     const trimmed = searchTerm.trim();
@@ -136,26 +146,14 @@ export default function Search() {
 
     if (!validatedData.success) {
       const errorMessages = validatedData.error.errors.map(
-        (error) => error.message
+        (error) => error.message,
       );
       Alert.alert("Validation Error", errorMessages.join("\n"));
       return;
     }
 
-    const calories =
-      (product.nutriments?.["energy-kcal_100g"] || 0) *
-      (validatedData.data.amount / 100);
-    const fat =
-      (product.nutriments?.fat_100g || 0) * (validatedData.data.amount / 100);
-    const carbs =
-      (product.nutriments?.carbohydrates_100g || 0) *
-      (validatedData.data.amount / 100);
-    const protein =
-      (product.nutriments?.proteins_100g || 0) * (validatedData.data.amount / 100);
-    const sugar =
-      (product.nutriments?.sugars_100g || 0) * (validatedData.data.amount / 100);
-    const fiber =
-      (product.nutriments?.fiber_100g || 0) * (validatedData.data.amount / 100);
+    const per100g = getMacros(product);
+    const scale = validatedData.data.amount / 100;
 
     try {
       await addMealToDb(
@@ -163,15 +161,15 @@ export default function Search() {
         auth?.user?.id as string,
         validatedData.data.selectedDate,
         validatedData.data.mealType,
-        product.product_name_en || product.product_name,
+        product.product_name_en || product.product_name || "Unnamed product",
         validatedData.data.amount,
-        parseFloat(calories.toFixed(2)),
-        parseFloat(fat.toFixed(2)),
-        parseFloat(carbs.toFixed(2)),
-        parseFloat(sugar.toFixed(2)),
-        parseFloat(protein.toFixed(2)),
-        parseFloat(fiber.toFixed(2)),
-        db
+        parseFloat((per100g.calories * scale).toFixed(2)),
+        parseFloat((per100g.fat * scale).toFixed(2)),
+        parseFloat((per100g.carbohydrates * scale).toFixed(2)),
+        parseFloat((per100g.sugar * scale).toFixed(2)),
+        parseFloat((per100g.protein * scale).toFixed(2)),
+        parseFloat((per100g.fiber * scale).toFixed(2)),
+        db,
       );
     } catch (error) {
       console.log("Error saving meal:", error);
@@ -220,60 +218,60 @@ export default function Search() {
         </Text>
       )}
 
-      {!isLoading && !isError && rankedProducts.length === 0 && (
-        <Text style={commonStyles.emptyText}>
-          {submittedTerm
-            ? `No results for "${submittedTerm}".`
-            : "Search the Open Food Facts database."}
-        </Text>
-      )}
-
-      <ScrollView
+      <FlatList
+        data={results}
+        keyExtractor={(item) => item.key}
         contentContainerStyle={{ paddingBottom: space.xxxl }}
         keyboardShouldPersistTaps="handled"
-      >
-        {rankedProducts.map((result) => (
-          <View key={result.code} style={commonStyles.card}>
-            <Text style={styles.productName}>
-              {result.product_name_en || result.product_name}
+        ListEmptyComponent={
+          isLoading || isError ? null : (
+            <Text style={commonStyles.emptyText}>
+              {submittedTerm
+                ? `No results for "${submittedTerm}".`
+                : "Search the Open Food Facts database."}
             </Text>
+          )
+        }
+        renderItem={({ item: { name, product, macros } }) => (
+          <View style={commonStyles.card}>
+            <Text style={styles.productName}>{name}</Text>
             <Text style={styles.productSubtext}>per 100g</Text>
             <View style={styles.separator} />
             <View style={commonStyles.macroGrid}>
               <View style={commonStyles.macroCell}>
                 <Text style={commonStyles.macroCellLabel}>Calories</Text>
                 <Text style={commonStyles.macroCellValue}>
-                  {result.nutriments["energy-kcal_100g"]?.toFixed(0) || 0}
+                  {macros.calories.toFixed(0)}
                 </Text>
               </View>
               <View style={commonStyles.macroCell}>
                 <Text style={commonStyles.macroCellLabel}>Fat</Text>
                 <Text style={commonStyles.macroCellValue}>
-                  {result.nutriments.fat_100g?.toFixed(1) || 0}g
+                  {macros.fat.toFixed(1)}g
                 </Text>
               </View>
               <View style={commonStyles.macroCell}>
                 <Text style={commonStyles.macroCellLabel}>Carbs</Text>
                 <Text style={commonStyles.macroCellValue}>
-                  {result.nutriments.carbohydrates_100g?.toFixed(1) || 0}g
+                  {macros.carbohydrates.toFixed(1)}g
                 </Text>
               </View>
               <View style={commonStyles.macroCell}>
                 <Text style={commonStyles.macroCellLabel}>Sugar</Text>
                 <Text style={commonStyles.macroCellValue}>
-                  {result.nutriments.sugars_100g?.toFixed(1) || 0}g
+                  {macros.sugar.toFixed(1)}g
                 </Text>
               </View>
               <View style={commonStyles.macroCell}>
                 <Text style={commonStyles.macroCellLabel}>Protein</Text>
                 <Text style={commonStyles.macroCellValue}>
-                  {result.nutriments.proteins_100g?.toFixed(1) || 0}g
+                  {macros.protein.toFixed(1)}g
                 </Text>
               </View>
               <View style={commonStyles.macroCell}>
                 <Text style={commonStyles.macroCellLabel}>Fiber</Text>
                 <Text style={commonStyles.macroCellValue}>
-                  {result.nutriments.fiber_100g?.toFixed(1) || 0}g
+                  {macros.fiber.toFixed(1)}g
                 </Text>
               </View>
             </View>
@@ -281,15 +279,15 @@ export default function Search() {
               style={styles.saveButton}
               underlayColor={colors.accentPress}
               onPress={() => {
-                setSelectedProduct(result);
+                setSelectedProduct(product);
                 setModalVisible(true);
               }}
             >
               <Text style={commonStyles.btnPrimaryText}>Save</Text>
             </TouchableHighlight>
           </View>
-        ))}
-      </ScrollView>
+        )}
+      />
 
       {selectedProduct && (
         <SaveModal

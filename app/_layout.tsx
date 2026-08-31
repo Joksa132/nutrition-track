@@ -97,9 +97,7 @@ const createDbIfNeeded = async (db: SQLiteDatabase) => {
       await db.execAsync(
         `ALTER TABLE product_templates ADD COLUMN position INTEGER NOT NULL DEFAULT 0;`,
       );
-    } catch {
-      // column already exists; ignore
-    }
+    } catch {}
   } catch (error) {
     console.error("Error initializing database:", error);
   }
