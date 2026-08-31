@@ -452,14 +452,14 @@ export default function Index() {
         </Pressable>
 
         <View style={styles.hero}>
-          <Text style={commonStyles.fieldLabel}>
-            {caloriesLeft >= 0 ? "Calories left" : "Over by"}
-          </Text>
+          <Text style={commonStyles.fieldLabel}>Calories</Text>
           <View style={styles.heroRow}>
             <Text style={styles.heroNumber}>
-              {Math.abs(caloriesLeft).toLocaleString()}
+              {totals.calories.toLocaleString()}
             </Text>
-            <Text style={styles.heroUnit}>kcal</Text>
+            <Text style={styles.heroTarget}>
+              / {recommendedIntake.calories.toLocaleString()}
+            </Text>
           </View>
           <View style={styles.rail}>
             <View
@@ -476,8 +476,9 @@ export default function Index() {
             />
           </View>
           <Text style={styles.heroFooter}>
-            {totals.calories.toLocaleString()} of{" "}
-            {recommendedIntake.calories.toLocaleString()} kcal
+            {caloriesLeft >= 0
+              ? `${caloriesLeft.toLocaleString()} calories left`
+              : `${Math.abs(caloriesLeft).toLocaleString()} calories over`}
           </Text>
         </View>
 
@@ -669,9 +670,11 @@ const styles = StyleSheet.create({
     fontSize: 48,
     lineHeight: 52,
   },
-  heroUnit: {
-    ...type.h2,
-    color: colors.textMuted,
+  heroTarget: {
+    ...type.numLarge,
+    fontSize: 26,
+    lineHeight: 30,
+    color: colors.textFaint,
   },
   rail: {
     height: 6,
