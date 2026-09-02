@@ -1,0 +1,74 @@
+export default {
+  expo: {
+    name: "nutrition-track",
+    slug: "nutrition-track",
+    version: "1.0.0",
+    orientation: "portrait",
+    icon: "./assets/images/icon.png",
+    scheme: "myapp",
+    userInterfaceStyle: "dark",
+    newArchEnabled: true,
+    ios: {
+      supportsTablet: true,
+      infoPlist: {
+        NSCameraUsageDescription:
+          "$(PRODUCT_NAME) needs access to your Camera.",
+      },
+    },
+    android: {
+      adaptiveIcon: {
+        foregroundImage: "./assets/images/adaptive-icon.png",
+        backgroundColor: "#ffffff",
+      },
+      permissions: [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+      ],
+      package: "com.anonymous.nutritiontrack",
+    },
+    web: {
+      bundler: "metro",
+      output: "static",
+      favicon: "./assets/images/favicon.png",
+    },
+    updates: {
+      url: "https://u.expo.dev/273a6abe-2cc2-4e7d-b1f5-d57513c0c896",
+    },
+    runtimeVersion: {
+      policy: "appVersion",
+    },
+    plugins: [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          image: "./assets/images/splash-icon.png",
+          imageWidth: 200,
+          resizeMode: "contain",
+          backgroundColor: "#0A0A0B",
+        },
+      ],
+      "expo-sqlite",
+      [
+        "react-native-vision-camera",
+        {
+          cameraPermissionText:
+            "$(PRODUCT_NAME) needs access to your Camera.",
+          enableCodeScanner: true,
+        },
+      ],
+    ],
+    experiments: {
+      typedRoutes: true,
+    },
+    extra: {
+      router: {
+        origin: false,
+      },
+      eas: {
+        projectId: "273a6abe-2cc2-4e7d-b1f5-d57513c0c896",
+      },
+      geminiApiKey: process.env.GEMINI_API_KEY,
+    },
+  },
+};

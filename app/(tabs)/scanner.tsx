@@ -1,5 +1,6 @@
 import {
   Text,
+  TextInput,
   View,
   StyleSheet,
   TouchableHighlight,
@@ -14,6 +15,7 @@ import {
   addProductToTemplates,
   getProductFromDb,
 } from "@/util/queries";
+import { readNutritionLabel } from "@/util/ai";
 import { AuthContext } from "@/components/AuthContext";
 import * as Crypto from "expo-crypto";
 import SaveModal from "@/components/SaveModal";
@@ -39,10 +41,15 @@ if (!isExpoGo) {
   ScannerCamera = require("@/components/Camera").default;
 }
 
+type ScanMode = "barcode" | "label";
+
 export default function Scanner() {
   const cameraPermission = isExpoGo ? null : useCameraPermission();
+  const [mode, setMode] = useState<ScanMode>("barcode");
   const [scanned, setScanned] = useState<boolean>(false);
   const [barcode, setBarcode] = useState<string | null>(null);
+  const [labelProduct, setLabelProduct] = useState<any>(null);
+  const [analyzing, setAnalyzing] = useState<boolean>(false);
   const [amount, setAmount] = useState<string>("");
   const [mealType, setMealType] = useState<string>("breakfast");
   const [modalVisible, setModalVisible] = useState<boolean>(false);
@@ -90,10 +97,54 @@ export default function Scanner() {
     enabled: !!barcode,
   });
 
+  const activeProduct = labelProduct ?? product;
+
+  const productLabel = activeProduct
+    ? activeProduct.product_name_en || activeProduct.product_name || ""
+    : "";
+  const canSave = Boolean(activeProduct) && productLabel.trim().length > 0;
+
   const handleBarcodeScanned = (barcodeData: string) => {
     setScanned(true);
     setBarcode(barcodeData);
     refetch();
+  };
+
+  const handleLabelCaptured = async (base64Jpeg: string) => {
+    setScanned(true);
+    setAnalyzing(true);
+    try {
+      const reading = await readNutritionLabel(base64Jpeg);
+      setLabelProduct({
+        product_name: reading.productName,
+        nutriments: {
+          "energy-kcal_100g": reading.calories,
+          fat_100g: reading.fat,
+          carbohydrates_100g: reading.carbohydrates,
+          sugars_100g: reading.sugar,
+          proteins_100g: reading.protein,
+          fiber_100g: reading.fiber,
+        },
+      });
+    } catch (error) {
+      console.log("Error reading label:", error);
+      Alert.alert(
+        "Could not read the label",
+        "Try again with the nutrition table filling more of the frame and better lighting.",
+      );
+      resetScanner();
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const setLabelName = (name: string) => {
+    setLabelProduct((prev: any) => (prev ? { ...prev, product_name: name } : prev));
+  };
+
+  const switchMode = (next: ScanMode) => {
+    resetScanner();
+    setMode(next);
   };
 
   const handlePermissionRequest = async () => {
@@ -114,6 +165,7 @@ export default function Scanner() {
   const resetScanner = () => {
     setScanned(false);
     setBarcode(null);
+    setLabelProduct(null);
     setAmount("");
   };
 
@@ -160,24 +212,24 @@ export default function Scanner() {
       return;
     }
 
-    if (product) {
+    if (activeProduct) {
       const calories =
-        (product.nutriments?.["energy-kcal_100g"] || product.calories || 0) *
+        (activeProduct.nutriments?.["energy-kcal_100g"] || activeProduct.calories || 0) *
         (validatedData.data.amount / 100);
       const fat =
-        (product.nutriments?.fat_100g || product.fat || 0) *
+        (activeProduct.nutriments?.fat_100g || activeProduct.fat || 0) *
         (validatedData.data.amount / 100);
       const carbs =
-        (product.nutriments?.carbohydrates_100g || product.carbohydrates || 0) *
+        (activeProduct.nutriments?.carbohydrates_100g || activeProduct.carbohydrates || 0) *
         (validatedData.data.amount / 100);
       const protein =
-        (product.nutriments?.proteins_100g || product.protein || 0) *
+        (activeProduct.nutriments?.proteins_100g || activeProduct.protein || 0) *
         (validatedData.data.amount / 100);
       const sugar =
-        (product.nutriments?.sugars_100g || product.sugar || 0) *
+        (activeProduct.nutriments?.sugars_100g || activeProduct.sugar || 0) *
         (validatedData.data.amount / 100);
       const fiber =
-        (product.nutriments?.fiber_100g || product.fiber || 0) *
+        (activeProduct.nutriments?.fiber_100g || activeProduct.fiber || 0) *
         (validatedData.data.amount / 100);
 
       try {
@@ -186,7 +238,7 @@ export default function Scanner() {
           auth?.user?.id as string,
           validatedData.data.selectedDate,
           validatedData.data.mealType,
-          product.product_name_en || product.product_name,
+          activeProduct.product_name_en || activeProduct.product_name,
           validatedData.data.amount,
           parseFloat(calories.toFixed(2)),
           parseFloat(fat.toFixed(2)),
@@ -210,21 +262,21 @@ export default function Scanner() {
   };
 
   const handleSaveAsTemplate = () => {
-    if (!product) return;
+    if (!activeProduct) return;
     setTemplateInitial({
-      productName: product.product_name_en || product.product_name || "",
+      productName: activeProduct.product_name_en || activeProduct.product_name || "",
       calories: String(
-        product.nutriments?.["energy-kcal_100g"] || product.calories || 0,
+        activeProduct.nutriments?.["energy-kcal_100g"] || activeProduct.calories || 0,
       ),
-      fat: String(product.nutriments?.fat_100g || product.fat || 0),
+      fat: String(activeProduct.nutriments?.fat_100g || activeProduct.fat || 0),
       carbohydrates: String(
-        product.nutriments?.carbohydrates_100g || product.carbohydrates || 0,
+        activeProduct.nutriments?.carbohydrates_100g || activeProduct.carbohydrates || 0,
       ),
-      sugar: String(product.nutriments?.sugars_100g || product.sugar || 0),
+      sugar: String(activeProduct.nutriments?.sugars_100g || activeProduct.sugar || 0),
       protein: String(
-        product.nutriments?.proteins_100g || product.protein || 0,
+        activeProduct.nutriments?.proteins_100g || activeProduct.protein || 0,
       ),
-      fiber: String(product.nutriments?.fiber_100g || product.fiber || 0),
+      fiber: String(activeProduct.nutriments?.fiber_100g || activeProduct.fiber || 0),
     });
     setTemplateModalVisible(true);
   };
@@ -281,47 +333,81 @@ export default function Scanner() {
     <View style={styles.container}>
       <ScannerCamera
         styles={styles}
+        mode={mode}
         scanned={scanned}
+        busy={analyzing}
         onBarcodeScanned={handleBarcodeScanned}
+        onLabelCaptured={handleLabelCaptured}
       />
+
+      <View style={styles.modeSwitch}>
+        {(["barcode", "label"] as const).map((value) => {
+          const active = mode === value;
+          return (
+            <TouchableHighlight
+              key={value}
+              style={[styles.modeItem, active && styles.modeItemActive]}
+              underlayColor={colors.surfaceAlt}
+              onPress={() => switchMode(value)}
+            >
+              <Text style={active ? styles.modeTextActive : styles.modeText}>
+                {value === "barcode" ? "Barcode" : "Label"}
+              </Text>
+            </TouchableHighlight>
+          );
+        })}
+      </View>
 
       {scanned && (
         <View style={styles.overlay}>
-          {isLoading && <Loading />}
+          {(isLoading || analyzing) && (
+            <Loading message={analyzing ? "Reading label..." : "Loading..."} />
+          )}
           {isError && (
             <Text style={styles.overlayText}>
               Error fetching product information.
             </Text>
           )}
-          {product === null && (
+          {activeProduct === null && (
             <Text style={styles.overlayText}>Product not found.</Text>
           )}
-          {product && (
+          {activeProduct && (
             <View>
-              <Text style={styles.productName}>
-                {product.product_name_en || product.product_name}
-              </Text>
+              {labelProduct ? (
+                <TextInput
+                  style={styles.nameInput}
+                  value={labelProduct.product_name}
+                  onChangeText={setLabelName}
+                  placeholder="Name this product"
+                  placeholderTextColor={colors.textFaint}
+                  autoFocus={!labelProduct.product_name}
+                />
+              ) : (
+                <Text style={styles.productName}>
+                  {activeProduct.product_name_en || activeProduct.product_name}
+                </Text>
+              )}
               <Text style={styles.productSubtext}>per 100g</Text>
               <View style={[commonStyles.macroGrid, { marginBottom: 4 }]}>
                 <View style={commonStyles.macroCell}>
                   <Text style={commonStyles.macroCellLabel}>Calories</Text>
                   <Text style={commonStyles.macroCellValue}>
-                    {product.nutriments?.["energy-kcal_100g"] ||
-                      product.calories ||
+                    {activeProduct.nutriments?.["energy-kcal_100g"] ||
+                      activeProduct.calories ||
                       0}
                   </Text>
                 </View>
                 <View style={commonStyles.macroCell}>
                   <Text style={commonStyles.macroCellLabel}>Fat</Text>
                   <Text style={commonStyles.macroCellValue}>
-                    {product.nutriments?.fat_100g || product.fat || 0}g
+                    {activeProduct.nutriments?.fat_100g || activeProduct.fat || 0}g
                   </Text>
                 </View>
                 <View style={commonStyles.macroCell}>
                   <Text style={commonStyles.macroCellLabel}>Carbs</Text>
                   <Text style={commonStyles.macroCellValue}>
-                    {product.nutriments?.carbohydrates_100g ||
-                      product.carbohydrates ||
+                    {activeProduct.nutriments?.carbohydrates_100g ||
+                      activeProduct.carbohydrates ||
                       0}
                     g
                   </Text>
@@ -329,19 +415,19 @@ export default function Scanner() {
                 <View style={commonStyles.macroCell}>
                   <Text style={commonStyles.macroCellLabel}>Sugar</Text>
                   <Text style={commonStyles.macroCellValue}>
-                    {product.nutriments?.sugars_100g || product.sugar || 0}g
+                    {activeProduct.nutriments?.sugars_100g || activeProduct.sugar || 0}g
                   </Text>
                 </View>
                 <View style={commonStyles.macroCell}>
                   <Text style={commonStyles.macroCellLabel}>Protein</Text>
                   <Text style={commonStyles.macroCellValue}>
-                    {product.nutriments?.proteins_100g || product.protein || 0}g
+                    {activeProduct.nutriments?.proteins_100g || activeProduct.protein || 0}g
                   </Text>
                 </View>
                 <View style={commonStyles.macroCell}>
                   <Text style={commonStyles.macroCellLabel}>Fiber</Text>
                   <Text style={commonStyles.macroCellValue}>
-                    {product.nutriments?.fiber_100g || product.fiber || 0}g
+                    {activeProduct.nutriments?.fiber_100g || activeProduct.fiber || 0}g
                   </Text>
                 </View>
               </View>
@@ -357,17 +443,17 @@ export default function Scanner() {
             </TouchableHighlight>
             <TouchableHighlight
               style={
-                product === null
+                !canSave
                   ? styles.primaryButtonDisabled
                   : styles.primaryButton
               }
               underlayColor={colors.accentPress}
               onPress={openAmountModal}
-              disabled={product === null}
+              disabled={!canSave}
             >
               <Text
                 style={
-                  product === null
+                  !canSave
                     ? styles.outlineButtonTextDisabled
                     : styles.primaryButtonText
                 }
@@ -377,17 +463,17 @@ export default function Scanner() {
             </TouchableHighlight>
             <TouchableHighlight
               style={
-                product === null
+                !canSave
                   ? styles.outlineButtonDisabled
                   : styles.outlineButton
               }
               underlayColor={colors.surfaceAlt}
               onPress={handleSaveAsTemplate}
-              disabled={product === null}
+              disabled={!canSave}
             >
               <Text
                 style={
-                  product === null
+                  !canSave
                     ? styles.outlineButtonTextDisabled
                     : styles.outlineButtonText
                 }
@@ -437,6 +523,46 @@ const styles = StyleSheet.create({
   },
   permissionButton: {
     marginHorizontal: space.xl,
+  },
+  nameInput: {
+    ...type.h1,
+    fontSize: 20,
+    marginBottom: 2,
+    paddingVertical: space.xs,
+    paddingHorizontal: space.sm,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+  },
+  modeSwitch: {
+    position: "absolute",
+    top: space.xl,
+    alignSelf: "center",
+    flexDirection: "row",
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
+    padding: 3,
+  },
+  modeItem: {
+    paddingVertical: space.sm,
+    paddingHorizontal: space.lg,
+    borderRadius: radius.pill,
+  },
+  modeItemActive: {
+    backgroundColor: colors.accent,
+  },
+  modeText: {
+    ...type.button,
+    fontSize: 13,
+    color: colors.textMuted,
+  },
+  modeTextActive: {
+    ...type.button,
+    fontSize: 13,
+    color: "#FFFFFF",
   },
   buttonContainer: {
     flex: 1,

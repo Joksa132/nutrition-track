@@ -11,17 +11,24 @@ import {
 } from "react-native-vision-camera";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { runOnJS } from "react-native-reanimated";
+import * as ImageManipulator from "expo-image-manipulator";
 
 type CameraProps = {
-  styles: Record<string, object>;
+  styles: Record<string, any>;
+  mode: "barcode" | "label";
   scanned: boolean;
+  busy: boolean;
   onBarcodeScanned: (barcode: string) => void;
+  onLabelCaptured: (base64Jpeg: string) => void;
 };
 
 export default function ScannerCamera({
   styles,
+  mode,
   scanned,
+  busy,
   onBarcodeScanned,
+  onLabelCaptured,
 }: CameraProps) {
   const [torch, setTorch] = useState<"on" | "off">("off");
   const [cameraPosition, setCameraPosition] = useState<CameraPosition>("back");
@@ -31,13 +38,9 @@ export default function ScannerCamera({
   const codeScanner = useCodeScanner({
     codeTypes: ["ean-13", "ean-8", "upc-a"],
     onCodeScanned: (codes) => {
-      if (!scanned && codes.length > 0) {
-        let codeValue = codes[0].value;
-
-        if (codeValue) {
-          onBarcodeScanned(codeValue);
-        }
-      }
+      if (mode !== "barcode" || scanned || codes.length === 0) return;
+      const codeValue = codes[0].value;
+      if (codeValue) onBarcodeScanned(codeValue);
     },
   });
 
@@ -49,6 +52,30 @@ export default function ScannerCamera({
     setTorch((current) => (current === "on" ? "off" : "on"));
   };
 
+  const captureLabel = async () => {
+    const camera = cameraRef.current;
+    if (!camera || busy) return;
+
+    const photo = await camera.takePhoto({
+      flash: torch === "on" ? "on" : "off",
+    });
+    const uri = photo.path.startsWith("file://")
+      ? photo.path
+      : `file://${photo.path}`;
+
+    const resized = await ImageManipulator.manipulateAsync(
+      uri,
+      [{ resize: { width: 1024 } }],
+      {
+        compress: 0.7,
+        format: ImageManipulator.SaveFormat.JPEG,
+        base64: true,
+      },
+    );
+
+    if (resized.base64) onLabelCaptured(resized.base64);
+  };
+
   const handleFocus = useCallback(
     (point: Point) => {
       const camera = cameraRef.current;
@@ -56,7 +83,7 @@ export default function ScannerCamera({
 
       camera.focus(point).catch(() => {});
     },
-    [device?.supportsFocus]
+    [device?.supportsFocus],
   );
 
   const tapGesture = Gesture.Tap().onEnd(({ x, y }) => {
@@ -73,7 +100,8 @@ export default function ScannerCamera({
           style={StyleSheet.absoluteFill}
           device={device}
           isActive={!scanned}
-          codeScanner={codeScanner}
+          photo={mode === "label"}
+          codeScanner={mode === "barcode" ? codeScanner : undefined}
           torch={torch}
           resizeMode="cover"
         />
@@ -85,6 +113,19 @@ export default function ScannerCamera({
               color="white"
             />
           </TouchableOpacity>
+          {mode === "label" && (
+            <TouchableOpacity
+              style={styles.button}
+              onPress={captureLabel}
+              disabled={busy}
+            >
+              <MaterialIcons
+                name="camera"
+                size={54}
+                color={busy ? "rgba(255,255,255,0.4)" : "white"}
+              />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
             <FontAwesome6 name="arrows-rotate" size={30} color="white" />
           </TouchableOpacity>
