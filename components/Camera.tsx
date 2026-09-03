@@ -58,6 +58,7 @@ export default function ScannerCamera({
 
     const photo = await camera.takePhoto({
       flash: torch === "on" ? "on" : "off",
+      enableShutterSound: false,
     });
     const uri = photo.path.startsWith("file://")
       ? photo.path

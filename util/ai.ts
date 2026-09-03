@@ -75,6 +75,7 @@ export const readNutritionLabel = async (
       generationConfig: {
         responseMimeType: "application/json",
         responseSchema: RESPONSE_SCHEMA,
+        thinkingConfig: { thinkingLevel: "minimal" },
       },
     }),
   });
