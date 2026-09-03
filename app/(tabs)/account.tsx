@@ -8,6 +8,7 @@ import {
   TouchableHighlight,
   Pressable,
   ScrollView,
+  TextInput,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Updates from "expo-updates";
@@ -17,7 +18,7 @@ import {
   addMealToDb,
   deleteTemplate,
   getAllTemplates,
-  reorderTemplates,
+  setTemplatePinned,
   updateTemplate,
 } from "@/util/queries";
 import { useSQLiteContext } from "expo-sqlite";
@@ -49,6 +50,7 @@ export default function Account() {
   const [templateToEdit, setTemplateToEdit] = useState<ProductTemplate | null>(
     null,
   );
+  const [templateFilter, setTemplateFilter] = useState<string>("");
   const db = useSQLiteContext();
   const queryClient = useQueryClient();
 
@@ -126,25 +128,16 @@ export default function Account() {
     setEditTemplateModalVisible(true);
   };
 
-  const { mutate: reorderTemplatesMutation } = useMutation({
-    mutationFn: (orderedIds: string[]) => reorderTemplates(orderedIds, db),
+  const { mutate: toggleTemplatePin } = useMutation({
+    mutationFn: (vars: { id: string; pinned: boolean }) =>
+      setTemplatePinned(vars.id, vars.pinned, db),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["templateInfo"] });
     },
     onError: (error: Error) => {
-      console.error("Error reordering templates:", error);
+      console.error("Error pinning template:", error);
     },
   });
-
-  const moveTemplate = (index: number, direction: -1 | 1) => {
-    if (!productTemplates) return;
-    const newIndex = index + direction;
-    if (newIndex < 0 || newIndex >= productTemplates.length) return;
-    const reordered = [...productTemplates];
-    const [moved] = reordered.splice(index, 1);
-    reordered.splice(newIndex, 0, moved);
-    reorderTemplatesMutation(reordered.map((t) => t.id));
-  };
 
   const toggleTemplate = (id: string) => {
     setExpandedTemplates((prev) => {
@@ -295,6 +288,10 @@ export default function Account() {
   };
 
   const templates = productTemplates ?? [];
+  const query = templateFilter.trim().toLowerCase();
+  const visibleTemplates = query
+    ? templates.filter((t) => t.product_name.toLowerCase().includes(query))
+    : templates;
 
   return (
     <View style={commonStyles.screen}>
@@ -355,6 +352,17 @@ export default function Account() {
           <Text style={styles.countBadge}>{templates.length}</Text>
         </Text>
 
+        {templates.length > 5 && (
+          <TextInput
+            style={[commonStyles.input, styles.filterInput]}
+            value={templateFilter}
+            onChangeText={setTemplateFilter}
+            placeholder="Filter templates"
+            placeholderTextColor={colors.textFaint}
+            autoCorrect={false}
+          />
+        )}
+
         {isLoading ? (
           <Text style={commonStyles.emptyText}>Loading templates...</Text>
         ) : isError ? (
@@ -363,38 +371,28 @@ export default function Account() {
           </Text>
         ) : templates.length === 0 ? (
           <Text style={commonStyles.emptyText}>No product templates saved.</Text>
+        ) : visibleTemplates.length === 0 ? (
+          <Text style={commonStyles.emptyText}>No templates match.</Text>
         ) : (
-          templates.map((template, index) => {
+          visibleTemplates.map((template) => {
             const isExpanded = expandedTemplates.has(template.id);
-            const isFirst = index === 0;
-            const isLast = index === templates.length - 1;
+            const isPinned = template.pinned === 1;
             return (
               <View key={template.id} style={commonStyles.card}>
                 <View style={styles.templateCardHeader}>
-                  <View style={styles.reorderColumn}>
-                    <Pressable
-                      onPress={() => moveTemplate(index, -1)}
-                      disabled={isFirst}
-                      hitSlop={8}
-                    >
-                      <Ionicons
-                        name="chevron-up"
-                        size={16}
-                        color={isFirst ? colors.border : colors.textMuted}
-                      />
-                    </Pressable>
-                    <Pressable
-                      onPress={() => moveTemplate(index, 1)}
-                      disabled={isLast}
-                      hitSlop={8}
-                    >
-                      <Ionicons
-                        name="chevron-down"
-                        size={16}
-                        color={isLast ? colors.border : colors.textMuted}
-                      />
-                    </Pressable>
-                  </View>
+                  <Pressable
+                    style={styles.pinButton}
+                    onPress={() =>
+                      toggleTemplatePin({ id: template.id, pinned: !isPinned })
+                    }
+                    hitSlop={8}
+                  >
+                    <Ionicons
+                      name={isPinned ? "bookmark" : "bookmark-outline"}
+                      size={18}
+                      color={isPinned ? colors.accent : colors.textFaint}
+                    />
+                  </Pressable>
                   <Pressable
                     style={styles.templateHeaderTapArea}
                     onPress={() => toggleTemplate(template.id)}
@@ -600,10 +598,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: space.sm,
   },
-  reorderColumn: {
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 2,
+  pinButton: {
+    padding: space.xs,
+  },
+  filterInput: {
+    marginBottom: space.md,
   },
   templateHeaderTapArea: {
     flex: 1,

@@ -72,4 +72,5 @@ export type ProductTemplate = {
   sugar: number;
   protein: number;
   fiber: number;
+  pinned: number;
 };

@@ -88,14 +88,14 @@ const createDbIfNeeded = async (db: SQLiteDatabase) => {
         sugar REAL NOT NULL,
         protein REAL NOT NULL,
         fiber REAL NOT NULL,
-        position INTEGER NOT NULL DEFAULT 0,
+        pinned INTEGER NOT NULL DEFAULT 0,
       FOREIGN KEY(user_id) REFERENCES users(id)
     );
     `);
 
     try {
       await db.execAsync(
-        `ALTER TABLE product_templates ADD COLUMN position INTEGER NOT NULL DEFAULT 0;`,
+        `ALTER TABLE product_templates ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0;`,
       );
     } catch {}
   } catch (error) {

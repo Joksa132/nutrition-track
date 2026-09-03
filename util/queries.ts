@@ -134,8 +134,8 @@ export const addProductToTemplates = async (
   db: SQLiteDatabase,
 ) => {
   return await db.runAsync(
-    `INSERT INTO product_templates (id, user_id, product_name, calories, fat, carbohydrates, sugar, protein, fiber, position)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(position), -1) + 1 FROM product_templates WHERE user_id = ?))`,
+    `INSERT INTO product_templates (id, user_id, product_name, calories, fat, carbohydrates, sugar, protein, fiber)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       userId,
@@ -146,7 +146,6 @@ export const addProductToTemplates = async (
       Math.round(sugar * 100) / 100,
       Math.round(protein * 100) / 100,
       Math.round(fiber * 100) / 100,
-      userId,
     ],
   );
 };
@@ -160,7 +159,7 @@ export const getProductFromDb = async (barcode: string, db: SQLiteDatabase) => {
 
 export const getAllTemplates = async (userId: string, db: SQLiteDatabase) => {
   return await db.getAllAsync(
-    "SELECT * FROM product_templates WHERE user_id = (?) ORDER BY position ASC, id ASC",
+    "SELECT * FROM product_templates WHERE user_id = (?) ORDER BY pinned DESC, product_name COLLATE NOCASE ASC",
     [userId],
   );
 };
@@ -202,18 +201,15 @@ export const updateTemplate = async (
   );
 };
 
-export const reorderTemplates = async (
-  orderedIds: string[],
+export const setTemplatePinned = async (
+  templateId: string,
+  pinned: boolean,
   db: SQLiteDatabase,
 ) => {
-  await db.withTransactionAsync(async () => {
-    for (let i = 0; i < orderedIds.length; i++) {
-      await db.runAsync(
-        "UPDATE product_templates SET position = ? WHERE id = ?",
-        [i, orderedIds[i]],
-      );
-    }
-  });
+  return await db.runAsync(
+    "UPDATE product_templates SET pinned = ? WHERE id = ?",
+    [pinned ? 1 : 0, templateId],
+  );
 };
 
 export const registerUser = async (
